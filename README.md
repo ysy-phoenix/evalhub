@@ -43,7 +43,7 @@ pip install -e ".[dev]"
 
 ```bash
 # Run a basic evaluation
-evalhub run --model gpt-3.5-turbo --task math::gsm8k --output-dir results
+evalhub run --model Qwen2.5-7B-Instruct --task humaneval --output-dir $HOME/metrics/Qwen2.5-7B-Instruct
 ```
 
 ## 🛠 Development

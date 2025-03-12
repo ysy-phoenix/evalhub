@@ -1,4 +1,3 @@
-import os
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 
@@ -39,7 +38,6 @@ class GenerationConfig:
         r"""Ensure stop tokens are set."""
         if self.stop is None:
             self.stop = ["</s>", "<|endoftext|>", "<|eos_token|>"]
-        os.makedirs(self.output_dir, exist_ok=True)
 
     def __setitem__(self, key, value):
         r"""Support dictionary-style item assignment."""

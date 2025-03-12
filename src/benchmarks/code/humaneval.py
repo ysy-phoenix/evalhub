@@ -1,4 +1,3 @@
-import dataclasses
 import os
 from pathlib import Path
 from typing import List
@@ -7,11 +6,12 @@ import orjson
 from datasets import load_dataset
 
 from src.benchmarks.base import Dataset, Task
+from src.benchmarks.code.utils import process_output
 from src.benchmarks.config import DATASET_HUB
 from src.inference.utils import GenerationResult
 
 HUMANEVAL_CONFIG = {
-    "temperature": 0.2,
+    "temperature": 0.0,
     "top_p": 0.95,
     "max_tokens": 2048,
 }
@@ -50,10 +50,18 @@ class HumanEvalDataset(Dataset):
         )
 
     def save(self, results: List[GenerationResult], output_dir: str) -> Path:
-        r"""Save results to a file."""
+        """Save raw and processed results to a file."""
         os.makedirs(output_dir, exist_ok=True)
-        save_path = Path(output_dir) / f"{self.name}.jsonl"
-        with open(save_path, "wb") as f:
-            for result in results:
-                f.write(orjson.dumps(dataclasses.asdict(result)) + b"\n")
+        output_dir = Path(output_dir)
+        raw_path = output_dir / f"{self.name}-raw.jsonl"
+        save_path = output_dir / f"{self.name}.jsonl"
+        with open(raw_path, "wb") as raw_file, open(save_path, "wb") as save_file:
+            for sample in results:
+                task_id = sample.task_id
+                for response in sample.responses:
+                    raw_file.write(orjson.dumps({"task_id": task_id, "solution": response}) + b"\n")
+                    save_file.write(
+                        orjson.dumps({"task_id": task_id, "solution": process_output(response)})
+                        + b"\n"
+                    )
         return save_path
