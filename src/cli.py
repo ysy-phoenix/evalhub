@@ -3,6 +3,8 @@
 import click
 from rich.console import Console
 
+from src.gen import gen
+
 console = Console()
 
 
@@ -20,6 +22,7 @@ def cli():
 def run(model, task, output_dir):
     """Run evaluation on a model with specified dataset."""
     console.print(f"[bold green]Running evaluation on {model} with {task} task[/bold green]")
+    gen(model, task, output_dir)
 
 
 @cli.command()
@@ -31,7 +34,6 @@ def results():
 def main():
     """Run the CLI entry point for EvalHub."""
     console.print("[bold yellow]Welcome to EvalHub - LLM Evaluation Platform[/bold yellow]")
-    console.print("Hello, World! 🚀")
     cli()
 
 
