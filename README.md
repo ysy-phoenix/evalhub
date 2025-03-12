@@ -58,12 +58,13 @@ uv pip install -e ".[dev]" # optional, for development
 ## 🚀 Quick Start
 
 ```bash
-# humaneval
-evalhub run --model Qwen2.5-7B-Instruct --task humaneval --output-dir $HOME/metrics/Qwen2.5-7B-Instruct
-evalplus.evaluate --dataset humaneval --samples $HOME/metrics/Qwen2.5-7B-Instruct/humaneval.jsonl
+# list configs / help
+evalhub configs
+evalhub run --help
 
-# mbpp
-evalhub run --model Qwen2.5-7B-Instruct --task mbpp --output-dir $HOME/metrics/Qwen2.5-7B-Instruct
+# humaneval && mbpp
+evalhub run --model Qwen2.5-7B-Instruct --tasks humaneval,mbpp --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/tmp -p temperature=0.2 -p top_p=0.95
+evalplus.evaluate --dataset humaneval --samples $HOME/metrics/Qwen2.5-7B-Instruct/humaneval.jsonl
 evalplus.evaluate --dataset mbpp --samples $HOME/metrics/Qwen2.5-7B-Instruct/mbpp.jsonl
 ```
 
