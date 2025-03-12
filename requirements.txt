@@ -1,0 +1,14 @@
+# Core dependencies
+click
+requests
+pydantic
+rich
+tqdm
+numpy
+psutil
+orjson
+openai
+datasets
+huggingface-hub
+hf_transfer
+evalplus
