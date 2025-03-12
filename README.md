@@ -25,49 +25,53 @@ All-in-one benchmarking platform for evaluating Large Language Models (LLMs) wit
 - 🔄 **OpenAI API Compatible** - Seamless integration with existing workflows
 - 💻 **Command Line Interface** - Easy benchmarking through intuitive commands
 - 🧩 **Extensible Framework** - Add custom tasks and evaluation metrics
-- 📊 **Comprehensive Metrics** - Detailed performance analysis and reporting
-- 🧪 **Standardized Testing** - Consistent evaluation across different models
+
+> [!Important]
+> This project is not for production-grade applications requiring high robustness and generalizability.
+>
+> EvalHub focuses on minimal viable code implementation and strictly follows the principle of separation between generation and evaluation processes.
+>
+> We prioritize simplicity and modularity over comprehensive feature sets.
+>
+> We now mainly focus on the evaluation of **code** and **math** benchmarks.
+
 
 ## 📦 Installation
+
+> [!Note]
+> [uv](https://github.com/astral-sh/uv) is a fast Python package installer and resolver.
 
 ```bash
 # Create a new environment
 conda create -n evalhub python=3.11 -y
 conda activate evalhub
 
+# Recommend using uv to install the package
+pip install -U pip
+pip install uv
+
 # Install the package
-pip install -e ".[dev]"
+uv pip install -r requirements.txt
+uv pip install -e ".[dev]" # optional, for development
 ```
 
 ## 🚀 Quick Start
 
 ```bash
-# Run a basic evaluation
+# humaneval
 evalhub run --model Qwen2.5-7B-Instruct --task humaneval --output-dir $HOME/metrics/Qwen2.5-7B-Instruct
+evalplus.evaluate --dataset humaneval --samples $HOME/metrics/Qwen2.5-7B-Instruct/humaneval.jsonl
+
+# mbpp
+evalhub run --model Qwen2.5-7B-Instruct --task mbpp --output-dir $HOME/metrics/Qwen2.5-7B-Instruct
+evalplus.evaluate --dataset mbpp --samples $HOME/metrics/Qwen2.5-7B-Instruct/mbpp.jsonl
 ```
 
 ## 🛠 Development
 
-### With uv (recommended)
-
-> [!Note]
-> [uv](https://github.com/astral-sh/uv) is a fast Python package installer and resolver.
-
-```bash
-# Install uv
-pip install uv
-
-# Create and activate virtual environment
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install dependencies with uv
-uv pip install -e ".[dev]"
-```
-
 ### Code Quality Tools
 
-> [!Important]
+> [!Note]
 > We use [Ruff](https://github.com/astral-sh/ruff) as our Python linter and formatter.
 
 ```bash
@@ -93,11 +97,9 @@ pre-commit run --all-files
 
 ## 🛣 Roadmap
 
-- [ ] Add more benchmark datasets
-- [ ] Implement parallel evaluation
-- [ ] Create web dashboard for results visualization
-- [ ] Core evaluation framework
-- [ ] Documentation setup
+- [x] code: humaneval && mbpp
+- [ ] math: gsm8k && math
+- [ ] code: livecodebench
 
 ## 📝 Change Log
 

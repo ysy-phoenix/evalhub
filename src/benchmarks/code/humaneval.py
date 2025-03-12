@@ -30,7 +30,9 @@ class HumanEvalDataset(Dataset):
         dataset = load_dataset(DATASET_HUB[self.name], split="test")
         for item in dataset:
             task = Task(
-                task_id=str(item["task_id"]),
+                task_id=str(item["task_id"])
+                if self.name == "humaneval"
+                else f"Mbpp/{item['task_id']}",
                 prompt=self.format_prompt(item, "python"),  # TODO: add more languages
             )
             self.add_task(task)
