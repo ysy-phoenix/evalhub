@@ -17,11 +17,14 @@ class Task:
 
     task_id: str
     prompt: str
+    sys_prompt: Optional[str] = None
 
     def __post_init__(self):
         r"""Ensure prompt ends with newline."""
         if not self.prompt.endswith("\n"):
             self.prompt += "\n"
+        if not self.sys_prompt:
+            self.sys_prompt = None
 
 
 @dataclass

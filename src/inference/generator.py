@@ -21,7 +21,14 @@ class LLMGenerator:
 
     def generate_single_sample(self, task: Task) -> Optional[str]:
         r"""Generate a single sample for a task."""
-        messages = [{"role": "user", "content": task.prompt}]
+        messages = (
+            [
+                {"role": "system", "content": task.sys_prompt},
+                {"role": "user", "content": task.prompt},
+            ]
+            if task.sys_prompt
+            else [{"role": "user", "content": task.prompt}]
+        )
         try:
             response = self.client.completion(
                 is_chat=self.config.is_chat,

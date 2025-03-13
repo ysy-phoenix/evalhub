@@ -80,7 +80,14 @@ evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/gsm8k_results.jsonl --m
 evalhub run --model Qwen2.5-7B-Instruct --tasks hendrycks_math --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
 evalhub eval --tasks hendrycks_math --solutions $HOME/metrics/Qwen2.5-7B-Instruct/hendrycks_math.jsonl --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
 evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/hendrycks_math_results.jsonl --max-display 20 --log-to-file
+
+# livecodebench
+evalhub run --model Qwen2.5-7B-Instruct --tasks livecodebench --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
+evalhub eval --tasks livecodebench --solutions $HOME/metrics/Qwen2.5-7B-Instruct/livecodebench.jsonl --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
 ```
+
+> [!Note]
+> `view` is supported for math tasks only now!
 
 ## 🛠 Development
 
@@ -127,23 +134,19 @@ pre-commit run --all-files
 
 - [x] code: humaneval && mbpp
 - [x] math: gsm8k && hendrycks_math
-- [ ] code: livecodebench
+- [x] code: livecodebench
 - [ ] math: math500 && AIME-2024
 
-## 📝 Change Log
-
-<details><summary>[2025-03-12] Initial Release <i>:: click to expand ::</i></summary>
-<div>
-
-- [x] Basic CLI implementation
-</div>
-</details>
+> [!Important]
+> Due to the tightly coupled nature of LiveCodeBench's codebase, despite our efforts to integrate it with minimal cost, we inevitably had to incorporate a significant amount of code from the original repository
 
 ## 🌐 Acknowledgements
 
 - [EvalPlus](https://github.com/evalplus/evalplus)
 - [deepscaler](https://github.com/agentica-project/deepscaler)
 - [math-evaluation-harness](https://github.com/ZubinGou/math-evaluation-harness)
+- [LiveCodeBench](https://github.com/LiveCodeBench/LiveCodeBench)
+- [verl](https://github.com/volcengine/verl)
 
 ## 📄 License
 

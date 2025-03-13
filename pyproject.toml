@@ -57,8 +57,8 @@ line-length = 100
 target-version = "py38"
 
 [tool.ruff.lint]
-select = ["E", "F", "B", "I", "UP", "N", "C", "W", "D"]
-ignore = ["D203", "D107", "D100", "D104", "D213", "C901"]
+select = ["E", "F", "B", "I", "UP", "N", "C", "W"]
+ignore = ["C901", "N818"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["src"]
