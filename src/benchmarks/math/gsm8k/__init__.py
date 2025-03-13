@@ -9,8 +9,8 @@ from tqdm import tqdm
 
 from src.benchmarks.base import Dataset, GroundTruth, Task
 from src.benchmarks.config import DATASET_HUB
-from src.benchmarks.math.gsm8k.utils import extract_ground_truth
-from src.benchmarks.math.utils import extract_answer, grade_answer_mathd
+from src.benchmarks.math.gsm8k.utils import extract_ground_truth, gsm8k_patch
+from src.benchmarks.math.utils import extract_answer, grade_answer_mathd, grade_answer_sympy
 from src.inference.utils import GenerationResult
 
 GSM8K_CONFIG = {
@@ -88,7 +88,11 @@ class GSM8KDataset(Dataset):
         for task_id, response in tqdm(predictions, desc="Evaluating"):
             extracted_answer = extract_answer(response)
             ground_truth = self.groundtruth[task_id].answer
-            is_correct = grade_answer_mathd(extracted_answer, ground_truth)
+            is_correct = (
+                grade_answer_mathd(extracted_answer, ground_truth)
+                or grade_answer_sympy(extracted_answer, ground_truth)
+                or gsm8k_patch(extracted_answer, ground_truth)
+            )
             if is_correct:
                 correct += 1
             results.append(

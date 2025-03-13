@@ -3,10 +3,13 @@
 from pathlib import Path
 
 import click
+import orjson
 from rich.console import Console
+from rich.panel import Panel
 from rich.table import Table
 
-from src.benchmarks import DATASET_MAP, EVALUATE_DATASETS
+from src.benchmarks import DATASET_MAP, EVALUATE_DATASETS, THIRD_PARTY_DATASETS
+from src.benchmarks.config import DATASET_HUB
 from src.gen import gen, parse_sampling_params
 from src.inference.utils import GenerationConfig
 
@@ -66,9 +69,74 @@ def eval(tasks, solutions, output_dir):
 
 
 @cli.command()
-def results():
-    """View evaluation results."""
-    console.print("[bold blue]Viewing evaluation results[/bold blue]")
+@click.option("--results", required=True, help="Results file path")
+@click.option("--max-samples", type=int, default=None, help="Maximum number of samples to view")
+@click.option("--show-response/--no-show-response", default=False, help="Show response")
+@click.option("--task-ids", help="Filter by specific task ID pattern, separated by commas")
+def view(results, max_samples, show_response, task_ids):
+    r"""View and analyze evaluation results with rich formatting."""
+    try:
+        with open(results) as f:
+            samples = [orjson.loads(line) for line in f]
+    except (FileNotFoundError, orjson.JSONDecodeError) as e:
+        console.print(f"[bold red]Error loading results file:[/bold red] {e}")
+        return
+
+    if task_ids:
+        task_ids = task_ids.split(",")
+        samples = [s for s in samples if s["task_id"] in task_ids]
+
+    filtered_samples = [sample for sample in samples if not sample.get("correct", False)]
+
+    if not filtered_samples:
+        console.print("[yellow]No results found.[/yellow]")
+        return
+
+    if max_samples:
+        filtered_samples = filtered_samples[:max_samples]
+
+    total = len(samples)
+    correct_count = sum(1 for s in samples if s.get("correct", False))
+    stats_table = Table(title="Results Summary", show_header=False)
+    stats_table.add_column("Metric", style="cyan")
+    stats_table.add_column("Value", style="green")
+    stats_table.add_row("Total samples", str(total))
+    stats_table.add_row("Correct", f"{correct_count} ({correct_count / total:.2%})")
+    stats_table.add_row(
+        "Incorrect", f"{total - correct_count} ({(total - correct_count) / total:.2%})"
+    )
+    stats_table.add_row("Displayed", str(len(filtered_samples)))
+
+    if task_ids:
+        stats_table.add_row("Task ID filter", task_ids)
+
+    title = "[bold blue]Incorrect Results[/bold blue]"
+
+    console.print(stats_table)
+    console.print("")
+    console.print(title)
+
+    for i, sample in enumerate(filtered_samples, 1):
+        if show_response:
+            response_text = sample["response"].strip()
+            response_panel = Panel(
+                response_text,
+                title=f"Response #{i} ({sample.get('task_id', 'Unknown task')})",
+                border_style="blue",
+                width=100,
+            )
+            console.print(response_panel)
+
+        comparison = Table(box=None, show_header=False, padding=(0, 2))
+        comparison.add_column("Label")
+        comparison.add_column("Value")
+
+        comparison.add_row("Task ID:", sample["task_id"], style="cyan")
+        comparison.add_row("Ground Truth:", sample["ground_truth"], style="green")
+        comparison.add_row("Extracted:", sample["extracted_answer"], style="red")
+
+        console.print(comparison)
+        console.print("[dim]" + "─" * 80 + "[/dim]")
 
 
 @cli.command(name="configs")
@@ -79,7 +147,7 @@ def list_configs():
     table.add_column("Parameter", style="cyan")
     table.add_column("Type", style="green")
     table.add_column("Default", style="yellow")
-    table.add_column("Description", style="white")
+    table.add_column("Description", style="magenta")
 
     config_descriptions = {
         "is_chat": "Whether to use chat format for prompts",
@@ -137,7 +205,8 @@ def list_tasks():
 
     task_table.add_column("Task", style="cyan")
     task_table.add_column("Evaluable", style="green")
-    task_table.add_column("Description", style="white")
+    task_table.add_column("Description", style="magenta")
+    task_table.add_column("Huggingface", style="blue")
 
     # Task descriptions
     task_descriptions = {
@@ -151,9 +220,10 @@ def list_tasks():
     sorted_tasks = sorted(DATASET_MAP.keys())
 
     for task in sorted_tasks:
-        evaluable = "✅" if task in EVALUATE_DATASETS else "❌"
+        evaluable = "✅" if task in EVALUATE_DATASETS else "❌(Third-party)"
         description = task_descriptions.get(task, "No description available")
-        task_table.add_row(task, evaluable, description)
+        hf_name = DATASET_HUB[task]
+        task_table.add_row(task, evaluable, description, hf_name)
 
     console.print(task_table)
 
@@ -164,12 +234,14 @@ def list_tasks():
     )
 
     console.print("\n[bold yellow]Evaluation Examples:[/bold yellow]")
-    for task in EVALUATE_DATASETS:
-        if task in ["humaneval", "mbpp"]:
+    for task in DATASET_MAP.keys():
+        if task in THIRD_PARTY_DATASETS:
             console.print(f"evalplus.evaluate --dataset {task} --samples ./results/{task}.jsonl")
         else:
+            assert task in EVALUATE_DATASETS, f"Dataset {task} is not supported for evaluation"
             console.print(
-                f"evalhub eval --tasks {task} --solutions ./results/{task}.jsonl --output-dir ./results"
+                f"evalhub eval --tasks {task} --solutions ./results/{task}.jsonl "
+                f"--output-dir ./results"
             )
 
 

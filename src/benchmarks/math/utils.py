@@ -10,7 +10,7 @@ import sympy
 from pylatexenc import latex2text
 from sympy.parsing import sympy_parser
 
-from src.utils import logger
+from src.utils.logger import logger
 
 
 # Dan Hendrycks' code
@@ -142,7 +142,8 @@ def _strip_string(string):
     string = string.replace("\\%", "")
     string = string.replace(r"\%", "")
 
-    # " 0." equivalent to " ." and "{0." equivalent to "{." Alternatively, add "0" if "." is the start of the string
+    # " 0." equivalent to " ." and "{0." equivalent to "{."
+    # Alternatively, add "0" if "." is the start of the string
     string = string.replace(" .", " 0.")
     string = string.replace("{.", "{0.")
     # if empty, return empty string
@@ -162,14 +163,17 @@ def _strip_string(string):
     # remove spaces
     string = string.replace(" ", "")
 
-    # \frac1b or \frac12 --> \frac{1}{b} and \frac{1}{2}, etc. Even works with \frac1{72} (but not \frac{72}1). Also does a/b --> \\frac{a}{b}
+    # \frac1b or \frac12 --> \frac{1}{b} and \frac{1}{2}, etc.
+    # Even works with \frac1{72} (but not \frac{72}1).
+    # Also does a/b --> \\frac{a}{b}
     string = _fix_fracs(string)
 
     # manually change 0.5 --> \frac{1}{2}
     if string == "0.5":
         string = "\\frac{1}{2}"
 
-    # NOTE: X/Y changed to \frac{X}{Y} in dataset, but in simple cases fix in case the model output is X/Y
+    # NOTE: X/Y changed to \frac{X}{Y} in dataset,
+    # but in simple cases fix in case the model output is X/Y
     string = _fix_a_slash_b(string)
 
     return string
@@ -182,7 +186,7 @@ TUPLE_CHARS = "()[]"
 
 
 def _sympy_parse(expr: str):
-    r"""Parses an expression with sympy."""
+    r"""Parse an expression with sympy."""
     py_expr = expr.replace("^", "**")
     return sympy_parser.parse_expr(
         py_expr,
@@ -194,7 +198,7 @@ def _sympy_parse(expr: str):
 
 
 def _parse_latex(expr: str) -> str:
-    r"""Attempts to parse latex to an expression sympy can read."""
+    r"""Parse latex to an expression sympy can read."""
     expr = expr.replace("\\tfrac", "\\frac")
     expr = expr.replace("\\dfrac", "\\frac")
     expr = expr.replace("\\frac", " \\frac")  # Play nice with mixed numbers.
@@ -212,7 +216,7 @@ def _parse_latex(expr: str) -> str:
 
 
 def _is_float(num: str) -> bool:
-    r"""Checks if the string is a float."""
+    r"""Check if the string is a float."""
     try:
         float(num)
         return True
@@ -221,7 +225,7 @@ def _is_float(num: str) -> bool:
 
 
 def _is_int(x: float) -> bool:
-    r"""Checks if the float is an integer."""
+    r"""Check if the float is an integer."""
     try:
         return abs(x - int(round(x))) <= 1e-7
     except Exception as e:
@@ -231,12 +235,12 @@ def _is_int(x: float) -> bool:
 
 
 def _is_frac(expr: str) -> bool:
-    r"""Checks if the string is a fraction."""
+    r"""Check if the string is a fraction."""
     return bool(re.search(r"^-?[0-9]+.?/0*[1-9][0-9]*.?$", expr))
 
 
 def _str_is_int(x: str) -> bool:
-    r"""Checks if the string is an integer."""
+    r"""Check if the string is an integer."""
     try:
         x = _strip_properly_formatted_commas(x)
         x = float(x)
@@ -248,7 +252,7 @@ def _str_is_int(x: str) -> bool:
 
 
 def _str_to_int(x: str) -> bool:
-    r"""Converts the string to an integer."""
+    r"""Convert the string to an integer."""
     x = x.replace(",", "")
     x = float(x)
     return int(x)
@@ -347,7 +351,7 @@ def _normalize(expr: str) -> str:
 
 
 def count_unknown_letters_in_expr(expr: str):
-    r"""Counts the number of unknown letters in the expression."""
+    r"""Count the number of unknown letters in the expression."""
     expr = expr.replace("sqrt", "")
     expr = expr.replace("frac", "")
     letters_in_expr = {x for x in expr if x.isalpha()}
@@ -355,7 +359,7 @@ def count_unknown_letters_in_expr(expr: str):
 
 
 def should_allow_eval(expr: str):
-    r"""Checks if the expression should be evaluated."""
+    r"""Check if the expression should be evaluated."""
     # we don't want to try parsing unknown text or functions of more than two variables
     if count_unknown_letters_in_expr(expr) > 2:
         return False
@@ -372,25 +376,28 @@ def should_allow_eval(expr: str):
 
 
 def are_equal_under_sympy(ground_truth_normalized: str, given_normalized: str):
-    r"""Checks if the two expressions are equal under sympy."""
-    are_equal = False
+    r"""Check if the two expressions are equal under sympy."""
+    are_correct = False
     try:
         expr = f"({ground_truth_normalized})-({given_normalized})"
         if should_allow_eval(expr):
             sympy_diff = _sympy_parse(expr)
             simplified = sympy.simplify(sympy_diff)
             if simplified == 0:
-                are_equal = True
+                are_correct = True
     except Exception as e:
         logger.warning(
             f"Failed to check if {ground_truth_normalized} and {given_normalized} are equal"
         )
         logger.warning(f"Error: {e}")
-    return are_equal
+    return are_correct
 
 
 def split_tuple(expr: str):
-    r"""Split the elements in a tuple/interval, while handling well-formatted commas in large numbers."""
+    r"""Split the elements in a tuple/interval.
+
+    Handles well-formatted commas in large numbers.
+    """
     expr = _strip_properly_formatted_commas(expr)
     if len(expr) == 0:
         return []
@@ -486,7 +493,8 @@ def grade_answer_sympy(given_answer: str, ground_truth: str) -> bool:
                 # so, we don't want to allow sympy.simplify in this case
                 is_correct = ground_truth_elem == given_elem
             elif _str_is_int(ground_truth_elem) != _str_is_int(given_elem):
-                # if the ground truth answer is an integer, we require the given answer to be a strict match (no sympy.simplify)
+                # if the ground truth answer is an integer, we require the given answer
+                # to be a strict match (no sympy.simplify)
                 is_correct = False
             else:
                 is_correct = are_equal_under_sympy(ground_truth_elem, given_elem)
@@ -512,17 +520,3 @@ def extract_answer(passage: str) -> str:
     if "\\boxed" in passage:
         return extract_boxed_answer(passage)
     return None
-
-
-def grade_answer_verl(solution_str, ground_truth):
-    r"""Grade the answer using Verl."""
-    if not ground_truth:
-        return False
-    if "\\boxed" in ground_truth:
-        ground_truth = extract_answer(ground_truth)
-    given_answer = extract_answer(solution_str)
-    if given_answer is None:
-        return False
-    return grade_answer_mathd(given_answer, ground_truth) or grade_answer_sympy(
-        given_answer, ground_truth
-    )

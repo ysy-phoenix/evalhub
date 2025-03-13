@@ -8,3 +8,5 @@ DATASET_MAP = {
 }
 
 EVALUATE_DATASETS = {"gsm8k"}
+
+THIRD_PARTY_DATASETS = {"humaneval", "mbpp"}
