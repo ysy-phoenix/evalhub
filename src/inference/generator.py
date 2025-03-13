@@ -15,18 +15,19 @@ from src.utils.logger import logger
 class LLMGenerator:
     r"""Class for generating responses via OpenAI Compatible APIs."""
 
-    def __init__(self, config: GenerationConfig) -> None:
+    def __init__(self, config: GenerationConfig, system_prompt: Optional[str] = None) -> None:
         self.config = config
         self.client = OpenAICompletion(config.base_url, config.api_key)
+        self.system_prompt = system_prompt
 
     def generate_single_sample(self, task: Task) -> Optional[str]:
         r"""Generate a single sample for a task."""
         messages = (
             [
-                {"role": "system", "content": task.sys_prompt},
+                {"role": "system", "content": self.system_prompt},
                 {"role": "user", "content": task.prompt},
             ]
-            if task.sys_prompt
+            if self.system_prompt
             else [{"role": "user", "content": task.prompt}]
         )
         try:

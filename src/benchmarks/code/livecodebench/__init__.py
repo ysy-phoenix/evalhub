@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from os import PathLike
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import orjson
 
@@ -58,6 +58,11 @@ class LiveCodeBenchDataset(Dataset):
         )
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
+    @property
+    def system_prompt(self) -> Optional[str]:
+        r"""Get system prompt for the dataset."""
+        return SYSTEM_MESSAGE_GENERIC
+
     def load_tasks(self):
         r"""Load tasks from LiveCodeBench dataset with caching support."""
         dataset = load_code_generation_dataset(release_version="release_latest")
@@ -65,7 +70,6 @@ class LiveCodeBenchDataset(Dataset):
             task = Task(
                 task_id=problem.question_id,
                 prompt=self.format_prompt(problem),
-                sys_prompt=SYSTEM_MESSAGE_GENERIC,
             )
             self.add_task(task)
 

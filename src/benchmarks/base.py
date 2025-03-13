@@ -53,6 +53,11 @@ class Dataset(ABC):
             self.load_tasks()
             self.save_cache()
 
+    @property
+    def system_prompt(self) -> Optional[str]:
+        r"""Get system prompt for the dataset."""
+        return None
+
     def load_cache(self) -> bool:
         r"""Load cached results for a task."""
         tasks_cache = self.cache_dir / f"{self.name}-tasks.pkl"

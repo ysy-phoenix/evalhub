@@ -42,7 +42,7 @@ def gen(model: str, ds_name: str, output_dir: str, sampling_params: dict) -> Non
             logger.warning(f"Parameter {key} not supported!")
     logger.info(f"Successfully loaded {ds_name} dataset, length: {len(dataset)}")
 
-    generator = LLMGenerator(dataset.config)
+    generator = LLMGenerator(dataset.config, dataset.system_prompt)
     results = generator.generate(dataset)
     save_path = dataset.save(results, output_dir)
     logger.info(f"Successfully saved results to {save_path}")

@@ -50,8 +50,8 @@ conda create -n evalhub python=3.11 -y
 conda activate evalhub
 
 # Recommend using uv to install the package
-pip install -U pip
-pip install uv
+uv venv --python 3.11
+source .venv/bin/activate
 
 # Install the package
 uv pip install -r requirements.txt
