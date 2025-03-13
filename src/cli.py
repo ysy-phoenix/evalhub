@@ -6,6 +6,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 
+from src.benchmarks import DATASET_MAP, EVALUATE_DATASETS
 from src.gen import gen, parse_sampling_params
 from src.inference.utils import GenerationConfig
 
@@ -42,6 +43,26 @@ def run(model, tasks, output_dir, sampling_param):
     for task in tasks.split(","):
         console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
         gen(model, task, output_dir, sampling_params)
+
+
+@cli.command()
+@click.option("--tasks", required=True, help="Tasks to evaluate on, separated by commas")
+@click.option("--solutions", required=True, help="Solutions to evaluate on, separated by commas")
+@click.option("--output-dir", required=True, help="Output directory")
+def eval(tasks, solutions, output_dir):
+    """Evaluate the model on the tasks."""
+    tasks = tasks.split(",")
+    solutions = solutions.split(",")
+    assert len(tasks) == len(solutions), "Number of tasks and solutions must be the same"
+    for task, solution in zip(tasks, solutions):
+        console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
+        assert task in EVALUATE_DATASETS, f"Dataset {task} is not supported for evaluation"
+        dataset = DATASET_MAP[task](name=task)
+        correct, total, accuracy = dataset.evaluate(solution, output_dir)
+        console.print(f"[bold green]Evaluation results for {task}:[/bold green]")
+        console.print(f"  [green]Correct:[/green] {correct}")
+        console.print(f"  [blue]Total:[/blue] {total}")
+        console.print(f"  [bold yellow]Accuracy:[/bold yellow] {accuracy}")
 
 
 @cli.command()
@@ -106,6 +127,50 @@ def list_configs():
         'evalhub run --model "Qwen2.5-7B-Instruct" --tasks [humaneval,mbpp] --output-dir ./results '
         "-p temperature=0.2 -p top_p=0.95"
     )
+
+
+@cli.command(name="tasks")
+def list_tasks():
+    """List all supported tasks and evaluable tasks."""
+    # Create a table for all tasks
+    task_table = Table(title="EvalHub Supported Tasks")
+
+    task_table.add_column("Task", style="cyan")
+    task_table.add_column("Evaluable", style="green")
+    task_table.add_column("Description", style="white")
+
+    # Task descriptions
+    task_descriptions = {
+        "humaneval": "Evaluates code generation capability on HumanEval benchmark",
+        "mbpp": "Tests code generation on MBPP (Mostly Basic Programming Problems)",
+        "gsm8k": "Grade school math problems requiring multi-step reasoning",
+        # Add more task descriptions as they become available
+    }
+
+    # Sort tasks alphabetically for better readability
+    sorted_tasks = sorted(DATASET_MAP.keys())
+
+    for task in sorted_tasks:
+        evaluable = "✅" if task in EVALUATE_DATASETS else "❌"
+        description = task_descriptions.get(task, "No description available")
+        task_table.add_row(task, evaluable, description)
+
+    console.print(task_table)
+
+    # Print usage examples
+    console.print("\n[bold yellow]Generation Examples:[/bold yellow]")
+    console.print(
+        'evalhub run --model "Qwen2.5-7B-Instruct" --tasks humaneval,mbpp --output-dir ./results'
+    )
+
+    console.print("\n[bold yellow]Evaluation Examples:[/bold yellow]")
+    for task in EVALUATE_DATASETS:
+        if task in ["humaneval", "mbpp"]:
+            console.print(f"evalplus.evaluate --dataset {task} --samples ./results/{task}.jsonl")
+        else:
+            console.print(
+                f"evalhub eval --tasks {task} --solutions ./results/{task}.jsonl --output-dir ./results"
+            )
 
 
 def main():

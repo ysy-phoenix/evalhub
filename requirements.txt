@@ -11,4 +11,6 @@ openai
 datasets
 huggingface-hub
 hf_transfer
+sympy
+pylatexenc
 evalplus

@@ -58,7 +58,7 @@ target-version = "py38"
 
 [tool.ruff.lint]
 select = ["E", "F", "B", "I", "UP", "N", "C", "W", "D"]
-ignore = ["D203", "D107", "D100", "D104", "D213"]
+ignore = ["D203", "D107", "D100", "D104", "D213", "C901", "E501", "D401"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["src"]

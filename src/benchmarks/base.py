@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import ClassVar, Dict, List, Optional
 
 from src.inference.utils import GenerationConfig, GenerationResult
 
@@ -20,6 +20,14 @@ class Task:
             self.prompt += "\n"
 
 
+@dataclass
+class GroundTruth:
+    r"""Ground truth for a task."""
+
+    task_id: str
+    answer: str
+
+
 class Dataset(ABC):
     r"""Base class for all datasets."""
 
@@ -28,12 +36,9 @@ class Dataset(ABC):
     def __init__(self, name: Optional[str] = None):
         self.name = name or self.__class__.name
         self.tasks: Dict[str, Task] = {}
+        self.groundtruth: Dict[str, GroundTruth] = {}
         self.config = DEFAULT_GENERATION_CONFIG
         self.load_tasks()
-
-    def set(self, key: str, value: Any):
-        r"""Set a configuration value."""
-        self.config[key] = value
 
     @abstractmethod
     def load_tasks(self):
@@ -84,3 +89,7 @@ class Dataset(ABC):
     def add_task(self, task: Task):
         r"""Add a task to the dataset."""
         self.tasks[task.task_id] = task
+
+    def add_groundtruth(self, groundtruth: GroundTruth):
+        r"""Add a groundtruth to the dataset."""
+        self.groundtruth[groundtruth.task_id] = groundtruth
