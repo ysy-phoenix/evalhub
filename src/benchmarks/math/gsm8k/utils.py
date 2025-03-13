@@ -2,6 +2,8 @@
 
 import re
 
+from src.utils.logger import logger
+
 
 def extract_ground_truth(solution_str):
     r"""Extract the ground truth from the solution string."""
@@ -44,8 +46,6 @@ def remove_units(solution: str) -> str:
 
     Examples:
         "2:00 \\text{ PM}" -> "2:00"
-        "$5.00 \\text{ dollars}" -> "$5.00"
-        "3 \\text{m}" -> "3"
 
     """
     # remove \text{...}
@@ -62,4 +62,7 @@ def gsm8k_patch(solution: str, ground_truth: str) -> bool:
     solution = remove_units(solution)
     if solution == "2:00" and ground_truth == "2":  # FIXME: patch for 2:00 PM
         return True
-    return solution == ground_truth
+    if solution == ground_truth:
+        logger.info(f"Patching GSM8K: {solution} == {ground_truth}")
+        return True
+    return False

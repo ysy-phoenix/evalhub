@@ -70,10 +70,11 @@ def eval(tasks, solutions, output_dir):
 
 @cli.command()
 @click.option("--results", required=True, help="Results file path")
-@click.option("--max-samples", type=int, default=None, help="Maximum number of samples to view")
+@click.option("--max-display", type=int, default=None, help="Maximum number of samples to display")
 @click.option("--show-response/--no-show-response", default=False, help="Show response")
 @click.option("--task-ids", help="Filter by specific task ID pattern, separated by commas")
-def view(results, max_samples, show_response, task_ids):
+@click.option("--log-to-file/--no-log-to-file", default=False, help="Log to file")
+def view(results, max_display, show_response, task_ids, log_to_file):
     r"""View and analyze evaluation results with rich formatting."""
     try:
         with open(results) as f:
@@ -92,8 +93,8 @@ def view(results, max_samples, show_response, task_ids):
         console.print("[yellow]No results found.[/yellow]")
         return
 
-    if max_samples:
-        filtered_samples = filtered_samples[:max_samples]
+    if max_display:
+        filtered_samples = filtered_samples[:max_display]
 
     total = len(samples)
     correct_count = sum(1 for s in samples if s.get("correct", False))
@@ -137,6 +138,18 @@ def view(results, max_samples, show_response, task_ids):
 
         console.print(comparison)
         console.print("[dim]" + "─" * 80 + "[/dim]")
+
+    if log_to_file:
+        results = Path(results)
+        with open(results.parent / f"{results.stem}_failed.log", "w") as f:
+            for sample in samples:
+                if not sample.get("correct", False):
+                    f.write(f"{sample['task_id']}\n")
+                    f.write(f"Ground Truth: {sample['ground_truth']}\n")
+                    f.write(f"Extracted: {sample['extracted_answer']}\n")
+                    if show_response:
+                        f.write(f"Response: {sample['response']}\n")
+                    f.write("-" * 80 + "\n")
 
 
 @cli.command(name="configs")
@@ -205,25 +218,15 @@ def list_tasks():
 
     task_table.add_column("Task", style="cyan")
     task_table.add_column("Evaluable", style="green")
-    task_table.add_column("Description", style="magenta")
     task_table.add_column("Huggingface", style="blue")
-
-    # Task descriptions
-    task_descriptions = {
-        "humaneval": "Evaluates code generation capability on HumanEval benchmark",
-        "mbpp": "Tests code generation on MBPP (Mostly Basic Programming Problems)",
-        "gsm8k": "Grade school math problems requiring multi-step reasoning",
-        # Add more task descriptions as they become available
-    }
 
     # Sort tasks alphabetically for better readability
     sorted_tasks = sorted(DATASET_MAP.keys())
 
     for task in sorted_tasks:
         evaluable = "✅" if task in EVALUATE_DATASETS else "❌(Third-party)"
-        description = task_descriptions.get(task, "No description available")
         hf_name = DATASET_HUB[task]
-        task_table.add_row(task, evaluable, description, hf_name)
+        task_table.add_row(task, evaluable, hf_name)
 
     console.print(task_table)
 
