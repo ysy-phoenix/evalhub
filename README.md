@@ -67,7 +67,7 @@ evalhub tasks
 evalhub run --help
 
 # humaneval && mbpp
-evalhub run --model Qwen2.5-7B-Instruct --tasks humaneval,mbpp --output-dir $HOME/metrics/Qwen2.5-7B-Instruct -p temperature=0.2 -p top_p=0.95
+evalhub run --model Qwen2.5-7B-Instruct --tasks humaneval,mbpp --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ -p temperature=0.2 -p top_p=0.95
 evalplus.evaluate --dataset humaneval --samples $HOME/metrics/Qwen2.5-7B-Instruct/humaneval.jsonl
 evalplus.evaluate --dataset mbpp --samples $HOME/metrics/Qwen2.5-7B-Instruct/mbpp.jsonl
 
@@ -126,8 +126,9 @@ pre-commit run --all-files
 ## 🛣 Roadmap
 
 - [x] code: humaneval && mbpp
-- [ ] math: gsm8k && math
+- [x] math: gsm8k && hendrycks_math
 - [ ] code: livecodebench
+- [ ] math: math500 && AIME-2024
 
 ## 📝 Change Log
 

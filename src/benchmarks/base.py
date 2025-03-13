@@ -1,8 +1,12 @@
+import os
+import pickle
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from pathlib import Path
 from typing import ClassVar, Dict, List, Optional
 
 from src.inference.utils import GenerationConfig, GenerationResult
+from src.utils.logger import logger
 
 DEFAULT_GENERATION_CONFIG = GenerationConfig()
 
@@ -38,7 +42,36 @@ class Dataset(ABC):
         self.tasks: Dict[str, Task] = {}
         self.groundtruth: Dict[str, GroundTruth] = {}
         self.config = DEFAULT_GENERATION_CONFIG
-        self.load_tasks()
+        self.cache_dir = Path(
+            os.environ.get("EVALHUB_CACHE_DIR", Path.home() / ".cache" / "evalhub")
+        )
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        if not self.load_cache():
+            self.load_tasks()
+            self.save_cache()
+
+    def load_cache(self) -> bool:
+        r"""Load cached results for a task."""
+        tasks_cache = self.cache_dir / f"{self.name}-tasks.pkl"
+        groundtruth_cache = self.cache_dir / f"{self.name}-groundtruth.pkl"
+        if tasks_cache.exists() and groundtruth_cache.exists():
+            with open(tasks_cache, "rb") as f:
+                self.tasks = pickle.load(f)
+            with open(groundtruth_cache, "rb") as f:
+                self.groundtruth = pickle.load(f)
+            logger.info(f"Loaded cached results for {self.name} from {self.cache_dir}")
+            return True
+        return False
+
+    def save_cache(self) -> None:
+        r"""Save results to cache."""
+        tasks_cache = self.cache_dir / f"{self.name}-tasks.pkl"
+        groundtruth_cache = self.cache_dir / f"{self.name}-groundtruth.pkl"
+        with open(tasks_cache, "wb") as f:
+            pickle.dump(self.tasks, f)
+        with open(groundtruth_cache, "wb") as f:
+            pickle.dump(self.groundtruth, f)
+        logger.info(f"Saved cached results for {self.name} to {self.cache_dir}")
 
     @abstractmethod
     def load_tasks(self):
