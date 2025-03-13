@@ -27,11 +27,14 @@ All-in-one benchmarking platform for evaluating Large Language Models (LLMs) wit
 - 🧩 **Extensible Framework** - Add custom tasks and evaluation metrics
 
 > [!Important]
-> This project is not for production-grade applications requiring high robustness and generalizability.
+> This project is not for production-grade applications requiring high robustness and generalizability (like [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness)).
 >
-> EvalHub focuses on minimal viable code implementation and strictly follows the principle of separation between generation and evaluation processes.
+> Design principles:
 >
-> We prioritize simplicity and modularity over comprehensive feature sets.
+> - Separation between generation and evaluation processes
+> - Minimal viable code implementation
+> - Prioritize simplicity and modularity over comprehensive feature sets
+> - Easy to expose evaluation details(prompts, answer extraction, etc.)
 >
 > We now mainly focus on the evaluation of **code** and **math** benchmarks.
 
@@ -58,17 +61,41 @@ uv pip install -e ".[dev]" # optional, for development
 ## 🚀 Quick Start
 
 ```bash
-# list configs / help
+# list configs / tasks / help
 evalhub configs
+evalhub tasks
 evalhub run --help
 
 # humaneval && mbpp
-evalhub run --model Qwen2.5-7B-Instruct --tasks humaneval,mbpp --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/tmp -p temperature=0.2 -p top_p=0.95
+evalhub run --model Qwen2.5-7B-Instruct --tasks humaneval,mbpp --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ -p temperature=0.2 -p top_p=0.95
 evalplus.evaluate --dataset humaneval --samples $HOME/metrics/Qwen2.5-7B-Instruct/humaneval.jsonl
 evalplus.evaluate --dataset mbpp --samples $HOME/metrics/Qwen2.5-7B-Instruct/mbpp.jsonl
+
+# gsm8k
+evalhub run --model Qwen2.5-7B-Instruct --tasks gsm8k --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
+evalhub eval --tasks gsm8k --solutions $HOME/metrics/Qwen2.5-7B-Instruct/gsm8k.jsonl --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
+evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/gsm8k_results.jsonl --max-display 20 --log-to-file
+
+# hendrycks_math
+evalhub run --model Qwen2.5-7B-Instruct --tasks hendrycks_math --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
+evalhub eval --tasks hendrycks_math --solutions $HOME/metrics/Qwen2.5-7B-Instruct/hendrycks_math.jsonl --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
+evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/hendrycks_math_results.jsonl --max-display 20 --log-to-file
 ```
 
 ## 🛠 Development
+
+### New Dataset
+
+To add a new dataset, you need to:
+
+1. Create a new directory in `src/benchmarks/`
+2. Implement the dataset class with following methods:
+    - `load_tasks`: Load the dataset
+    - `format_prompt`: Format the prompt for the given example
+    - `save`: Save the results for the given example
+    - `evaluate`: Evaluate the results
+    - other helper functions
+3. Add the dataset to the `DATASET_MAP` and `EVALUATE_DATASETS` in `src/benchmarks/__init__.py`
 
 ### Code Quality Tools
 
@@ -99,8 +126,9 @@ pre-commit run --all-files
 ## 🛣 Roadmap
 
 - [x] code: humaneval && mbpp
-- [ ] math: gsm8k && math
+- [x] math: gsm8k && hendrycks_math
 - [ ] code: livecodebench
+- [ ] math: math500 && AIME-2024
 
 ## 📝 Change Log
 
@@ -110,6 +138,12 @@ pre-commit run --all-files
 - [x] Basic CLI implementation
 </div>
 </details>
+
+## 🌐 Acknowledgements
+
+- [EvalPlus](https://github.com/evalplus/evalplus)
+- [deepscaler](https://github.com/agentica-project/deepscaler)
+- [math-evaluation-harness](https://github.com/ZubinGou/math-evaluation-harness)
 
 ## 📄 License
 

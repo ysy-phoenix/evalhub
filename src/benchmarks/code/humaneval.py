@@ -23,7 +23,7 @@ class HumanEvalDataset(Dataset):
     def __init__(self, name: str):
         super().__init__(name)
         for key, value in HUMANEVAL_CONFIG.items():
-            self.set(key, value)
+            self.config[key] = value
 
     def load_tasks(self):
         r"""Load tasks from HumanEval dataset."""

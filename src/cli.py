@@ -3,9 +3,13 @@
 from pathlib import Path
 
 import click
+import orjson
 from rich.console import Console
+from rich.panel import Panel
 from rich.table import Table
 
+from src.benchmarks import DATASET_MAP, EVALUATE_DATASETS, THIRD_PARTY_DATASETS
+from src.benchmarks.config import DATASET_HUB
 from src.gen import gen, parse_sampling_params
 from src.inference.utils import GenerationConfig
 
@@ -45,9 +49,107 @@ def run(model, tasks, output_dir, sampling_param):
 
 
 @cli.command()
-def results():
-    """View evaluation results."""
-    console.print("[bold blue]Viewing evaluation results[/bold blue]")
+@click.option("--tasks", required=True, help="Tasks to evaluate on, separated by commas")
+@click.option("--solutions", required=True, help="Solutions to evaluate on, separated by commas")
+@click.option("--output-dir", required=True, help="Output directory")
+def eval(tasks, solutions, output_dir):
+    """Evaluate the model on the tasks."""
+    tasks = tasks.split(",")
+    solutions = solutions.split(",")
+    assert len(tasks) == len(solutions), "Number of tasks and solutions must be the same"
+    for task, solution in zip(tasks, solutions):
+        console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
+        assert task in EVALUATE_DATASETS, f"Dataset {task} is not supported for evaluation"
+        dataset = DATASET_MAP[task](name=task)
+        correct, total, accuracy = dataset.evaluate(solution, output_dir)
+        console.print(f"[bold green]Evaluation results for {task}:[/bold green]")
+        console.print(f"  [green]Correct:[/green] {correct}")
+        console.print(f"  [blue]Total:[/blue] {total}")
+        console.print(f"  [bold yellow]Accuracy:[/bold yellow] {accuracy}")
+
+
+@cli.command()
+@click.option("--results", required=True, help="Results file path")
+@click.option("--max-display", type=int, default=None, help="Maximum number of samples to display")
+@click.option("--show-response/--no-show-response", default=False, help="Show response")
+@click.option("--task-ids", help="Filter by specific task ID pattern, separated by commas")
+@click.option("--log-to-file/--no-log-to-file", default=False, help="Log to file")
+def view(results, max_display, show_response, task_ids, log_to_file):
+    r"""View and analyze evaluation results with rich formatting."""
+    try:
+        with open(results) as f:
+            samples = [orjson.loads(line) for line in f]
+    except (FileNotFoundError, orjson.JSONDecodeError) as e:
+        console.print(f"[bold red]Error loading results file:[/bold red] {e}")
+        return
+
+    if task_ids:
+        task_ids = task_ids.split(",")
+        samples = [s for s in samples if s["task_id"] in task_ids]
+
+    filtered_samples = [sample for sample in samples if not sample.get("correct", False)]
+
+    if not filtered_samples:
+        console.print("[yellow]No results found.[/yellow]")
+        return
+
+    if max_display:
+        filtered_samples = filtered_samples[:max_display]
+
+    total = len(samples)
+    correct_count = sum(1 for s in samples if s.get("correct", False))
+    stats_table = Table(title="Results Summary", show_header=False)
+    stats_table.add_column("Metric", style="cyan")
+    stats_table.add_column("Value", style="green")
+    stats_table.add_row("Total samples", str(total))
+    stats_table.add_row("Correct", f"{correct_count} ({correct_count / total:.2%})")
+    stats_table.add_row(
+        "Incorrect", f"{total - correct_count} ({(total - correct_count) / total:.2%})"
+    )
+    stats_table.add_row("Displayed", str(len(filtered_samples)))
+
+    if task_ids:
+        stats_table.add_row("Task ID filter", task_ids)
+
+    title = "[bold blue]Incorrect Results[/bold blue]"
+
+    console.print(stats_table)
+    console.print("")
+    console.print(title)
+
+    for i, sample in enumerate(filtered_samples, 1):
+        if show_response:
+            response_text = sample["response"].strip()
+            response_panel = Panel(
+                response_text,
+                title=f"Response #{i} ({sample.get('task_id', 'Unknown task')})",
+                border_style="blue",
+                width=100,
+            )
+            console.print(response_panel)
+
+        comparison = Table(box=None, show_header=False, padding=(0, 2))
+        comparison.add_column("Label")
+        comparison.add_column("Value")
+
+        comparison.add_row("Task ID:", sample["task_id"], style="cyan")
+        comparison.add_row("Ground Truth:", sample["ground_truth"], style="green")
+        comparison.add_row("Extracted:", sample["extracted_answer"], style="red")
+
+        console.print(comparison)
+        console.print("[dim]" + "─" * 80 + "[/dim]")
+
+    if log_to_file:
+        results = Path(results)
+        with open(results.parent / f"{results.stem}_failed.log", "w") as f:
+            for sample in samples:
+                if not sample.get("correct", False):
+                    f.write(f"{sample['task_id']}\n")
+                    f.write(f"Ground Truth: {sample['ground_truth']}\n")
+                    f.write(f"Extracted: {sample['extracted_answer']}\n")
+                    if show_response:
+                        f.write(f"Response: {sample['response']}\n")
+                    f.write("-" * 80 + "\n")
 
 
 @cli.command(name="configs")
@@ -58,7 +160,7 @@ def list_configs():
     table.add_column("Parameter", style="cyan")
     table.add_column("Type", style="green")
     table.add_column("Default", style="yellow")
-    table.add_column("Description", style="white")
+    table.add_column("Description", style="magenta")
 
     config_descriptions = {
         "is_chat": "Whether to use chat format for prompts",
@@ -106,6 +208,44 @@ def list_configs():
         'evalhub run --model "Qwen2.5-7B-Instruct" --tasks [humaneval,mbpp] --output-dir ./results '
         "-p temperature=0.2 -p top_p=0.95"
     )
+
+
+@cli.command(name="tasks")
+def list_tasks():
+    """List all supported tasks and evaluable tasks."""
+    # Create a table for all tasks
+    task_table = Table(title="EvalHub Supported Tasks")
+
+    task_table.add_column("Task", style="cyan")
+    task_table.add_column("Evaluable", style="green")
+    task_table.add_column("Huggingface", style="blue")
+
+    # Sort tasks alphabetically for better readability
+    sorted_tasks = sorted(DATASET_MAP.keys())
+
+    for task in sorted_tasks:
+        evaluable = "✅" if task in EVALUATE_DATASETS else "❌(Third-party)"
+        hf_name = DATASET_HUB[task]
+        task_table.add_row(task, evaluable, hf_name)
+
+    console.print(task_table)
+
+    # Print usage examples
+    console.print("\n[bold yellow]Generation Examples:[/bold yellow]")
+    console.print(
+        'evalhub run --model "Qwen2.5-7B-Instruct" --tasks humaneval,mbpp --output-dir ./results'
+    )
+
+    console.print("\n[bold yellow]Evaluation Examples:[/bold yellow]")
+    for task in DATASET_MAP.keys():
+        if task in THIRD_PARTY_DATASETS:
+            console.print(f"evalplus.evaluate --dataset {task} --samples ./results/{task}.jsonl")
+        else:
+            assert task in EVALUATE_DATASETS, f"Dataset {task} is not supported for evaluation"
+            console.print(
+                f"evalhub eval --tasks {task} --solutions ./results/{task}.jsonl "
+                f"--output-dir ./results"
+            )
 
 
 def main():

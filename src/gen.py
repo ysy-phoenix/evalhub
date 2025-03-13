@@ -32,6 +32,7 @@ def parse_sampling_params(sampling_params: dict) -> dict:
 
 def gen(model: str, ds_name: str, output_dir: str, sampling_params: dict) -> None:
     r"""Generate results for a given model and dataset."""
+    assert ds_name in DATASET_MAP, f"Dataset {ds_name} not supported for generation"
     dataset = DATASET_MAP[ds_name](name=ds_name)
     dataset.config["model_name"] = model
     for key, value in sampling_params.items():
