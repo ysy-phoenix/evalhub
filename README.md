@@ -20,6 +20,9 @@
 
 All-in-one benchmarking platform for evaluating Large Language Models (LLMs) with comprehensive metrics and standardized testing frameworks.
 
+> [!Warning]
+> This project is under active development and the API is not stable yet.
+
 ## ✨ Features
 
 - 🔄 **OpenAI API Compatible** - Seamless integration with existing workflows
@@ -27,7 +30,7 @@ All-in-one benchmarking platform for evaluating Large Language Models (LLMs) wit
 - 🧩 **Extensible Framework** - Add custom tasks and evaluation metrics
 
 > [!Important]
-> This project is not for production-grade applications requiring high robustness and generalizability (like [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness)).
+> This project is **not** for production-grade applications requiring high robustness and generalizability (like [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness)).
 >
 > Design principles:
 >
@@ -65,6 +68,11 @@ uv pip install -e ".[dev]" # optional, for development
 evalhub configs
 evalhub tasks
 evalhub run --help
+
+# before running the following commands, serve the model locally
+# the default run command will assume the model is served on localhost:30000(i.e. sglang port)
+# feel free to pass base_url and api_key to the run command, more details can be found via `evalhub configs`
+python -m sglang.launch_server --model-path $HOME/models/Qwen2.5-7B-Instruct
 
 # humaneval && mbpp
 evalhub run --model Qwen2.5-7B-Instruct --tasks humaneval,mbpp --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ -p temperature=0.2 -p top_p=0.95
@@ -136,9 +144,14 @@ pre-commit run --all-files
 - [x] math: gsm8k && hendrycks_math
 - [x] code: livecodebench
 - [ ] math: math500 && AIME-2024
+- [ ] refactor math framework
+- [ ] refactor livecodebench framework
+- [ ] organize docs
 
 > [!Important]
-> Due to the tightly coupled nature of LiveCodeBench's codebase, despite our efforts to integrate it with minimal cost, we inevitably had to incorporate a significant amount of code from the original repository
+> Due to the tightly coupled nature of LiveCodeBench's codebase, despite our efforts to integrate it with minimal cost, we inevitably had to incorporate a significant amount of code from the original repository.
+>
+> We only suopport codegeneration scenario of LiveCodeBench.
 
 ## 🌐 Acknowledgements
 
