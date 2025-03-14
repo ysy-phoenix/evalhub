@@ -520,3 +520,10 @@ def extract_answer(passage: str) -> str:
     if "\\boxed" in passage:
         return extract_boxed_answer(passage)
     return None
+
+
+def grade_answer(given_answer: str, ground_truth: str) -> bool:
+    r"""Grade the answer."""
+    if grade_answer_mathd(given_answer, ground_truth):
+        return True
+    return grade_answer_sympy(given_answer, ground_truth)

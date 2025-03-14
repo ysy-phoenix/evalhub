@@ -92,6 +92,16 @@ evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/hendrycks_math_results.
 # livecodebench
 evalhub run --model Qwen2.5-7B-Instruct --tasks livecodebench --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
 evalhub eval --tasks livecodebench --solutions $HOME/metrics/Qwen2.5-7B-Instruct/livecodebench.jsonl --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
+
+# math500
+evalhub run --model Qwen2.5-Math-7B-Instruct --tasks math500 --output-dir $HOME/metrics/Qwen2.5-Math-7B-Instruct/
+evalhub eval --tasks math500 --solutions $HOME/metrics/Qwen2.5-Math-7B-Instruct/math500.jsonl --output-dir $HOME/metrics/Qwen2.5-Math-7B-Instruct/
+evalhub view --results $HOME/metrics/Qwen2.5-Math-7B-Instruct/math500_results.jsonl --max-display 20 --log-to-file
+
+# aime2024
+evalhub run --model Qwen2.5-Math-7B-Instruct --tasks aime2024 --output-dir $HOME/metrics/Qwen2.5-Math-7B-Instruct/
+evalhub eval --tasks aime2024 --solutions $HOME/metrics/Qwen2.5-Math-7B-Instruct/aime2024.jsonl --output-dir $HOME/metrics/Qwen2.5-Math-7B-Instruct/
+evalhub view --results $HOME/metrics/Qwen2.5-Math-7B-Instruct/aime2024_results.jsonl --max-display 20 --log-to-file
 ```
 
 > [!Note]
@@ -143,8 +153,8 @@ pre-commit run --all-files
 - [x] code: humaneval && mbpp
 - [x] math: gsm8k && hendrycks_math
 - [x] code: livecodebench
-- [ ] math: math500 && AIME-2024
-- [ ] refactor math framework
+- [x] math: math500 && AIME-2024
+- [x] refactor math framework
 - [ ] refactor livecodebench framework
 - [ ] organize docs
 
