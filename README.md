@@ -92,6 +92,7 @@ evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/hendrycks_math_results.
 # livecodebench
 evalhub run --model Qwen2.5-7B-Instruct --tasks livecodebench --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
 evalhub eval --tasks livecodebench --solutions $HOME/metrics/Qwen2.5-7B-Instruct/livecodebench.jsonl --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
+evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/livecodebench_results.json --show-response --max-display 20 --log-to-file
 
 # math500
 evalhub run --model Qwen2.5-Math-7B-Instruct --tasks math500 --output-dir $HOME/metrics/Qwen2.5-Math-7B-Instruct/
@@ -105,7 +106,7 @@ evalhub view --results $HOME/metrics/Qwen2.5-Math-7B-Instruct/aime2024_results.j
 ```
 
 > [!Note]
-> `view` is supported for math tasks only now!
+> `view` is supported for math and livecodebench tasks only now!
 
 ## 🛠 Development
 
@@ -155,7 +156,7 @@ pre-commit run --all-files
 - [x] code: livecodebench
 - [x] math: math500 && AIME-2024
 - [x] refactor math framework
-- [ ] clean up livecodebench framework
+- [x] clean up livecodebench framework
 - [ ] organize docs
 
 > [!Important]

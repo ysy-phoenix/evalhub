@@ -3,15 +3,14 @@
 from pathlib import Path
 
 import click
-import orjson
 from rich.console import Console
-from rich.panel import Panel
 from rich.table import Table
 
 from src.benchmarks import DATASET_MAP, EVALUATE_DATASETS, THIRD_PARTY_DATASETS
 from src.benchmarks.config import DATASET_HUB
 from src.gen import gen, parse_sampling_params
 from src.inference.utils import GenerationConfig
+from src.view import view_results
 
 console = Console()
 
@@ -74,83 +73,39 @@ def eval(tasks, solutions, output_dir):
 @click.option("--max-display", type=int, default=None, help="Maximum number of samples to display")
 @click.option("--show-response/--no-show-response", default=False, help="Show response")
 @click.option("--task-ids", help="Filter by specific task ID pattern, separated by commas")
+@click.option(
+    "--sort-by",
+    type=click.Choice(["pass@1", "difficulty", "platform", "date"]),
+    default="pass@1",
+    help="Sort results by",
+)
+@click.option(
+    "--difficulty", type=click.Choice(["easy", "medium", "hard"]), help="Filter by difficulty"
+)
+@click.option(
+    "--platform",
+    type=click.Choice(["leetcode", "codeforces", "atcoder"]),
+    help="Filter by platform",
+)
 @click.option("--log-to-file/--no-log-to-file", default=False, help="Log to file")
-def view(results, max_display, show_response, task_ids, log_to_file):
-    r"""View and analyze evaluation results with rich formatting."""
-    try:
-        with open(results) as f:
-            samples = [orjson.loads(line) for line in f]
-    except (FileNotFoundError, orjson.JSONDecodeError) as e:
-        console.print(f"[bold red]Error loading results file:[/bold red] {e}")
-        return
+def view(results, max_display, show_response, task_ids, sort_by, difficulty, platform, log_to_file):
+    r"""View and analyze evaluation results with rich formatting.
 
-    if task_ids:
-        task_ids = task_ids.split(",")
-        samples = [s for s in samples if s["task_id"] in task_ids]
+    Automatically detects the result format:
+    - JSONL files: Math evaluation results (GSM8K, etc.)
+    - JSON files: LiveCodeBench results
+    """
 
-    filtered_samples = [sample for sample in samples if not sample.get("correct", False)]
-
-    if not filtered_samples:
-        console.print("[yellow]No results found.[/yellow]")
-        return
-
-    if max_display:
-        filtered_samples = filtered_samples[:max_display]
-
-    total = len(samples)
-    correct_count = sum(1 for s in samples if s.get("correct", False))
-    stats_table = Table(title="Results Summary", show_header=False)
-    stats_table.add_column("Metric", style="cyan")
-    stats_table.add_column("Value", style="green")
-    stats_table.add_row("Total samples", str(total))
-    stats_table.add_row("Correct", f"{correct_count} ({correct_count / total:.2%})")
-    stats_table.add_row(
-        "Incorrect", f"{total - correct_count} ({(total - correct_count) / total:.2%})"
+    view_results(
+        results_path=Path(results),
+        max_display=max_display,
+        show_response=show_response,
+        task_ids=task_ids,
+        sort_by=sort_by,
+        difficulty=difficulty,
+        platform=platform,
+        log_to_file=log_to_file,
     )
-    stats_table.add_row("Displayed", str(len(filtered_samples)))
-
-    if task_ids:
-        stats_table.add_row("Task ID filter", task_ids)
-
-    title = "[bold blue]Incorrect Results[/bold blue]"
-
-    console.print(stats_table)
-    console.print("")
-    console.print(title)
-
-    for i, sample in enumerate(filtered_samples, 1):
-        if show_response:
-            response_text = sample["response"].strip()
-            response_panel = Panel(
-                response_text,
-                title=f"Response #{i} ({sample.get('task_id', 'Unknown task')})",
-                border_style="blue",
-                width=100,
-            )
-            console.print(response_panel)
-
-        comparison = Table(box=None, show_header=False, padding=(0, 2))
-        comparison.add_column("Label")
-        comparison.add_column("Value")
-
-        comparison.add_row("Task ID:", sample["task_id"], style="cyan")
-        comparison.add_row("Ground Truth:", sample["ground_truth"], style="green")
-        comparison.add_row("Extracted:", sample["extracted_answer"], style="red")
-
-        console.print(comparison)
-        console.print("[dim]" + "─" * 80 + "[/dim]")
-
-    if log_to_file:
-        results = Path(results)
-        with open(results.parent / f"{results.stem}_failed.log", "w") as f:
-            for sample in samples:
-                if not sample.get("correct", False):
-                    f.write(f"{sample['task_id']}\n")
-                    f.write(f"Ground Truth: {sample['ground_truth']}\n")
-                    f.write(f"Extracted: {sample['extracted_answer']}\n")
-                    if show_response:
-                        f.write(f"Response: {sample['response']}\n")
-                    f.write("-" * 80 + "\n")
 
 
 @cli.command(name="configs")
