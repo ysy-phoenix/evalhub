@@ -13,8 +13,8 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import numpy as np
 from tqdm import tqdm
 
-from src.benchmarks.code.livecodebench.evaluation.pass_k_utils import compute_metrics_from_results
-from src.benchmarks.code.livecodebench.evaluation.testing_util import run_test
+from src.benchmarks.code.livecodebench.pass_k_utils import compute_metrics_from_results
+from src.benchmarks.code.livecodebench.testing_util import run_test
 from src.utils.logger import logger
 
 sys.set_int_max_str_digits(50000)
@@ -22,6 +22,7 @@ sys.set_int_max_str_digits(50000)
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 DEFAULT_K_LIST = [1, 5, 10, 20, 40, 50, 75, 100, 125, 150, 200, 500, 1000]
+GLOBAL_TIMEOUT = 30
 
 
 def _temp_run(sample, generation, debug, result, metadata_list, timeout):
@@ -42,8 +43,12 @@ def check_correctness(sample, generation, timeout, debug=True):
         target=_temp_run,
         args=(sample, generation, debug, result, metadata_list, timeout),
     )
+    # FIXME: This is a hack to ensure that the process doesn't run too long
+    timeout = min(
+        GLOBAL_TIMEOUT, (timeout + 1) * len(json.loads(sample["input_output"])["inputs"]) + 5
+    )
     p.start()
-    p.join(timeout=(timeout + 1) * len(json.loads(sample["input_output"])["inputs"]) + 5)
+    p.join(timeout=timeout)
     if p.is_alive():
         p.kill()
     if not result:
@@ -170,7 +175,9 @@ def evaluate_generations(
     with tqdm(total=len(inputs)) as pbar:
         with ProcessPoolExecutor(max_workers=1 if debug else num_process_evaluate) as executor:
             futures = {
-                executor.submit(run_with_timeout, evaluate_generations_by_problem, (arg,)): index
+                # executor.submit(run_with_timeout, evaluate_generations_by_problem, (arg,)): index
+                # for arg, index in inputs
+                executor.submit(evaluate_generations_by_problem, arg): index
                 for arg, index in inputs
             }
 
@@ -183,7 +190,7 @@ def evaluate_generations(
                 except Exception as e:
                     logger.warning(f"Error for index {index}: {e}")
                     results[index], metadata[index] = (
-                        [-2],
+                        [-5],
                         [{"error": repr(e), "error_code": -5, "error_message": "TestRunnerError"}],
                     )
                 pbar.update(1)

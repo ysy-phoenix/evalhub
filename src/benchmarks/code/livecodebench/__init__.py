@@ -8,14 +8,14 @@ from typing import List, Optional, Tuple
 import orjson
 
 from src.benchmarks.base import Dataset, Task
-from src.benchmarks.code.livecodebench.benchmarks.code_generation import (
+from src.benchmarks.code.livecodebench.code_generation import (
     CodeGenerationProblem,
     load_code_generation_dataset,
 )
-from src.benchmarks.code.livecodebench.evaluation.compute_code_generation_metrics import (
+from src.benchmarks.code.livecodebench.compute_code_generation_metrics import (
     codegen_metrics,
 )
-from src.benchmarks.code.livecodebench.evaluation.pass_k_utils import extract_instance_results
+from src.benchmarks.code.livecodebench.pass_k_utils import extract_instance_results
 from src.benchmarks.code.utils import extract_livecodebench_code
 from src.inference.utils import GenerationResult
 from src.utils.logger import logger
@@ -115,12 +115,14 @@ class LiveCodeBenchDataset(Dataset):
 
         benchmark = load_code_generation_dataset(release_version="release_latest")
         benchmark = [problem for problem in benchmark if problem.question_id in custom_outputs]
+        logger.info(f"Loaded {len(benchmark)} problems")
 
         assert len(custom_outputs) == len(benchmark), f"{len(custom_outputs)} != {len(benchmark)}"
         assert all(isinstance(custom_output, dict) for custom_output in custom_outputs.values())
 
         save_results, combined_results = [], []
         for instance in benchmark:
+            # FIXME: for pass@1 only now
             code_list = [custom_outputs[instance.question_id]["solution"]]
             output = instance.insert_output(code_list, code_list)
             save_results.append(output)

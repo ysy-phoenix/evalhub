@@ -155,13 +155,13 @@ pre-commit run --all-files
 - [x] code: livecodebench
 - [x] math: math500 && AIME-2024
 - [x] refactor math framework
-- [ ] refactor livecodebench framework
+- [ ] clean up livecodebench framework
 - [ ] organize docs
 
 > [!Important]
 > Due to the tightly coupled nature of LiveCodeBench's codebase, despite our efforts to integrate it with minimal cost, we inevitably had to incorporate a significant amount of code from the original repository.
 >
-> We only suopport codegeneration scenario of LiveCodeBench.
+> We only suopport codegeneration scenario and pass@1 metric of LiveCodeBench.
 
 ## 🌐 Acknowledgements
 

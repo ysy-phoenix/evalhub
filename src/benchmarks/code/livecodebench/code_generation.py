@@ -1,14 +1,15 @@
 import base64
 import json
+import os
 import pickle
 import zlib
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+from multiprocessing import Pool
 
+import orjson
 from datasets import load_dataset
-
-from src.utils.logger import logger
 
 
 class Platform(Enum):
@@ -36,9 +37,6 @@ class Test:
 
     def __post_init__(self):
         self.testtype = TestType(self.testtype)
-        # if self.testtype == TestType.FUNCTIONAL:
-        #     self.input = json.loads(self.input)
-        #     self.output = json.loads(self.output)
 
 
 @dataclass
@@ -60,13 +58,13 @@ class CodeGenerationProblem:
         self.difficulty = Difficulty(self.difficulty)
         self.contest_date = datetime.fromisoformat(self.contest_date)
 
-        self.public_test_cases = json.loads(self.public_test_cases)  # type: ignore
+        self.public_test_cases = orjson.loads(self.public_test_cases)  # type: ignore
         self.public_test_cases = [Test(**t) for t in self.public_test_cases]
 
         try:
-            self.private_test_cases = json.loads(self.private_test_cases)  # type: ignore
+            self.private_test_cases = orjson.loads(self.private_test_cases)  # type: ignore
         except Exception:
-            self.private_test_cases = json.loads(
+            self.private_test_cases = orjson.loads(
                 pickle.loads(
                     zlib.decompress(
                         base64.b64decode(self.private_test_cases.encode("utf-8"))  # type: ignore
@@ -75,7 +73,7 @@ class CodeGenerationProblem:
             )  # type: ignore
         self.private_test_cases = [Test(**t) for t in self.private_test_cases]
 
-        self.metadata = json.loads(self.metadata)  # type: ignore
+        self.metadata = orjson.loads(self.metadata)  # type: ignore
 
     def insert_output(self, output_list: list[str], code_list: list[str]) -> dict:
         return {
@@ -117,6 +115,10 @@ class CodeGenerationProblem:
         }
 
 
+def create_problem(p):
+    return CodeGenerationProblem(**p)
+
+
 def load_code_generation_dataset(release_version="release_v1") -> list[CodeGenerationProblem]:
     dataset = load_dataset(
         "livecodebench/code_generation_lite",
@@ -124,17 +126,8 @@ def load_code_generation_dataset(release_version="release_v1") -> list[CodeGener
         version_tag=release_version,
         trust_remote_code=True,
     )
-    dataset = [CodeGenerationProblem(**p) for p in dataset]  # type: ignore
-    logger.info(f"Loaded {len(dataset)} problems")
-    return dataset
-
-
-def load_code_generation_dataset_not_fast(
-    release_version="release_v1",
-) -> list[CodeGenerationProblem]:
-    dataset = load_dataset("livecodebench/code_generation", split="test")
-    dataset = [CodeGenerationProblem(**p) for p in dataset]  # type: ignore
-    logger.info(f"Loaded {len(dataset)} problems")
+    with Pool(processes=os.cpu_count()) as pool:
+        dataset = pool.map(create_problem, dataset)
     return dataset
 
 
