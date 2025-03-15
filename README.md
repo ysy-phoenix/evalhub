@@ -112,16 +112,7 @@ evalhub view --results $HOME/metrics/Qwen2.5-Math-7B-Instruct/aime2024_results.j
 
 ### New Dataset
 
-To add a new dataset, you need to:
-
-1. Create a new directory in `src/benchmarks/`
-2. Implement the dataset class with following methods:
-    - `load_tasks`: Load the dataset
-    - `format_prompt`: Format the prompt for the given example
-    - `save`: Save the results for the given example
-    - `evaluate`: Evaluate the results
-    - other helper functions
-3. Add the dataset to the `DATASET_MAP` and `EVALUATE_DATASETS` in `src/benchmarks/__init__.py`
+See [docs/tutorial.md](docs/tutorial.md) for more details.
 
 ### Code Quality Tools
 
@@ -157,7 +148,7 @@ pre-commit run --all-files
 - [x] math: math500 && AIME-2024
 - [x] refactor math framework
 - [x] clean up livecodebench framework
-- [ ] organize docs
+- [x] organize docs
 
 > [!Important]
 > Due to the tightly coupled nature of LiveCodeBench's codebase, despite our efforts to integrate it with minimal cost, we inevitably had to incorporate a significant amount of code from the original repository.
