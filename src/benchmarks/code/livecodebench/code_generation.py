@@ -75,7 +75,8 @@ class CodeGenerationProblem:
 
         self.metadata = orjson.loads(self.metadata)  # type: ignore
 
-    def insert_output(self, output_list: list[str], code_list: list[str]) -> dict:
+    @property
+    def summary(self) -> dict:
         return {
             "question_title": self.question_title,
             "question_content": self.question_content,
@@ -85,18 +86,16 @@ class CodeGenerationProblem:
             "contest_date": self.contest_date.isoformat(),
             "starter_code": self.starter_code,
             "difficulty": self.difficulty.value,
-            "output_list": output_list,
-            "code_list": code_list,
         }
 
-    def insert_output_evaluation(
+    def format_evaluation(
         self,
-        output_list: list[str],
         code_list: list[str],
         graded_list: list[bool],
         **kwargs,
     ) -> dict:
-        output = self.insert_output(output_list, code_list)
+        output = self.summary
+        output["code_list"] = code_list
         output["graded_list"] = graded_list
         output["pass@1"] = graded_list.count(True) / len(graded_list)
         for k, v in kwargs.items():

@@ -4,9 +4,7 @@
 import json
 import multiprocessing
 import os
-import signal
 import sys
-import time
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -44,9 +42,8 @@ def check_correctness(sample, generation, timeout, debug=True):
         args=(sample, generation, debug, result, metadata_list, timeout),
     )
     # FIXME: This is a hack to ensure that the process doesn't run too long
-    timeout = min(
-        GLOBAL_TIMEOUT, (timeout + 1) * len(json.loads(sample["input_output"])["inputs"]) + 5
-    )
+    _timeout = (timeout + 1) * len(json.loads(sample["input_output"])["inputs"]) + 5
+    timeout = min(GLOBAL_TIMEOUT, _timeout)
     p.start()
     p.join(timeout=timeout)
     if p.is_alive():
@@ -55,45 +52,12 @@ def check_correctness(sample, generation, timeout, debug=True):
         in_outs = json.loads(sample["input_output"])
         # consider that all tests failed
         result = [[-1 for i in range(len(in_outs["inputs"]))]]
+        logger.warning(
+            f"Triggered GLOBAL_TIMEOUT: {GLOBAL_TIMEOUT=} while original timeout: {_timeout=}"
+        )
         if debug:
             print("global timeout")
     return result[0], metadata_list[0]
-
-
-# TODO: Find better way to handle timeout
-def run_with_timeout(func, args, timeout=30):
-    r"""Run function and force terminate process after timeout."""
-    from multiprocessing import Process, Queue
-
-    result_queue = Queue()
-
-    def wrapper():
-        try:
-            result = func(*args)
-            result_queue.put((True, result))
-        except Exception as e:
-            result_queue.put((False, e))
-
-    process = Process(target=wrapper)
-    process.start()
-
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        if not result_queue.empty():
-            success, result = result_queue.get()
-            process.join(1)
-            if success:
-                return result
-            else:
-                raise result
-        time.sleep(0.1)
-
-    process.terminate()
-    process.join(1)
-    if process.is_alive():
-        os.kill(process.pid, signal.SIGKILL)
-
-    raise TimeoutError(f"Function timed out after {timeout} seconds")
 
 
 def evaluate_generations_by_problem(args):
@@ -175,8 +139,6 @@ def evaluate_generations(
     with tqdm(total=len(inputs)) as pbar:
         with ProcessPoolExecutor(max_workers=1 if debug else num_process_evaluate) as executor:
             futures = {
-                # executor.submit(run_with_timeout, evaluate_generations_by_problem, (arg,)): index
-                # for arg, index in inputs
                 executor.submit(evaluate_generations_by_problem, arg): index
                 for arg, index in inputs
             }

@@ -120,48 +120,40 @@ class LiveCodeBenchDataset(Dataset):
         assert len(custom_outputs) == len(benchmark), f"{len(custom_outputs)} != {len(benchmark)}"
         assert all(isinstance(custom_output, dict) for custom_output in custom_outputs.values())
 
-        save_results, combined_results = [], []
-        for instance in benchmark:
-            # FIXME: for pass@1 only now
-            code_list = [custom_outputs[instance.question_id]["solution"]]
-            output = instance.insert_output(code_list, code_list)
-            save_results.append(output)
-            combined_results.append((code_list, code_list))
-
         eval_samples = [instance.get_evaluation_sample() for instance in benchmark]
-        generations = [extracted for _, extracted in combined_results]
-        metrics = codegen_metrics(
+        generations = [
+            custom_outputs[instance.question_id]["solution"]
+            if isinstance(custom_outputs[instance.question_id]["solution"], list)
+            else [custom_outputs[instance.question_id]["solution"]]  # FIXME: for pass@1 only now
+            for instance in benchmark
+        ]
+        metrics, results, metadatas = codegen_metrics(
             eval_samples,
             generations,
             num_process_evaluate=16,
             timeout=6,
         )
-        logger.info("Finished evaluation")
 
-        graded = extract_instance_results(metrics[1])
-        logger.info("Extracted instance results")
+        graded = extract_instance_results(results)
 
-        metadatas = metrics[2]
         save_eval_results = [
-            instance.insert_output_evaluation(
-                outputs_list,
-                extracted_list,
+            instance.format_evaluation(
+                code_list,
                 graded_list,
                 metadata=meta,
             )
-            for instance, (outputs_list, extracted_list), graded_list, meta in zip(
-                benchmark, combined_results, graded, metadatas
+            for instance, code_list, graded_list, meta in zip(
+                benchmark, generations, graded, metadatas
             )
         ]
-        logger.info("Saved evaluation results")
 
         # save_eval_results
         output_results = {}
         output_results["date"] = datetime.now().strftime("%Y-%m-%d %H:%M")
-        for k in metrics[0]:
+        for k in metrics:
             if k.startswith("pass@"):
-                logger.info(f"{k}: {metrics[0][k]}")
-                output_results[k] = metrics[0][k]
+                logger.info(f"{k}: {metrics[k]}")
+                output_results[k] = metrics[k]
 
         output_results["detail_pass@1"] = {}
         output_results["eval"] = {}
@@ -181,3 +173,20 @@ class LiveCodeBenchDataset(Dataset):
             json.dump(output_results, f, indent=2)
 
         return None, None, None
+
+
+"""
+illustation of output_results
+
+{
+    "date": "2025-03-14 12:00",
+    "pass@1": 0.5,
+    "detail_pass@1": {"easy": 0.5, "medium": 0.5, "hard": 0.5},
+    "eval": {
+        "question_id_1": {
+            "code_list": ["code1", "code2", "code3"],
+            "graded_list": [True, False, True],
+        }
+    }
+}
+"""
