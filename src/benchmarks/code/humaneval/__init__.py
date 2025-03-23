@@ -48,7 +48,7 @@ class HumanEvalDataset(Dataset):
             "Please continue to complete the function. "
             + "You are not allowed to modify the given code and do the completion only. "
             + "Please return all completed function in a codeblock. "
-            + f"Here is the given code to do completion:\n'''{lang.lower()}\n{prompt}'''"
+            + f"Here is the given code to do completion:\n```{lang.lower()}\n{prompt}\n```"
         )
 
     def save(self, results: List[GenerationResult], output_dir: str) -> Path:
