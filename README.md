@@ -73,6 +73,7 @@ evalhub run --help
 # the default run command will assume the model is served on localhost:30000(i.e. sglang port)
 # feel free to pass base_url and api_key to the run command, more details can be found via `evalhub configs`
 python -m sglang.launch_server --model-path $HOME/models/Qwen2.5-7B-Instruct
+python -m sglang_router.launch_server --model-path $HOME/models/Qwen2.5-Coder-7B-Instruct --dp 4
 
 # humaneval && mbpp
 evalhub run --model Qwen2.5-7B-Instruct --tasks humaneval,mbpp --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ -p temperature=0.2 -p top_p=0.95
@@ -107,6 +108,12 @@ evalhub view --results $HOME/metrics/Qwen2.5-Math-7B-Instruct/aime2024_results.j
 
 > [!Note]
 > `view` is supported for math and livecodebench tasks only now!
+
+We also provide some all in one scripts in `scripts/`, and feel free to adjust for your own use.
+
+```bash
+bash ./scripts/eval_code.sh --model Qwen2.5-Coder-7B-Instruct --temperature 0.6 --max-tokens 4096
+```
 
 ## 🛠 Development
 
