@@ -1,8 +1,8 @@
+import asyncio
 import json
 import os
 from collections import defaultdict
 from datetime import datetime
-from multiprocessing import Pool
 from os import PathLike
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -118,9 +118,8 @@ class LiveCodeBenchDataset(Dataset):
                     )
         return save_path
 
-    def submit(self, eval_samples: dict, model_outputs: dict) -> dict:
-        r"""Submit solutions to LiveCodeBench."""
-        progress = get_progress_bar()
+    async def submit_async(self, eval_samples: dict, model_outputs: dict) -> list:
+        r"""Asynchronous submission of code evaluation tasks."""
         submissions = {}
         for id, eval_sample in eval_samples.items():
             assert id in model_outputs, f"{id} not in model_outputs"
@@ -152,22 +151,48 @@ class LiveCodeBenchDataset(Dataset):
                 }
                 submissions[id] = submission
 
+        progress = get_progress_bar()
+        results = []
+        completed = passed = 0
+
         with progress:
             eval_task = progress.add_task(
                 "[bold blue]Evaluating submissions", total=len(submissions)
             )
 
-            with Pool(os.cpu_count()) as pool:
-                results = []
-                for result in pool.imap(judge, submissions.items()):
-                    results.append(result)
-                    progress.advance(eval_task)
-                    passed = sum(1 for _, r in results if r.get("status", None) == "accepted")
-                    progress.update(
-                        eval_task,
-                        description=f"[bold blue]Submissions passed ({passed}/{len(results)})",
-                    )
+            semaphore = asyncio.Semaphore(os.cpu_count())
+
+            async def process_submission(id, submission):
+                async with semaphore:
+                    result = await judge(id, submission)
+                    return result
+
+            tasks = [process_submission(id, submission) for id, submission in submissions.items()]
+
+            for future in asyncio.as_completed(tasks):
+                id, result = await future
+                results.append((id, result))
+                completed += 1
+                if result.get("status", None) == "accepted":
+                    passed += 1
+
+                progress.update(
+                    eval_task,
+                    completed=completed,
+                    description=f"[bold blue]Submissions passed ({passed}/{completed})",
+                )
+
         return results
+
+    def submit(self, eval_samples: dict, model_outputs: dict) -> dict:
+        r"""Submit solutions to LiveCodeBench."""
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        return loop.run_until_complete(self.submit_async(eval_samples, model_outputs))
 
     def new_evaluate(
         self, solution: PathLike, output_dir: PathLike, ks: List[int] = DEFAULT_KS

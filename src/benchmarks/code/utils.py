@@ -1,7 +1,7 @@
 import re
 
+import aiohttp
 import numpy as np
-import requests
 
 from src.utils.logger import logger
 
@@ -19,11 +19,11 @@ def compute_pass_at_k(n: int, c: int, k: int) -> float:
     return 1.0 - np.prod(1.0 - k / np.arange(n - c + 1, n + 1))
 
 
-def judge(submission: dict) -> dict:
-    id, submission = submission
-    response = requests.post(API_BASE_URL, json=submission)
-    result = response.json()
-    return id, result
+async def judge(id: str, submission: dict) -> dict:
+    async with aiohttp.ClientSession() as session:
+        async with session.post(API_BASE_URL, json=submission) as response:
+            result = await response.json()
+            return id, result
 
 
 def process_output(output: str) -> str:
