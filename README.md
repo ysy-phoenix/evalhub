@@ -115,6 +115,17 @@ We also provide some all in one scripts in `scripts/`, and feel free to adjust f
 bash ./scripts/eval_code.sh --model Qwen2.5-Coder-7B-Instruct --temperature 0.6 --max-tokens 4096
 ```
 
+> [!Important]
+> Due to the tightly coupled nature of LiveCodeBench's codebase, despite our efforts to integrate it with minimal cost, we inevitably had to incorporate a significant amount of code from the original repository.
+>
+> We only suopport codegeneration scenario of LiveCodeBench.
+
+03/26/2025 update: We add a new mode for livecodebench, use [mini-judge](https://github.com/ysy-phoenix/mini-judge) as backend.
+- The original LiveCodeBench would return upon encountering the first failed test case
+- whereas our new evaluation will execute all test cases.
+- As a result, there is a significant difference in speed between the two approaches.
+- By default, the original evaluation method is used, but you can modify it [here](src/benchmarks/code/livecodebench/__init__.py).
+
 ## 🛠 Development
 
 ### New Dataset
@@ -156,11 +167,8 @@ pre-commit run --all-files
 - [x] refactor math framework
 - [x] clean up livecodebench framework
 - [x] organize docs
-
-> [!Important]
-> Due to the tightly coupled nature of LiveCodeBench's codebase, despite our efforts to integrate it with minimal cost, we inevitably had to incorporate a significant amount of code from the original repository.
->
-> We only suopport codegeneration scenario and pass@1 metric of LiveCodeBench.
+- [x] integrate with mini-judge
+- [ ] code: BigCodeBench
 
 ## 🌐 Acknowledgements
 

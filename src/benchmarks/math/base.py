@@ -4,15 +4,15 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import orjson
-from tqdm import tqdm
 
 from src.benchmarks.base import Dataset
 from src.benchmarks.math.utils import extract_answer, grade_answer
 from src.inference.utils import GenerationResult
+from src.utils.pbar import get_progress_bar
 
 
 class MathDataset(Dataset):
-    """Dataset class for math reasoning problems."""
+    r"""Dataset class for math reasoning problems."""
 
     def __init__(self, name: str = "math"):
         super().__init__(name)
@@ -61,21 +61,33 @@ class MathDataset(Dataset):
             "Number of predictions and groundtruths must be the same"
         )
         correct, total, results = 0, len(predictions), []
-        for task_id, response in tqdm(predictions, desc="Evaluating"):
-            extracted_answer = extract_answer(response)
-            ground_truth = self.groundtruth[task_id].answer
-            is_correct = self.check_correct(extracted_answer, ground_truth)
-            if is_correct:
-                correct += 1
-            results.append(
-                {
-                    "task_id": task_id,
-                    "response": response,
-                    "extracted_answer": extracted_answer,
-                    "ground_truth": self.groundtruth[task_id].answer,
-                    "correct": is_correct,
-                }
-            )
+
+        progress = get_progress_bar()
+
+        with progress:
+            eval_task = progress.add_task("[bold blue]Evaluating", total=total)
+
+            for task_id, response in predictions:
+                extracted_answer = extract_answer(response)
+                ground_truth = self.groundtruth[task_id].answer
+                is_correct = self.check_correct(extracted_answer, ground_truth)
+                if is_correct:
+                    correct += 1
+                results.append(
+                    {
+                        "task_id": task_id,
+                        "response": response,
+                        "extracted_answer": extracted_answer,
+                        "ground_truth": self.groundtruth[task_id].answer,
+                        "correct": is_correct,
+                    }
+                )
+                progress.update(
+                    eval_task,
+                    advance=1,
+                    description=f"[bold blue]Evaluating ({correct / total:.1%} accuracy)",
+                )
+
         accuracy = correct / total if total > 0 else 0
         result_path = output_dir / f"{self.name}_results.jsonl"
         with open(result_path, "wb") as f:

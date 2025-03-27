@@ -193,7 +193,7 @@ def view_results(
     platform: Optional[str] = None,
     log_to_file: bool = False,
 ):
-    """Unified view function that handles different result formats."""
+    r"""Unified view function that handles different result formats."""
     if results_path.suffix.lower() == ".json":
         try:
             with open(results_path) as f:

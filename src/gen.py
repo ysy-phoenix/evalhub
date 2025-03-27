@@ -5,7 +5,7 @@ from src.utils.logger import logger
 
 def parse_sampling_params(sampling_params: dict) -> dict:
     """Parse sampling parameters from command line arguments."""
-    sampling_params = {}
+    ret = {}
     for param in sampling_params:
         key, value = param.split("=", 1)
 
@@ -26,8 +26,8 @@ def parse_sampling_params(sampling_params: dict) -> dict:
         except ValueError:
             # Keep as string if conversion fails
             pass
-        sampling_params[key] = value
-    return sampling_params
+        ret[key] = value
+    return ret
 
 
 def gen(model: str, ds_name: str, output_dir: str, sampling_params: dict) -> None:
