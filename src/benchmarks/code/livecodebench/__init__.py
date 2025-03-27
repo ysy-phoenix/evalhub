@@ -1,24 +1,38 @@
 import json
 import os
+from collections import defaultdict
 from datetime import datetime
+from multiprocessing import Pool
 from os import PathLike
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+import numpy as np
 import orjson
 
 from src.benchmarks.base import Dataset, Task
 from src.benchmarks.code.livecodebench.code_generation import (
     CodeGenerationProblem,
     load_code_generation_dataset,
+    load_mini_problems,
 )
 from src.benchmarks.code.livecodebench.compute_code_generation_metrics import (
     codegen_metrics,
 )
 from src.benchmarks.code.livecodebench.pass_k_utils import extract_instance_results
-from src.benchmarks.code.utils import extract_livecodebench_code
+from src.benchmarks.code.utils import (
+    DEFAULT_KS,
+    compute_pass_at_k,
+    extract_livecodebench_code,
+    judge,
+)
 from src.inference.utils import GenerationResult
 from src.utils.logger import logger
+from src.utils.pbar import get_progress_bar
+
+DEFAULT_TIME_LIMIT = 10
+DEFAULT_MEMORY_LIMIT = 4 * 1024
+NEW_MODE = True
 
 LIVECODEBENCH_CONFIG = {
     "temperature": 0.2,
@@ -65,8 +79,8 @@ class LiveCodeBenchDataset(Dataset):
 
     def load_tasks(self):
         r"""Load tasks from LiveCodeBench dataset with caching support."""
-        dataset = load_code_generation_dataset(release_version="release_latest")
-        for problem in dataset:
+        problems = load_mini_problems(release_version="release_latest")
+        for problem in problems:
             task = Task(
                 task_id=problem.question_id,
                 prompt=self.format_prompt(problem),
@@ -104,9 +118,141 @@ class LiveCodeBenchDataset(Dataset):
                     )
         return save_path
 
+    def submit(self, eval_samples: dict, model_outputs: dict) -> dict:
+        r"""Submit solutions to LiveCodeBench."""
+        progress = get_progress_bar()
+        submissions = {}
+        for id, eval_sample in eval_samples.items():
+            assert id in model_outputs, f"{id} not in model_outputs"
+            for solution in model_outputs[id]:
+                input_output = json.loads(eval_sample["input_output"])
+                inputs = input_output["inputs"]
+                outputs = input_output["outputs"]
+                if input_output.get("fn_name", None) is not None:
+                    mode = "leetcode"
+                    inputs = [
+                        [json.loads(line) for line in inputs.split("\n")] for inputs in inputs
+                    ]
+                    outputs = [json.loads(output) for output in outputs]
+                else:
+                    mode = "acm"
+                test_cases = [
+                    {"input": inp, "expected": out}
+                    for inp, out in zip(inputs, outputs, strict=False)
+                ]
+                entry_point = input_output.get("fn_name", None)
+                submission = {
+                    "code": solution,
+                    "language": "python",
+                    "mode": mode,
+                    "test_cases": test_cases,
+                    "entry_point": entry_point,
+                    "time_limit": DEFAULT_TIME_LIMIT,
+                    "memory_limit": DEFAULT_MEMORY_LIMIT,
+                }
+                submissions[id] = submission
+
+        with progress:
+            eval_task = progress.add_task(
+                "[bold blue]Evaluating submissions", total=len(submissions)
+            )
+
+            with Pool(os.cpu_count()) as pool:
+                results = []
+                for result in pool.imap(judge, submissions.items()):
+                    results.append(result)
+                    progress.advance(eval_task)
+                    passed = sum(1 for _, r in results if r.get("status", None) == "accepted")
+                    progress.update(
+                        eval_task,
+                        description=f"[bold blue]Submissions passed ({passed}/{len(results)})",
+                    )
+        return results
+
+    def new_evaluate(
+        self, solution: PathLike, output_dir: PathLike, ks: List[int] = DEFAULT_KS
+    ) -> Tuple[int, int, float]:
+        r"""Evaluate solutions using LiveCodeBench's evaluator."""
+        # Load model outputs
+        model_outputs = defaultdict(list)
+        with open(solution, "rb") as f:
+            for line in f:
+                sample = orjson.loads(line)
+                model_outputs[sample["task_id"]].append(sample["solution"])
+
+        # Load benchmark problems
+        logger.info("Loading benchmark problems")
+        benchmark = load_code_generation_dataset(release_version="release_latest")
+        logger.info("Filtering benchmark problems")
+        problems = {
+            instance.question_id: instance
+            for instance in benchmark
+            if instance.question_id in model_outputs
+        }
+        logger.info(f"Loaded {len(problems)} problems")
+
+        # Load eval samples
+        eval_samples = {
+            instance.question_id: instance.get_evaluation_sample() for instance in benchmark
+        }
+        logger.info(f"Loaded {len(eval_samples)} eval samples")
+
+        # Submit solutions
+        responses = self.submit(eval_samples, model_outputs)
+
+        # Aggregate results
+        results = defaultdict(list)
+        for id, response in responses:
+            results[id].append(response)
+
+        with open(Path(output_dir) / f"{self.name}_responses.json", "w") as f:
+            json.dump(results, f, indent=2)
+
+        # Compute pass@k
+        stats = {
+            "overall": defaultdict(list),
+            "by_difficulty": defaultdict(lambda: defaultdict(list)),
+        }
+        for id, responses in results.items():
+            difficulty = problems[id].difficulty
+            n = len(responses)
+            c = sum(response["status"] == "accepted" for response in responses)
+            for k in ks:
+                if n < k:
+                    break
+                pass_k = compute_pass_at_k(n, c, k)
+                stats["overall"][k].append(pass_k)
+                stats["by_difficulty"][difficulty][k].append(pass_k)
+
+        output = {
+            "overall": {k: np.mean(v) for k, v in stats["overall"].items()},
+            "by_difficulty": {
+                diff.value: {k: np.mean(v) for k, v in vals.items()}
+                for diff, vals in stats["by_difficulty"].items()
+            },
+        }
+
+        # Log results
+        logger.info("Overall pass@k:")
+        for k in output["overall"]:
+            logger.info(f"pass@{k}: {output['overall'][k]}")
+        logger.info("Difficulty-wise pass@k:")
+        for diff in output["by_difficulty"]:
+            logger.info(f"{diff}:")
+            for k in output["by_difficulty"][diff]:
+                logger.info(f"pass@{k}: {output['by_difficulty'][diff][k]}")
+
+        # Save results
+        with open(Path(output_dir) / f"{self.name}_results.json", "w") as f:
+            json.dump(output, f, indent=2)
+        return None, None, None
+
     # Adapted from https://github.com/wasiahmad/livecodebench/blob/main/livecodebench/evaluate.py
     def evaluate(self, solution: PathLike, output_dir: PathLike) -> Tuple[int, int, float]:
         r"""Evaluate solutions using LiveCodeBench's evaluator."""
+        if NEW_MODE:
+            self.new_evaluate(solution, output_dir)
+            return None, None, None
         custom_outputs = {}
         with open(solution, "rb") as f:
             for line in f:

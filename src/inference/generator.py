@@ -1,16 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional
 
-from rich.progress import (
-    BarColumn,
-    MofNCompleteColumn,
-    Progress,
-    SpinnerColumn,
-    TaskProgressColumn,
-    TextColumn,
-    TimeRemainingColumn,
-)
-
 from src.benchmarks.base import Dataset, Task
 from src.inference.utils import (
     GenerationConfig,
@@ -18,6 +8,7 @@ from src.inference.utils import (
     OpenAICompletion,
 )
 from src.utils.logger import logger
+from src.utils.pbar import get_progress_bar
 
 
 class LLMGenerator:
@@ -75,14 +66,7 @@ class LLMGenerator:
         tasks = list(dataset.tasks.values())
         results = []
 
-        progress = Progress(
-            SpinnerColumn(),
-            TextColumn("[bold blue]{task.description}"),
-            BarColumn(bar_width=40),
-            TaskProgressColumn(),
-            MofNCompleteColumn(),
-            TimeRemainingColumn(),
-        )
+        progress = get_progress_bar()
 
         with progress:
             task_id = progress.add_task(

@@ -4,18 +4,11 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 import orjson
-from rich.progress import (
-    BarColumn,
-    Progress,
-    SpinnerColumn,
-    TaskProgressColumn,
-    TextColumn,
-    TimeRemainingColumn,
-)
 
 from src.benchmarks.base import Dataset
 from src.benchmarks.math.utils import extract_answer, grade_answer
 from src.inference.utils import GenerationResult
+from src.utils.pbar import get_progress_bar
 
 
 class MathDataset(Dataset):
@@ -69,17 +62,10 @@ class MathDataset(Dataset):
         )
         correct, total, results = 0, len(predictions), []
 
-        progress = Progress(
-            SpinnerColumn(),
-            TextColumn("[bold blue]{task.description}"),
-            BarColumn(bar_width=40),
-            TaskProgressColumn(),
-            TextColumn("[cyan]{task.fields[correct]} correct"),
-            TimeRemainingColumn(),
-        )
+        progress = get_progress_bar()
 
         with progress:
-            eval_task = progress.add_task("[bold blue]Evaluating", total=total, correct=0)
+            eval_task = progress.add_task("[bold blue]Evaluating", total=total)
 
             for task_id, response in predictions:
                 extracted_answer = extract_answer(response)
@@ -99,7 +85,6 @@ class MathDataset(Dataset):
                 progress.update(
                     eval_task,
                     advance=1,
-                    correct=correct,
                     description=f"[bold blue]Evaluating ({correct / total:.1%} accuracy)",
                 )
 

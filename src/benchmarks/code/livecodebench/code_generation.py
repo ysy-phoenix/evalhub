@@ -1,6 +1,5 @@
 import base64
 import json
-import os
 import pickle
 import zlib
 from dataclasses import dataclass
@@ -9,7 +8,7 @@ from enum import Enum
 from multiprocessing import Pool
 
 import orjson
-from datasets import load_dataset
+from datasets import Dataset, load_dataset
 
 
 class Platform(Enum):
@@ -37,6 +36,13 @@ class Test:
 
     def __post_init__(self):
         self.testtype = TestType(self.testtype)
+
+
+@dataclass
+class MiniProblem:
+    question_content: str
+    question_id: str
+    starter_code: str
 
 
 @dataclass
@@ -114,20 +120,36 @@ class CodeGenerationProblem:
         }
 
 
-def create_problem(p):
-    return CodeGenerationProblem(**p)
-
-
-def load_code_generation_dataset(release_version="release_v1") -> list[CodeGenerationProblem]:
-    dataset = load_dataset(
+def load_livecodebench(release_version="release_latest") -> Dataset:
+    return load_dataset(
         "livecodebench/code_generation_lite",
         split="test",
         version_tag=release_version,
         trust_remote_code=True,
     )
-    with Pool(processes=os.cpu_count()) as pool:
+
+
+def create_problem(p):
+    return CodeGenerationProblem(**p)
+
+
+def load_code_generation_dataset(release_version="release_latest") -> list[CodeGenerationProblem]:
+    dataset = load_livecodebench(release_version)
+    with Pool(processes=len(dataset)) as pool:
         dataset = pool.map(create_problem, dataset)
     return dataset
+
+
+def load_mini_problems(release_version="release_latest") -> list[MiniProblem]:
+    dataset = load_livecodebench(release_version)
+    return [
+        MiniProblem(
+            question_content=p["question_content"],
+            question_id=p["question_id"],
+            starter_code=p["starter_code"],
+        )
+        for p in dataset
+    ]
 
 
 if __name__ == "__main__":
