@@ -32,7 +32,7 @@ from src.utils.pbar import get_progress_bar
 
 DEFAULT_TIME_LIMIT = 10
 DEFAULT_MEMORY_LIMIT = 4 * 1024
-NEW_MODE = True
+NEW_MODE = False
 
 LIVECODEBENCH_CONFIG = {
     "temperature": 0.2,
@@ -183,7 +183,6 @@ class LiveCodeBenchDataset(Dataset):
         # Load benchmark problems
         logger.info("Loading benchmark problems")
         benchmark = load_code_generation_dataset(release_version="release_latest")
-        logger.info("Filtering benchmark problems")
         problems = {
             instance.question_id: instance
             for instance in benchmark
@@ -223,28 +222,42 @@ class LiveCodeBenchDataset(Dataset):
                 pass_k = compute_pass_at_k(n, c, k)
                 stats["overall"][k].append(pass_k)
                 stats["by_difficulty"][difficulty][k].append(pass_k)
+        output_results = {}
+        output_results["date"] = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-        output = {
-            "overall": {k: np.mean(v) for k, v in stats["overall"].items()},
-            "by_difficulty": {
-                diff.value: {k: np.mean(v) for k, v in vals.items()}
-                for diff, vals in stats["by_difficulty"].items()
-            },
-        }
+        for k, v in stats["overall"].items():
+            output_results[f"pass@{k}"] = np.mean(v)
 
-        # Log results
+        output_results["detail_pass@1"] = {}
+        for diff, vals in stats["by_difficulty"].items():
+            for k, v in vals.items():
+                if k == 1:
+                    output_results["detail_pass@1"][diff.value] = np.mean(v)
+
+        output_results["eval"] = {}
+        for id, instance in problems.items():
+            if id not in results:
+                continue
+            code_list = [model_outputs[id][i] for i in range(len(model_outputs[id]))]
+            graded_list = [response["status"] == "accepted" for response in results[id]]
+            eval_result = instance.format_evaluation(
+                code_list=code_list,
+                graded_list=graded_list,
+                metadata=list(results[id]),
+            )
+            output_results["eval"][id] = eval_result
+
         logger.info("Overall pass@k:")
-        for k in output["overall"]:
-            logger.info(f"pass@{k}: {output['overall'][k]}")
-        logger.info("Difficulty-wise pass@k:")
-        for diff in output["by_difficulty"]:
-            logger.info(f"{diff}:")
-            for k in output["by_difficulty"][diff]:
-                logger.info(f"pass@{k}: {output['by_difficulty'][diff][k]}")
+        for k in [k for k in stats["overall"].keys() if k in ks]:
+            logger.info(f"pass@{k}: {output_results.get(f'pass@{k}', 0)}")
 
-        # Save results
+        logger.info("Difficulty-wise pass@1:")
+        for diff in output_results["detail_pass@1"]:
+            logger.info(f"{diff} pass@1: {output_results['detail_pass@1'][diff]}")
+
         with open(Path(output_dir) / f"{self.name}_results.json", "w") as f:
-            json.dump(output, f, indent=2)
+            json.dump(output_results, f, indent=2)
+
         return None, None, None
 
     # Adapted from https://github.com/wasiahmad/livecodebench/blob/main/livecodebench/evaluate.py
