@@ -1,9 +1,19 @@
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 from src.utils.logger import logger
+
+DEFAULT_CHAT_STOP_TOKENS = [
+    "<|eot_id|>",
+    "<|im_end|>",
+    "</s>",
+    "<|EOT|>",
+    "<|endoftext|>",
+    "<|eos|>",
+]
+DEFAULT_TEXT_STOP_TOKENS = ["</s>", "<|endoftext|>", "<|eos_token|>"]
 
 
 @dataclass
@@ -26,7 +36,7 @@ class GenerationConfig:
     frequency_penalty: float = 0
     presence_penalty: float = 0
     n_samples: int = 1
-    num_workers: int = 512
+    num_workers: int = 1024
     timeout: int = 200
     stop: List[str] = None
     base_url: str = "http://localhost:30000/v1"
@@ -63,10 +73,10 @@ class OpenAICompletion:
     r"""Class for completing OpenAI Compatible APIs."""
 
     def __init__(self, base_url: str, api_key: str) -> None:
-        r"""Initialize the OpenAI client."""
-        self.client = OpenAI(base_url=base_url, api_key=api_key)
+        r"""Initialize the AsyncOpenAI client."""
+        self.client = AsyncOpenAI(base_url=base_url, api_key=api_key)
 
-    def completion(
+    async def completion(
         self,
         is_chat: bool,
         prompt: Union[str, List[Dict[str, str]]],
@@ -81,23 +91,10 @@ class OpenAICompletion:
         extra_body: Dict = None,
     ) -> str:
         r"""Execute a completion request, supporting both chat and text completion."""
-        # Set default stop tokens based on completion type
         if stop is None:
-            stop = (
-                [
-                    "<|eot_id|>",
-                    "<|im_end|>",
-                    "</s>",
-                    "<|EOT|>",
-                    "<|endoftext|>",
-                    "<|eos|>",
-                ]
-                if is_chat
-                else ["</s>", "<|endoftext|>", "<|eos_token|>"]
-            )
+            stop = DEFAULT_CHAT_STOP_TOKENS if is_chat else DEFAULT_TEXT_STOP_TOKENS
 
         try:
-            # Common parameters for both completion types
             params = {
                 "model": model_name,
                 "temperature": temperature,
@@ -111,12 +108,12 @@ class OpenAICompletion:
             }
 
             if is_chat:
-                response = self.client.chat.completions.create(messages=prompt, **params)
+                response = await self.client.chat.completions.create(messages=prompt, **params)
                 if response.choices[0].finish_reason == "length":
                     return ""
                 return response.choices[0].message.content
             else:
-                response = self.client.completions.create(prompt=prompt, **params)
+                response = await self.client.completions.create(prompt=prompt, **params)
                 return response.choices[0].text
 
         except Exception as e:

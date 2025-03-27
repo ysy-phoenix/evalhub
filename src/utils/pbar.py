@@ -5,6 +5,7 @@ from rich.progress import (
     SpinnerColumn,
     TaskProgressColumn,
     TextColumn,
+    TimeElapsedColumn,
     TimeRemainingColumn,
 )
 
@@ -16,6 +17,7 @@ def get_progress_bar() -> Progress:
         BarColumn(bar_width=None),
         TaskProgressColumn(),
         MofNCompleteColumn(),
+        TimeElapsedColumn(),
         TimeRemainingColumn(),
     )
     return progress
