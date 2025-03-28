@@ -1,5 +1,6 @@
 import base64
 import json
+import os
 import pickle
 import zlib
 from dataclasses import dataclass
@@ -135,7 +136,7 @@ def create_problem(p):
 
 def load_code_generation_dataset(release_version="release_latest") -> list[CodeGenerationProblem]:
     dataset = load_livecodebench(release_version)
-    with Pool(processes=len(dataset)) as pool:
+    with Pool(os.cpu_count()) as pool:
         dataset = pool.map(create_problem, dataset)
     return dataset
 

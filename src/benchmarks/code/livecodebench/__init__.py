@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import datetime
 from os import PathLike
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import orjson
@@ -30,6 +30,9 @@ from src.benchmarks.code.utils import (
 from src.utils.logger import logger
 from src.utils.pbar import get_progress_bar
 
+LIVECODEBENCH_META_DATA = {
+    "release_version": "v4_v5",
+}
 DEFAULT_TIME_LIMIT = 10
 DEFAULT_MEMORY_LIMIT = 4 * 1024
 NEW_MODE = False
@@ -63,8 +66,10 @@ FORMATTING_WITHOUT_STARTER_CODE = (
 class LiveCodeBenchDataset(CodeDataset):
     r"""Dataset class for LiveCodeBench code generation benchmark."""
 
-    def __init__(self, name: str = "livecodebench"):
-        super().__init__(name)
+    def __init__(
+        self, name: str = "livecodebench", meta_data: Dict[str, Any] = LIVECODEBENCH_META_DATA
+    ):
+        super().__init__(name, meta_data=meta_data)
         for key, value in LIVECODEBENCH_CONFIG.items():
             self.config[key] = value
         self.cache_dir = Path(
@@ -79,7 +84,7 @@ class LiveCodeBenchDataset(CodeDataset):
 
     def load_tasks(self):
         r"""Load tasks from LiveCodeBench dataset with caching support."""
-        problems = load_mini_problems(release_version="release_latest")
+        problems = load_mini_problems(release_version=self.meta_data["release_version"])
         for problem in problems:
             task = Task(
                 task_id=problem.question_id,
@@ -192,7 +197,7 @@ class LiveCodeBenchDataset(CodeDataset):
 
         # Load benchmark problems
         logger.info("Loading benchmark problems")
-        benchmark = load_code_generation_dataset(release_version="release_latest")
+        benchmark = load_code_generation_dataset(release_version=self.meta_data["release_version"])
         problems = {
             instance.question_id: instance
             for instance in benchmark
@@ -245,11 +250,14 @@ class LiveCodeBenchDataset(CodeDataset):
                     output_results["detail_pass@1"][diff.value] = np.mean(v)
 
         output_results["eval"] = {}
+        passed = total = 0
         for id, instance in problems.items():
             if id not in results:
                 continue
             code_list = [model_outputs[id][i] for i in range(len(model_outputs[id]))]
             graded_list = [response["status"] == "accepted" for response in results[id]]
+            passed += sum(response.get("metadata", {}).get("passed", 0) for response in results[id])
+            total += sum(response.get("metadata", {}).get("total", 0) for response in results[id])
             eval_result = instance.format_evaluation(
                 code_list=code_list,
                 graded_list=graded_list,
@@ -257,6 +265,7 @@ class LiveCodeBenchDataset(CodeDataset):
             )
             output_results["eval"][id] = eval_result
 
+        logger.info(f"Passed test cases: {passed}/{total}")
         logger.info("Overall pass@k:")
         for k in [k for k in stats["overall"].keys() if k in ks]:
             logger.info(f"pass@{k}: {output_results.get(f'pass@{k}', 0)}")
@@ -282,7 +291,7 @@ class LiveCodeBenchDataset(CodeDataset):
                 sample = orjson.loads(line)
                 custom_outputs[sample["task_id"]] = sample
 
-        benchmark = load_code_generation_dataset(release_version="release_latest")
+        benchmark = load_code_generation_dataset(release_version=self.meta_data["release_version"])
         benchmark = [problem for problem in benchmark if problem.question_id in custom_outputs]
         logger.info(f"Loaded {len(benchmark)} problems")
 

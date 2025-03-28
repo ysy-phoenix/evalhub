@@ -7,7 +7,7 @@ from src.benchmarks.code.base import CodeDataset
 from src.benchmarks.code.bigcodebench.sanitize import sanitize
 from src.benchmarks.config import DATASET_HUB
 
-DEFAULT_META_DATA = {
+BIGCODEBENCH_META_DATA = {
     "split": "instruct",
     "subset": "full",
 }
@@ -26,7 +26,9 @@ INSTRUCTION_PREFIX = (
 class BigCodeBenchDataset(CodeDataset):
     r"""Dataset class for BigCodeBench."""
 
-    def __init__(self, name: str, meta_data: Dict[str, Any] = DEFAULT_META_DATA):
+    def __init__(
+        self, name: str = "bigcodebench", meta_data: Dict[str, Any] = BIGCODEBENCH_META_DATA
+    ):
         super().__init__(name, meta_data=meta_data)
         for key, value in BIGCODEBENCH_CONFIG.items():
             self.config[key] = value
