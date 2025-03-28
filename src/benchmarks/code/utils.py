@@ -1,4 +1,6 @@
+import ast
 import re
+import traceback
 
 import aiohttp
 import numpy as np
@@ -10,6 +12,16 @@ EMPTY_TEST_CASES = [
     {"input": "", "expected": ""},
 ]
 DEFAULT_KS = [1, 5, 10]
+
+
+def syntax_check(code, verbose=False):
+    try:
+        ast.parse(code)
+        return True
+    except (SyntaxError, MemoryError):
+        if verbose:
+            traceback.print_exc()
+        return False
 
 
 def compute_pass_at_k(n: int, c: int, k: int) -> float:

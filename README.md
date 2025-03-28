@@ -94,17 +94,9 @@ evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/hendrycks_math_results.
 evalhub run --model Qwen2.5-7B-Instruct --tasks livecodebench --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
 evalhub eval --tasks livecodebench --solutions $HOME/metrics/Qwen2.5-7B-Instruct/livecodebench.jsonl --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
 evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/livecodebench_results.json --show-response --max-display 20 --log-to-file
-
-# math500
-evalhub run --model Qwen2.5-Math-7B-Instruct --tasks math500 --output-dir $HOME/metrics/Qwen2.5-Math-7B-Instruct/
-evalhub eval --tasks math500 --solutions $HOME/metrics/Qwen2.5-Math-7B-Instruct/math500.jsonl --output-dir $HOME/metrics/Qwen2.5-Math-7B-Instruct/
-evalhub view --results $HOME/metrics/Qwen2.5-Math-7B-Instruct/math500_results.jsonl --max-display 20 --log-to-file
-
-# aime2024
-evalhub run --model Qwen2.5-Math-7B-Instruct --tasks aime2024 --output-dir $HOME/metrics/Qwen2.5-Math-7B-Instruct/
-evalhub eval --tasks aime2024 --solutions $HOME/metrics/Qwen2.5-Math-7B-Instruct/aime2024.jsonl --output-dir $HOME/metrics/Qwen2.5-Math-7B-Instruct/
-evalhub view --results $HOME/metrics/Qwen2.5-Math-7B-Instruct/aime2024_results.jsonl --max-display 20 --log-to-file
 ```
+
+for more commands, please refer to [docs/cmds.md](docs/cmds.md)
 
 > [!Note]
 > `view` is supported for math and livecodebench tasks only now!
@@ -168,7 +160,7 @@ pre-commit run --all-files
 - [x] clean up livecodebench framework
 - [x] organize docs
 - [x] integrate with mini-judge
-- [ ] code: BigCodeBench
+- [x] code: BigCodeBench
 
 ## 🌐 Acknowledgements
 
