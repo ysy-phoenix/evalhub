@@ -76,7 +76,8 @@ python -m sglang.launch_server --model-path $HOME/models/Qwen2.5-7B-Instruct
 python -m sglang_router.launch_server --model-path $HOME/models/Qwen2.5-Coder-7B-Instruct --dp 4
 
 # humaneval && mbpp
-evalhub run --model Qwen2.5-7B-Instruct --tasks humaneval,mbpp --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ -p temperature=0.2 -p top_p=0.95
+evalhub run --model Qwen2.5-7B-Instruct --tasks humaneval --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ -p temperature=0.2 -p top_p=0.95 # -p key=value to override default config
+evalhub run --model Qwen2.5-7B-Instruct --tasks mbpp --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
 evalplus.evaluate --dataset humaneval --samples $HOME/metrics/Qwen2.5-7B-Instruct/humaneval.jsonl
 evalplus.evaluate --dataset mbpp --samples $HOME/metrics/Qwen2.5-7B-Instruct/mbpp.jsonl
 

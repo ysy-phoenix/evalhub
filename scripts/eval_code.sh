@@ -53,8 +53,9 @@ echo "Using temperature: $TEMPERATURE"
 echo "Using max tokens: $MAX_TOKENS"
 echo "Output directory: $OUTPUT_DIR"
 
-evalhub run --model "$MODEL" --tasks humaneval,mbpp --output-dir "$OUTPUT_DIR" -p temperature="$TEMPERATURE" -p max_tokens="$MAX_TOKENS"
+evalhub run --model "$MODEL" --tasks humaneval --output-dir "$OUTPUT_DIR" -p temperature="$TEMPERATURE" -p max_tokens="$MAX_TOKENS"
 evalplus.evaluate --dataset humaneval --samples "$OUTPUT_DIR/humaneval.jsonl"
+evalhub run --model "$MODEL" --tasks mbpp --output-dir "$OUTPUT_DIR" -p temperature="$TEMPERATURE" -p max_tokens="$MAX_TOKENS"
 evalplus.evaluate --dataset mbpp --samples "$OUTPUT_DIR/mbpp.jsonl"
 
 evalhub run --model "$MODEL" --tasks livecodebench --output-dir "$OUTPUT_DIR" -p temperature="$TEMPERATURE" -p max_tokens="$MAX_TOKENS"

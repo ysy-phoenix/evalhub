@@ -111,6 +111,7 @@ class OpenAICompletion:
                 response = await self.client.chat.completions.create(messages=prompt, **params)
                 if response.choices[0].finish_reason == "length":
                     logger.warning(f"Max tokens exceeded:\n{response.choices[0].message.content}")
+                    return ""  # FIXME: maybe hallucination
                 return response.choices[0].message.content
             else:
                 response = await self.client.completions.create(prompt=prompt, **params)

@@ -71,7 +71,7 @@ class LLMGenerator:
                 "[bold blue]Generating samples", total=total_samples
             )
             task_progress = progress.add_task("[bold blue]Completing tasks", total=total_tasks)
-            sem = asyncio.Semaphore(self.config.num_workers)
+            sem = asyncio.Semaphore(min(len(all_coroutines), self.config.num_workers))
 
             async def bounded_task(coro):
                 async with sem:

@@ -28,7 +28,8 @@ evalhub view --results $HOME/metrics/Qwen2.5-Math-7B-Instruct/aime2024_results.j
 
 ```bash
 # humaneval && mbpp
-evalhub run --model Qwen2.5-7B-Instruct --tasks humaneval,mbpp --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ -p temperature=0.2 -p top_p=0.95
+evalhub run --model Qwen2.5-7B-Instruct --tasks humaneval --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ -p temperature=0.2 -p top_p=0.95 # -p key=value to override default config
+evalhub run --model Qwen2.5-7B-Instruct --tasks mbpp --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
 evalplus.evaluate --dataset humaneval --samples $HOME/metrics/Qwen2.5-7B-Instruct/humaneval.jsonl
 evalplus.evaluate --dataset mbpp --samples $HOME/metrics/Qwen2.5-7B-Instruct/mbpp.jsonl
 
