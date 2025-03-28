@@ -1,14 +1,9 @@
-import os
-from pathlib import Path
-from typing import List
-
-import orjson
 from datasets import load_dataset
 
-from src.benchmarks.base import Dataset, Task
-from src.benchmarks.code.utils import process_output
+from src.benchmarks.base import Task
+from src.benchmarks.code.base import CodeDataset
+from src.benchmarks.code.humaneval.sanitize import sanitize
 from src.benchmarks.config import DATASET_HUB
-from src.inference.utils import GenerationResult
 
 HUMANEVAL_CONFIG = {
     "temperature": 0.0,
@@ -17,7 +12,7 @@ HUMANEVAL_CONFIG = {
 }
 
 
-class HumanEvalDataset(Dataset):
+class HumanEvalDataset(CodeDataset):
     r"""Dataset class for HumanEval/MBPP."""
 
     def __init__(self, name: str):
@@ -34,6 +29,7 @@ class HumanEvalDataset(Dataset):
                 if self.name == "humaneval"
                 else f"Mbpp/{item['task_id']}",
                 prompt=self.format_prompt(item, "python"),  # TODO: add more languages
+                metadata={"entry_point": item["entry_point"]},
             )
             self.add_task(task)
 
@@ -51,19 +47,6 @@ class HumanEvalDataset(Dataset):
             + f"Here is the given code to do completion:\n```{lang.lower()}\n{prompt}\n```"
         )
 
-    def save(self, results: List[GenerationResult], output_dir: str) -> Path:
-        """Save raw and processed results to a file."""
-        os.makedirs(output_dir, exist_ok=True)
-        output_dir = Path(output_dir)
-        raw_path = output_dir / f"{self.name}-raw.jsonl"
-        save_path = output_dir / f"{self.name}.jsonl"
-        with open(raw_path, "wb") as raw_file, open(save_path, "wb") as save_file:
-            for sample in results:
-                task_id = sample.task_id
-                for response in sample.responses:
-                    raw_file.write(orjson.dumps({"task_id": task_id, "solution": response}) + b"\n")
-                    save_file.write(
-                        orjson.dumps({"task_id": task_id, "solution": process_output(response)})
-                        + b"\n"
-                    )
-        return save_path
+    def extract_code(self, task_id: str, response: str) -> str:
+        r"""Extract the code from the response."""
+        return sanitize(response, self.tasks[task_id].metadata["entry_point"])

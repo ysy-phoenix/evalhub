@@ -1,3 +1,4 @@
+from src.benchmarks.code.bigcodebench import BigCodeBenchDataset
 from src.benchmarks.code.humaneval import HumanEvalDataset
 from src.benchmarks.code.livecodebench import LiveCodeBenchDataset
 from src.benchmarks.math.aime2024 import AIME2024Dataset
@@ -13,8 +14,9 @@ DATASET_MAP = {
     "livecodebench": LiveCodeBenchDataset,
     "math500": Math500Dataset,
     "aime2024": AIME2024Dataset,
+    "bigcodebench": BigCodeBenchDataset,
 }
 
 EVALUATE_DATASETS = {"gsm8k", "hendrycks_math", "livecodebench", "math500", "aime2024"}
 
-THIRD_PARTY_DATASETS = {"humaneval", "mbpp"}
+THIRD_PARTY_DATASETS = {"humaneval", "mbpp", "bigcodebench"}

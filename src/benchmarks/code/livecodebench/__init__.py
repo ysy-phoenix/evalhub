@@ -10,7 +10,8 @@ from typing import List, Optional, Tuple
 import numpy as np
 import orjson
 
-from src.benchmarks.base import Dataset, Task
+from src.benchmarks.base import Task
+from src.benchmarks.code.base import CodeDataset
 from src.benchmarks.code.livecodebench.code_generation import (
     CodeGenerationProblem,
     load_code_generation_dataset,
@@ -26,7 +27,6 @@ from src.benchmarks.code.utils import (
     extract_livecodebench_code,
     judge,
 )
-from src.inference.utils import GenerationResult
 from src.utils.logger import logger
 from src.utils.pbar import get_progress_bar
 
@@ -37,7 +37,7 @@ NEW_MODE = False
 LIVECODEBENCH_CONFIG = {
     "temperature": 0.2,
     "top_p": 0.95,
-    "max_tokens": 2048,
+    "max_tokens": 4096,
 }
 
 SYSTEM_MESSAGE_GENERIC = (
@@ -60,7 +60,7 @@ FORMATTING_WITHOUT_STARTER_CODE = (
 )
 
 
-class LiveCodeBenchDataset(Dataset):
+class LiveCodeBenchDataset(CodeDataset):
     r"""Dataset class for LiveCodeBench code generation benchmark."""
 
     def __init__(self, name: str = "livecodebench"):
@@ -99,24 +99,9 @@ class LiveCodeBenchDataset(Dataset):
         prompt += "### Answer: (use the provided format with backticks)\n\n"
         return prompt
 
-    def save(self, results: List[GenerationResult], output_dir: str) -> Path:
-        """Save raw and processed results to a file."""
-        os.makedirs(output_dir, exist_ok=True)
-        output_dir = Path(output_dir)
-        raw_path = output_dir / f"{self.name}-raw.jsonl"
-        save_path = output_dir / f"{self.name}.jsonl"
-        with open(raw_path, "wb") as raw_file, open(save_path, "wb") as save_file:
-            for sample in results:
-                task_id = sample.task_id
-                for response in sample.responses:
-                    raw_file.write(orjson.dumps({"task_id": task_id, "solution": response}) + b"\n")
-                    save_file.write(
-                        orjson.dumps(
-                            {"task_id": task_id, "solution": extract_livecodebench_code(response)}
-                        )
-                        + b"\n"
-                    )
-        return save_path
+    def extract_code(self, task_id: str, response: str) -> str:
+        r"""Extract the code from the response."""
+        return extract_livecodebench_code(response)
 
     async def submit_async(self, eval_samples: dict, model_outputs: dict) -> list:
         r"""Asynchronous submission of code evaluation tasks."""

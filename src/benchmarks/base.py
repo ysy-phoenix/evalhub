@@ -1,9 +1,11 @@
+import hashlib
+import json
 import os
 import pickle
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import ClassVar, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 
 from src.inference.utils import GenerationConfig, GenerationResult
 from src.utils.logger import logger
@@ -18,6 +20,7 @@ class Task:
     task_id: str
     prompt: str
     sys_prompt: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
 
     def __post_init__(self):
         r"""Ensure prompt ends with newline."""
@@ -40,16 +43,22 @@ class Dataset(ABC):
 
     name: ClassVar[str] = ""
 
-    def __init__(self, name: Optional[str] = None):
+    def __init__(
+        self,
+        name: Optional[str] = None,
+        meta_data: Optional[Dict[str, Any]] = None,
+        reload: bool = False,
+    ):
         self.name = name or self.__class__.name
         self.tasks: Dict[str, Task] = {}
         self.groundtruth: Dict[str, GroundTruth] = {}
         self.config = DEFAULT_GENERATION_CONFIG
+        self.meta_data: Dict[str, Any] = meta_data or {}
         self.cache_dir = Path(
             os.environ.get("EVALHUB_CACHE_DIR", Path.home() / ".cache" / "evalhub")
         )
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        if not self.load_cache():
+        if not self.load_cache() or reload:
             self.load_tasks()
             self.save_cache()
 
@@ -60,8 +69,9 @@ class Dataset(ABC):
 
     def load_cache(self) -> bool:
         r"""Load cached results for a task."""
-        tasks_cache = self.cache_dir / f"{self.name}-tasks.pkl"
-        groundtruth_cache = self.cache_dir / f"{self.name}-groundtruth.pkl"
+        hash_key = hashlib.md5(json.dumps(self.meta_data).encode()).hexdigest()
+        tasks_cache = self.cache_dir / f"{self.name}-{hash_key}-tasks.pkl"
+        groundtruth_cache = self.cache_dir / f"{self.name}-{hash_key}-groundtruth.pkl"
         if tasks_cache.exists() and groundtruth_cache.exists():
             with open(tasks_cache, "rb") as f:
                 self.tasks = pickle.load(f)
@@ -73,8 +83,9 @@ class Dataset(ABC):
 
     def save_cache(self) -> None:
         r"""Save results to cache."""
-        tasks_cache = self.cache_dir / f"{self.name}-tasks.pkl"
-        groundtruth_cache = self.cache_dir / f"{self.name}-groundtruth.pkl"
+        hash_key = hashlib.md5(json.dumps(self.meta_data).encode()).hexdigest()
+        tasks_cache = self.cache_dir / f"{self.name}-{hash_key}-tasks.pkl"
+        groundtruth_cache = self.cache_dir / f"{self.name}-{hash_key}-groundtruth.pkl"
         with open(tasks_cache, "wb") as f:
             pickle.dump(self.tasks, f)
         with open(groundtruth_cache, "wb") as f:

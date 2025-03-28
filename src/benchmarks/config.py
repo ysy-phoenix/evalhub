@@ -7,4 +7,5 @@ DATASET_HUB = {
     "livecodebench": "livecodebench/code_generation_lite",
     "math500": "HuggingFaceH4/MATH-500",
     "aime2024": "HuggingFaceH4/aime_2024",
+    "bigcodebench": "bigcode/bigcodebench",
 }
