@@ -150,7 +150,7 @@ class LiveCodeBenchDataset(CodeDataset):
                 "[bold blue]Evaluating submissions", total=len(submissions)
             )
 
-            semaphore = asyncio.Semaphore(os.cpu_count())
+            semaphore = asyncio.Semaphore(min(16, os.cpu_count()))
 
             async def process_submission(id, submission):
                 async with semaphore:
@@ -256,8 +256,17 @@ class LiveCodeBenchDataset(CodeDataset):
                 continue
             code_list = [model_outputs[id][i] for i in range(len(model_outputs[id]))]
             graded_list = [response["status"] == "accepted" for response in results[id]]
-            passed += sum(response.get("metadata", {}).get("passed", 0) for response in results[id])
-            total += sum(response.get("metadata", {}).get("total", 0) for response in results[id])
+            try:
+                passed += sum(
+                    response.get("metadata", {}).get("passed", 0) for response in results[id]
+                )
+                total += sum(
+                    response.get("metadata", {}).get("total", 0) for response in results[id]
+                )
+            except Exception as e:
+                logger.error(f"Error processing results for {id}: {e}")
+                passed += 0
+                total += 0
             eval_result = instance.format_evaluation(
                 code_list=code_list,
                 graded_list=graded_list,
