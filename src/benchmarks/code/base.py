@@ -28,35 +28,40 @@ class CodeDataset(Dataset):
         r"""Extract the code from the response."""
         raise NotImplementedError
 
+    def sanitize_and_save(self, raw_file: PathLike, output_dir: PathLike) -> Path:
+        r"""Sanitize and save the results."""
+        save_path = output_dir / f"{self.name}.jsonl"
+        with open(raw_file, "rb") as f:
+            total_samples = sum(1 for _ in f)
+        with (
+            open(raw_file, "rb") as f,
+            open(save_path, "wb") as save_file,
+            get_progress_bar() as progress,
+        ):
+            task = progress.add_task(
+                "[bold blue]Sanitizing and saving results", total=total_samples
+            )
+
+            for line in f:
+                data = orjson.loads(line)
+                task_id, solution = data["task_id"], data["solution"]
+                solution = solution.split("</think>")[-1].strip()  # FIMXE: for long COT
+                sanitized_solution = self.extract_code(task_id, solution)
+                save_file.write(
+                    orjson.dumps({"task_id": task_id, "solution": sanitized_solution}) + b"\n"
+                )
+                progress.update(task, advance=1)
+
+        return save_path
+
     def save(self, results: List[GenerationResult], output_dir: PathLike) -> Path:
-        """Save raw and processed results to a file."""
+        r"""Save raw and processed results to a file."""
         os.makedirs(output_dir, exist_ok=True)
         output_dir = Path(output_dir)
         raw_path = output_dir / f"{self.name}-raw.jsonl"
-        save_path = output_dir / f"{self.name}.jsonl"
-
-        total_samples = sum(len(result.responses) for result in results)
-        progress = get_progress_bar()
-
-        with progress:
-            save_task = progress.add_task("[bold blue]Saving results", total=total_samples)
-
-            with open(save_path, "wb") as save_file, open(raw_path, "wb") as raw_file:
-                for sample in results:
-                    task_id = sample.task_id
-                    for response in sample.responses:
-                        save_file.write(
-                            orjson.dumps(
-                                {
-                                    "task_id": task_id,
-                                    "solution": self.extract_code(task_id, response),
-                                }
-                            )
-                            + b"\n"
-                        )
-                        raw_file.write(
-                            orjson.dumps({"task_id": task_id, "solution": response}) + b"\n"
-                        )
-                        progress.update(save_task, advance=1)
-
+        with open(raw_path, "wb") as f:
+            for result in results:
+                for response in result.responses:
+                    f.write(orjson.dumps({"task_id": result.task_id, "solution": response}) + b"\n")
+        save_path = self.sanitize_and_save(raw_path, output_dir)
         return save_path

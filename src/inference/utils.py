@@ -37,7 +37,7 @@ class GenerationConfig:
     presence_penalty: float = 0
     n_samples: int = 1
     num_workers: int = 1024
-    timeout: int = 200
+    timeout: int = 1800
     stop: List[str] = None
     base_url: str = "http://localhost:30000/v1"
     api_key: str = "EMPTY"
@@ -87,7 +87,7 @@ class OpenAICompletion:
         frequency_penalty: float = 0,
         presence_penalty: float = 0,
         stop: Optional[List[str]] = None,
-        timeout: int = 200,
+        timeout: int = 1800,
         extra_body: Dict = None,
     ) -> str:
         r"""Execute a completion request, supporting both chat and text completion."""

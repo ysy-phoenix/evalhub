@@ -20,7 +20,7 @@ sys.set_int_max_str_digits(50000)
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 DEFAULT_K_LIST = [1, 5, 10, 20, 40, 50, 75, 100, 125, 150, 200, 500, 1000]
-GLOBAL_TIMEOUT = 30
+GLOBAL_TIMEOUT = 180
 
 
 def _temp_run(sample, generation, debug, result, metadata_list, timeout):
