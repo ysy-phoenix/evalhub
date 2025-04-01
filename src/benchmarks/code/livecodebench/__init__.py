@@ -207,7 +207,7 @@ class LiveCodeBenchDataset(CodeDataset):
 
         # Load eval samples
         eval_samples = {
-            instance.question_id: instance.get_evaluation_sample() for instance in benchmark
+            instance.question_id: instance.get_evaluation_sample() for instance in problems.values()
         }
         logger.info(f"Loaded {len(eval_samples)} eval samples")
 
