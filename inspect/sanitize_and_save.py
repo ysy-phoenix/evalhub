@@ -1,14 +1,15 @@
-from pathlib import Path
+import argparse
 
-from src.benchmarks.code.humaneval import HumanEvalDataset
-
-raw_file = Path("~/metrics/OlympicCoder-7B/humaneval-raw.jsonl").expanduser()
-output_dir = Path("~/metrics/OlympicCoder-7B").expanduser()
+from src.benchmarks.code.livecodebench import LiveCodeBenchDataset
 
 
 def main():
-    ds = HumanEvalDataset(name="humaneval")
-    ds.sanitize_and_save(raw_file, output_dir)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--raw_file", type=str)
+    parser.add_argument("--output_dir", type=str)
+    args = parser.parse_args()
+    ds = LiveCodeBenchDataset(name="livecodebench")
+    ds.sanitize_and_save(args.raw_file, args.output_dir)
 
 
 if __name__ == "__main__":

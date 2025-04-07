@@ -26,6 +26,7 @@ from src.benchmarks.code.utils import (
     compute_pass_at_k,
     extract_livecodebench_code,
     judge,
+    process_output,
 )
 from src.utils.logger import logger
 from src.utils.pbar import get_progress_bar
@@ -106,7 +107,10 @@ class LiveCodeBenchDataset(CodeDataset):
 
     def extract_code(self, task_id: str, response: str) -> str:
         r"""Extract the code from the response."""
-        return extract_livecodebench_code(response)
+        if response.count("```") == 2:
+            return extract_livecodebench_code(response)
+        else:
+            return process_output(response)
 
     async def submit_async(self, eval_samples: dict, model_outputs: dict) -> list:
         r"""Asynchronous submission of code evaluation tasks."""

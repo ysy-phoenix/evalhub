@@ -30,6 +30,7 @@ class CodeDataset(Dataset):
 
     def sanitize_and_save(self, raw_file: PathLike, output_dir: PathLike) -> Path:
         r"""Sanitize and save the results."""
+        output_dir = Path(output_dir)
         save_path = output_dir / f"{self.name}.jsonl"
         with open(raw_file, "rb") as f:
             total_samples = sum(1 for _ in f)
