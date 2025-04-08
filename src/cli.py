@@ -26,6 +26,7 @@ def cli():
 @click.option("--model", required=True, help="Model to evaluate")
 @click.option("--tasks", required=True, help="Tasks to evaluate on, separated by commas")
 @click.option("--output-dir", required=True, help="Output directory")
+@click.option("--system-prompt", help="System prompt for the model")
 # Advanced: support for arbitrary model parameters
 @click.option(
     "--sampling-param",
@@ -33,8 +34,8 @@ def cli():
     multiple=True,
     help="Additional sampling parameters in format: key=value",
 )
-def run(model, tasks, output_dir, sampling_param):
-    """Run evaluation on a model with specified dataset."""
+def run(model, tasks, output_dir, sampling_param, system_prompt):
+    r"""Run evaluation on a model with specified dataset."""
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     sampling_params = parse_sampling_params(sampling_param)
     console.print("[blue]Setting sampling parameters:[/blue]")
@@ -44,7 +45,7 @@ def run(model, tasks, output_dir, sampling_param):
     # Execute generation with model parameters
     for task in tasks.split(","):
         console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
-        gen(model, task, output_dir, sampling_params)
+        gen(model, task, output_dir, sampling_params, system_prompt)
 
 
 @cli.command()
@@ -52,7 +53,7 @@ def run(model, tasks, output_dir, sampling_param):
 @click.option("--solutions", required=True, help="Solutions to evaluate on, separated by commas")
 @click.option("--output-dir", required=True, help="Output directory")
 def eval(tasks, solutions, output_dir):
-    """Evaluate the model on the tasks."""
+    r"""Evaluate the model on the tasks."""
     tasks = tasks.split(",")
     solutions = solutions.split(",")
     assert len(tasks) == len(solutions), "Number of tasks and solutions must be the same"
@@ -168,7 +169,7 @@ def list_configs():
 
 @cli.command(name="tasks")
 def list_tasks():
-    """List all supported tasks and evaluable tasks."""
+    r"""List all supported tasks and evaluable tasks."""
     # Create a table for all tasks
     task_table = Table(title="EvalHub Supported Tasks")
 
@@ -205,7 +206,7 @@ def list_tasks():
 
 
 def main():
-    """Run the CLI entry point for EvalHub."""
+    r"""Run the CLI entry point for EvalHub."""
     console.print("[bold yellow]Welcome to EvalHub - LLM Evaluation Platform[/bold yellow]")
     cli()
 

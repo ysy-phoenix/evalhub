@@ -1,10 +1,12 @@
+from typing import Optional
+
 from src.benchmarks import DATASET_MAP
 from src.inference.generator import LLMGenerator
 from src.utils.logger import logger
 
 
 def parse_sampling_params(sampling_params: dict) -> dict:
-    """Parse sampling parameters from command line arguments."""
+    r"""Parse sampling parameters from command line arguments."""
     ret = {}
     for param in sampling_params:
         key, value = param.split("=", 1)
@@ -30,7 +32,13 @@ def parse_sampling_params(sampling_params: dict) -> dict:
     return ret
 
 
-def gen(model: str, ds_name: str, output_dir: str, sampling_params: dict) -> None:
+def gen(
+    model: str,
+    ds_name: str,
+    output_dir: str,
+    sampling_params: dict,
+    system_prompt: Optional[str] = None,
+) -> None:
     r"""Generate results for a given model and dataset."""
     assert ds_name in DATASET_MAP, f"Dataset {ds_name} not supported for generation"
     dataset = DATASET_MAP[ds_name](name=ds_name)
@@ -41,8 +49,12 @@ def gen(model: str, ds_name: str, output_dir: str, sampling_params: dict) -> Non
         except KeyError:
             logger.warning(f"Parameter {key} not supported!")
     logger.info(f"Successfully loaded {ds_name} dataset, length: {len(dataset)}")
+    system_prompt = system_prompt or dataset.system_prompt
+    # NOTE: This will override the system prompt in the dataset
+    if system_prompt:
+        logger.info(f"Using system prompt: {system_prompt}")
 
-    generator = LLMGenerator(dataset.config, dataset.system_prompt)
+    generator = LLMGenerator(dataset.config, system_prompt)
     results = generator.generate(dataset)
     save_path = dataset.save(results, output_dir)
     logger.info(f"Successfully saved results to {save_path}")
