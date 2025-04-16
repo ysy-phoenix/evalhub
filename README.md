@@ -59,6 +59,9 @@ source .venv/bin/activate
 # Install the package
 uv pip install -r requirements.txt
 uv pip install -e ".[dev]" # optional, for development
+
+# Recommend cleaning up cache after pulling the latest changes
+rm -rf ~/.cache/evalhub/
 ```
 
 ## 🚀 Quick Start

@@ -298,24 +298,21 @@ class LiveCodeBenchDataset(CodeDataset):
         if NEW_MODE:
             self.new_evaluate(solution, output_dir)
             return None, None, None
-        custom_outputs = {}
+        custom_outputs = defaultdict(list)
         with open(solution, "rb") as f:
             for line in f:
                 sample = orjson.loads(line)
-                custom_outputs[sample["task_id"]] = sample
+                custom_outputs[sample["task_id"]].append(sample)
 
         benchmark = load_code_generation_dataset(release_version=self.meta_data["release_version"])
         benchmark = [problem for problem in benchmark if problem.question_id in custom_outputs]
         logger.info(f"Loaded {len(benchmark)} problems")
 
         assert len(custom_outputs) == len(benchmark), f"{len(custom_outputs)} != {len(benchmark)}"
-        assert all(isinstance(custom_output, dict) for custom_output in custom_outputs.values())
 
         eval_samples = [instance.get_evaluation_sample() for instance in benchmark]
         generations = [
-            custom_outputs[instance.question_id]["solution"]
-            if isinstance(custom_outputs[instance.question_id]["solution"], list)
-            else [custom_outputs[instance.question_id]["solution"]]  # FIXME: for pass@1 only now
+            [output["solution"] for output in custom_outputs[instance.question_id]]
             for instance in benchmark
         ]
         metrics, results, metadatas = codegen_metrics(
@@ -346,19 +343,32 @@ class LiveCodeBenchDataset(CodeDataset):
                 logger.info(f"{k}: {metrics[k]}")
                 output_results[k] = metrics[k]
 
-        output_results["detail_pass@1"] = {}
+        output_results["detail_pass"] = {}
         output_results["eval"] = {}
-        difficulty_wise_pass_at_1 = {}
+        difficulty_wise_pass_at_k = {}
+
+        k_list = [k for k in metrics if k.startswith("pass@")]
+
         for r in save_eval_results:
             output_results["eval"][r["question_id"]] = r
-            if r["difficulty"] not in difficulty_wise_pass_at_1:
-                difficulty_wise_pass_at_1[r["difficulty"]] = []
-            difficulty_wise_pass_at_1[r["difficulty"]].append(r["pass@1"])
+            difficulty = r["difficulty"]
 
-        for tag, v in difficulty_wise_pass_at_1.items():
-            pass_at_1 = sum(v) / len(v)
-            logger.info(f"{tag} pass@1: {pass_at_1}")
-            output_results["detail_pass@1"][tag] = pass_at_1
+            if difficulty not in difficulty_wise_pass_at_k:
+                difficulty_wise_pass_at_k[difficulty] = {k: [] for k in k_list}
+
+            for k in k_list:
+                if k in r:
+                    difficulty_wise_pass_at_k[difficulty][k].append(r[k])
+
+        for difficulty, k_dict in difficulty_wise_pass_at_k.items():
+            output_results["detail_pass"][difficulty] = {}
+            for k, values in k_dict.items():
+                if values:
+                    avg = sum(values) / len(values)
+                    logger.info(f"{difficulty} {k}: {avg}")
+                    output_results["detail_pass"][difficulty][k] = avg
+                else:
+                    output_results["detail_pass"][difficulty][k] = 0.0
 
         with open(Path(output_dir) / f"{self.name}_results.json", "w") as f:
             json.dump(output_results, f, indent=2)
