@@ -121,28 +121,33 @@ class CodeGenerationProblem:
         }
 
 
-def load_livecodebench(release_version="release_latest") -> Dataset:
-    return load_dataset(
+def load_livecodebench(meta_data: dict) -> Dataset:
+    dataset = load_dataset(
         "livecodebench/code_generation_lite",
         split="test",
-        version_tag=release_version,
+        version_tag=meta_data["release_version"],
         trust_remote_code=True,
     )
+    if meta_data["start_date"] is not None:
+        dataset = dataset.filter(lambda line: line["contest_date"] >= meta_data["start_date"])
+    if meta_data["end_date"] is not None:
+        dataset = dataset.filter(lambda line: line["contest_date"] < meta_data["end_date"])
+    return dataset
 
 
 def create_problem(p):
     return CodeGenerationProblem(**p)
 
 
-def load_code_generation_dataset(release_version="release_latest") -> list[CodeGenerationProblem]:
-    dataset = load_livecodebench(release_version)
+def load_code_generation_dataset(meta_data: dict) -> list[CodeGenerationProblem]:
+    dataset = load_livecodebench(meta_data)
     with Pool(os.cpu_count()) as pool:
         dataset = pool.map(create_problem, dataset)
     return dataset
 
 
-def load_mini_problems(release_version="release_latest") -> list[MiniProblem]:
-    dataset = load_livecodebench(release_version)
+def load_mini_problems(meta_data: dict) -> list[MiniProblem]:
+    dataset = load_livecodebench(meta_data)
     return [
         MiniProblem(
             question_content=p["question_content"],

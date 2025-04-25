@@ -32,7 +32,9 @@ from src.utils.logger import logger
 from src.utils.pbar import get_progress_bar
 
 LIVECODEBENCH_META_DATA = {
-    "release_version": "v4_v5",
+    "release_version": "release_latest",
+    "start_date": "2024-08-00T00:00:00",
+    "end_date": "2025-01-00T00:00:00",
 }
 DEFAULT_TIME_LIMIT = 10
 DEFAULT_MEMORY_LIMIT = 4 * 1024
@@ -85,7 +87,7 @@ class LiveCodeBenchDataset(CodeDataset):
 
     def load_tasks(self):
         r"""Load tasks from LiveCodeBench dataset with caching support."""
-        problems = load_mini_problems(release_version=self.meta_data["release_version"])
+        problems = load_mini_problems(meta_data=self.meta_data)
         for problem in problems:
             task = Task(
                 task_id=problem.question_id,
@@ -201,7 +203,7 @@ class LiveCodeBenchDataset(CodeDataset):
 
         # Load benchmark problems
         logger.info("Loading benchmark problems")
-        benchmark = load_code_generation_dataset(release_version=self.meta_data["release_version"])
+        benchmark = load_code_generation_dataset(meta_data=self.meta_data)
         problems = {
             instance.question_id: instance
             for instance in benchmark
@@ -304,7 +306,7 @@ class LiveCodeBenchDataset(CodeDataset):
                 sample = orjson.loads(line)
                 custom_outputs[sample["task_id"]].append(sample)
 
-        benchmark = load_code_generation_dataset(release_version=self.meta_data["release_version"])
+        benchmark = load_code_generation_dataset(meta_data=self.meta_data)
         benchmark = [problem for problem in benchmark if problem.question_id in custom_outputs]
         logger.info(f"Loaded {len(benchmark)} problems")
 

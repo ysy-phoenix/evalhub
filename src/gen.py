@@ -49,10 +49,15 @@ def gen(
         except KeyError:
             logger.warning(f"Parameter {key} not supported!")
     logger.info(f"Successfully loaded {ds_name} dataset, length: {len(dataset)}")
-    system_prompt = system_prompt or dataset.system_prompt
+    if system_prompt == "":
+        system_prompt = None
+    else:
+        system_prompt = system_prompt or dataset.system_prompt
     # NOTE: This will override the system prompt in the dataset
     if system_prompt:
-        logger.info(f"Using system prompt: {system_prompt}")
+        logger.info(f"Using system prompt:\n{system_prompt}")
+    else:
+        logger.info("Not using system prompt!")
 
     generator = LLMGenerator(dataset.config, system_prompt)
     results = generator.generate(dataset)
