@@ -61,12 +61,7 @@ def eval(tasks, solutions, output_dir):
         console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
         assert task in EVALUATE_DATASETS, f"Dataset {task} is not supported for evaluation"
         dataset = DATASET_MAP[task](name=task)
-        correct, total, accuracy = dataset.evaluate(solution, output_dir)
-        if correct is not None and total is not None and accuracy is not None:
-            console.print(f"[bold green]Evaluation results for {task}:[/bold green]")
-            console.print(f"  [green]Correct:[/green] {correct}")
-            console.print(f"  [blue]Total:[/blue] {total}")
-            console.print(f"  [bold yellow]Accuracy:[/bold yellow] {accuracy}")
+        dataset.evaluate(solution, output_dir)
 
 
 @cli.command()
