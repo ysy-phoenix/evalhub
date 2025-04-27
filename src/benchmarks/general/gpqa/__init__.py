@@ -1,36 +1,79 @@
+import random
+import re
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
 import orjson
+from datasets import load_dataset
 
-from src.benchmarks.base import Dataset
-from src.benchmarks.math.utils import extract_answer, grade_answer
+from src.benchmarks.base import Dataset, GroundTruth, Task
+from src.benchmarks.config import DATASET_HUB
 from src.inference.utils import GenerationResult
 from src.utils.logger import logger
-from src.utils.metrics import compute_pass_at_k, get_majority_vote
+from src.utils.metrics import compute_pass_at_k
 from src.utils.pbar import get_progress_bar
+
+GPQA_QUERY_TEMPLATE = (
+    "Answer the following multiple choice question.\n"
+    "The last line of your response should be of the following format:\n"
+    "'Answer: $LETTER' (without quotes) where LETTER is one of ABCD.\n"
+    "Think step by step before answering.\n\n"
+    "{Question}\n\n"
+    "A) {A}\n"
+    "B) {B}\n"
+    "C) {C}\n"
+    "D) {D}"
+)
+ANSWER_PATTERN_MULTICHOICE = r"(?i)Answer[ \t]*:[ \t]*\$?([A-D])\$?"
 
 DEFAULT_KS = [1, 5, 10]
 
 
-class MathDataset(Dataset):
-    r"""Dataset class for math reasoning problems."""
+class GPQADataset(Dataset):
+    r"""Dataset class for GPQA problems."""
 
-    def __init__(self, name: str = "math"):
+    def __init__(self, name: str = "gpqa"):
         super().__init__(name)
 
     def load_tasks(self) -> None:
-        r"""Load tasks from math reasoning dataset."""
-        raise NotImplementedError
+        r"""Load tasks from GPQA dataset."""
+        dataset = load_dataset(DATASET_HUB[self.name], "gpqa_diamond", split="train")
+        for i, item in enumerate(dataset):
+            prompt, answer = self.format_prompt(item)
+            task = Task(
+                task_id=f"GPQA/{i}",
+                prompt=prompt,
+            )
+            groundtruth = GroundTruth(
+                task_id=f"GPQA/{i}",
+                answer=answer,
+            )
+            self.add_task(task)
+            self.add_groundtruth(groundtruth)
 
-    def format_prompt(self, item: dict[str, Any]) -> str:
-        r"""Format the prompt for math reasoning task."""
-        raise NotImplementedError
+    def format_prompt(self, item: dict[str, Any]) -> tuple[str, str]:
+        r"""Format the prompt for GPQA task."""
+        choices = [
+            item["Incorrect Answer 1"],
+            item["Incorrect Answer 2"],
+            item["Incorrect Answer 3"],
+        ]
+        random.shuffle(choices)
+        gold_index = random.randint(0, 3)
+        choices.insert(gold_index, item["Correct Answer"])
+        query_prompt = GPQA_QUERY_TEMPLATE.format(
+            A=choices[0], B=choices[1], C=choices[2], D=choices[3], Question=item["Question"]
+        )
+        gold_choice = "ABCD"[gold_index]
+        return query_prompt, gold_choice
 
-    def check_correct(self, extracted_answer: str, ground_truth: str) -> bool:
-        r"""Check if the extracted answer is correct."""
-        return grade_answer(extracted_answer, ground_truth)
+    def extract_answer(self, response: str) -> str:
+        r"""Extract the answer from the response."""
+        if "</think>" in response:
+            response = response.split("</think>")[-1]
+        match = re.search(ANSWER_PATTERN_MULTICHOICE, response)
+        return match.group(1) if match else None
 
     def save(self, results: list[GenerationResult], output_dir: str | Path) -> Path:
         r"""Save raw results to a JSONL file."""
@@ -78,11 +121,9 @@ class MathDataset(Dataset):
             eval_task = progress.add_task("[bold blue]Evaluating", total=total)
 
             for task_id, responses in solutions.items():
-                extracted_answers = [extract_answer(response) for response in responses]
+                extracted_answers = [self.extract_answer(response) for response in responses]
                 ground_truth = self.groundtruth[task_id].answer
-                is_correct = [
-                    self.check_correct(answer, ground_truth) for answer in extracted_answers
-                ]
+                is_correct = [answer == ground_truth for answer in extracted_answers]
 
                 # Calculate pass@k metrics
                 pass_at_k = defaultdict(float)
@@ -91,10 +132,6 @@ class MathDataset(Dataset):
                         continue
                     pass_at_k[str(k)] = compute_pass_at_k(len(responses), sum(is_correct), k)
 
-                # Calculate majority vote
-                majority_vote = get_majority_vote(extracted_answers)
-                is_correct_majority = self.check_correct(majority_vote, ground_truth)
-
                 result = {
                     "task_id": task_id,
                     "responses": responses,
@@ -102,13 +139,10 @@ class MathDataset(Dataset):
                     "ground_truth": self.groundtruth[task_id].answer,
                     "correct": is_correct,
                     "pass_at_k": pass_at_k,
-                    "majority_vote": majority_vote,
-                    "is_correct_majority": is_correct_majority,
                 }
 
                 progress.update(eval_task, advance=1)
                 results.append(result)
-                correct += int(is_correct_majority)
 
         # Calculate aggregate metrics
         pass_at_k = {
@@ -120,7 +154,6 @@ class MathDataset(Dataset):
         # Log metrics
         for k, value in pass_at_k.items():
             logger.info(f"Pass@{k}: {value:.2%}")
-        logger.info(f"Cons@{len(results[0]['responses'])}: {cons_at_k:.2%}")
 
         # Save detailed results
         result_path = output_dir / f"{self.name}_results.jsonl"
