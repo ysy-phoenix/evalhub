@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Optional
 
 from src.benchmarks.base import Dataset
 from src.inference.utils import (
@@ -21,7 +21,7 @@ class LLMGenerator:
 
     async def generate_sample(
         self, task_id: str, prompt: str, sample_id: int
-    ) -> Tuple[str, int, Optional[str]]:
+    ) -> tuple[str, int, Optional[str]]:
         r"""generate a single sample asynchronously"""
         messages = (
             [
@@ -50,11 +50,11 @@ class LLMGenerator:
             logger.error(f"Error processing task {task_id} sample {sample_id}: {str(e)}")
             return (task_id, sample_id, None)
 
-    async def generate_async(self, dataset: Dataset) -> List[GenerationResult]:
+    async def generate_async(self, dataset: Dataset) -> list[GenerationResult]:
         r"""High-level asynchronous generation interface."""
         tasks_list = list(dataset.tasks.values())
         total_tasks = len(tasks_list)
-        results_dict: Dict[str, List[str]] = {task.task_id: [] for task in tasks_list}
+        results_dict: dict[str, list[str]] = {task.task_id: [] for task in tasks_list}
         total_samples = total_tasks * self.config.n_samples
 
         all_coroutines = []
@@ -64,7 +64,7 @@ class LLMGenerator:
 
         progress = get_progress_bar()
         completed_samples = 0
-        completed_tasks: Set[str] = set()
+        completed_tasks: set[str] = set()
 
         with progress:
             sample_progress = progress.add_task(
@@ -102,7 +102,7 @@ class LLMGenerator:
         results.sort(key=lambda x: x.task_id)
         return results
 
-    def generate(self, dataset: Dataset) -> List[GenerationResult]:
+    def generate(self, dataset: Dataset) -> list[GenerationResult]:
         r"""Synchronous interface, internally calling the asynchronous implementation."""
         try:
             loop = asyncio.get_event_loop()

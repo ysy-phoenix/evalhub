@@ -1,13 +1,13 @@
 # Copied from https://github.com/evalplus/evalplus/blob/master/evalplus/lecacy_sanitize.py
 
 import re
-from typing import List, Optional
+from typing import Optional
 
 from src.benchmarks.code.utils import syntax_check
 
 
 def remove_unindented_lines(
-    code: str, protect_before: str, execeptions: List[str], trim_tails: List[str]
+    code: str, protect_before: str, execeptions: list[str], trim_tails: list[str]
 ) -> str:
     lines = code.splitlines()
     cut_idx = []
@@ -47,7 +47,7 @@ def sanitize(
     old_code: str,
     entry_point: str,
     rm_prefix_lines: Optional[str] = None,
-    eofs: List = None,
+    eofs: list = None,
 ):
     new_code = old_code
     if rm_prefix_lines is not None:

@@ -5,7 +5,7 @@ import pickle
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import Any, ClassVar, Optional
 
 from src.inference.utils import GenerationConfig, GenerationResult
 from src.utils.logger import logger
@@ -20,7 +20,7 @@ class Task:
     task_id: str
     prompt: str
     sys_prompt: Optional[str] = None
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[dict[str, Any]] = None
 
     def __post_init__(self):
         r"""Ensure prompt ends with newline."""
@@ -46,14 +46,14 @@ class Dataset(ABC):
     def __init__(
         self,
         name: Optional[str] = None,
-        meta_data: Optional[Dict[str, Any]] = None,
+        meta_data: Optional[dict[str, Any]] = None,
         reload: bool = False,
     ):
         self.name = name or self.__class__.name
-        self.tasks: Dict[str, Task] = {}
-        self.groundtruth: Dict[str, GroundTruth] = {}
+        self.tasks: dict[str, Task] = {}
+        self.groundtruth: dict[str, GroundTruth] = {}
         self.config = DEFAULT_GENERATION_CONFIG
-        self.meta_data: Dict[str, Any] = meta_data or {}
+        self.meta_data: dict[str, Any] = meta_data or {}
         self.cache_dir = Path(
             os.environ.get("EVALHUB_CACHE_DIR", Path.home() / ".cache" / "evalhub")
         )
@@ -117,7 +117,7 @@ class Dataset(ABC):
         raise NotImplementedError("Subclass must implement format_prompt method")
 
     @abstractmethod
-    def save(self, results: List[GenerationResult]):
+    def save(self, results: list[GenerationResult]):
         r"""Save results to a file."""
         raise NotImplementedError("Subclass must implement save method")
 
@@ -134,7 +134,7 @@ class Dataset(ABC):
         return self.tasks.get(task_id)
 
     @property
-    def task_ids(self) -> List[str]:
+    def task_ids(self) -> list[str]:
         r"""Get all task IDs."""
         return list(self.tasks.keys())
 

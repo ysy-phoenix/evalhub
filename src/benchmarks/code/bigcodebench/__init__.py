@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from datasets import load_dataset
 
@@ -27,7 +27,7 @@ class BigCodeBenchDataset(CodeDataset):
     r"""Dataset class for BigCodeBench."""
 
     def __init__(
-        self, name: str = "bigcodebench", meta_data: Dict[str, Any] = BIGCODEBENCH_META_DATA
+        self, name: str = "bigcodebench", meta_data: dict[str, Any] = BIGCODEBENCH_META_DATA
     ):
         super().__init__(name, meta_data=meta_data)
         for key, value in BIGCODEBENCH_CONFIG.items():

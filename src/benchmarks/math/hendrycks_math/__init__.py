@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from datasets import load_dataset
 
@@ -37,7 +37,7 @@ class HendrycksMathDataset(MathDataset):
             self.add_task(task)
             self.add_groundtruth(groundtruth)
 
-    def format_prompt(self, item: Dict[str, Any]) -> str:
+    def format_prompt(self, item: dict[str, Any]) -> str:
         r"""Format the prompt for Hendrycks Math task."""
         question = item["problem"].strip()
         instruction_following = (
