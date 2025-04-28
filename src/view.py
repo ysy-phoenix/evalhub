@@ -16,13 +16,18 @@ console = Console()
 def display_math_results(
     results_path: Path,
     max_display: Optional[int] = -1,
+    false_only: bool = True,
 ):
     r"""Display math evaluation results."""
+    if max_display < 0:
+        max_display = float("inf")
+    cnt = 0
+
     with open(results_path, "rb") as f:
-        for i, line in enumerate(f):
-            if i >= max_display:
-                break
+        for line in f:
             result = orjson.loads(line)
+            if false_only and result.get("pass_at_k", {}).get("1", 0) == 1.0:
+                continue
             rprint(
                 Panel.fit(
                     f"[bold]Ground Truth:[/]\n{result['ground_truth']}",
@@ -52,11 +57,15 @@ def display_math_results(
             )
 
             rprint("[yellow]" + "─" * 80 + "[/yellow]\n")
+            cnt += 1
+            if cnt >= max_display:
+                break
 
 
 def display_livecodebench_results(
     results_path: Path,
     max_display: Optional[int] = -1,
+    false_only: bool = True,
 ):
     r"""Display LiveCodeBench evaluation results."""
     with open(results_path, "rb") as f:
@@ -67,9 +76,6 @@ def display_livecodebench_results(
     if not problems:
         console.print("[yellow]No results found with current filters.[/yellow]")
         return
-
-    if max_display:
-        problems = problems[:max_display]
 
     stats_table = Table(title="LiveCodeBench Results Summary", show_header=False)
     stats_table.add_column("Metric", style="cyan")
@@ -88,12 +94,16 @@ def display_livecodebench_results(
     console.print("")
     console.print("[bold blue]Problem Results[/bold blue]")
 
+    cnt = 0
     for i, problem in enumerate(problems, 1):
         title = problem.get("question_title", "Unknown")
         platform = problem.get("platform", "Unknown")
         question_id = problem.get("question_id", "Unknown")
         difficulty = problem.get("difficulty", "Unknown")
         pass_rate = problem.get("pass@1", 0)
+
+        if false_only and pass_rate > 0:
+            continue
 
         problem_panel = Panel(
             f"[bold]{title}[/bold]\n\n"
@@ -115,11 +125,15 @@ def display_livecodebench_results(
             console.print(code_panel)
 
         console.print("[dim]" + "─" * 80 + "[/dim]")
+        cnt += 1
+        if cnt >= max_display:
+            break
 
 
 def view_results(
     results_path: Path,
     max_display: Optional[int] = -1,
+    false_only: bool = True,
 ):
     r"""Unified view function that handles different result formats."""
     if results_path.suffix.lower() == ".json":
@@ -128,6 +142,7 @@ def view_results(
             display_livecodebench_results(
                 results_path=results_path,
                 max_display=max_display,
+                false_only=false_only,
             )
         except (FileNotFoundError, orjson.JSONDecodeError) as e:
             console.print(f"[bold red]Error loading JSON results file:[/bold red] {e}")
@@ -138,6 +153,7 @@ def view_results(
             display_math_results(
                 results_path=results_path,
                 max_display=max_display,
+                false_only=false_only,
             )
         except (FileNotFoundError, orjson.JSONDecodeError) as e:
             console.print(f"[bold red]Error loading JSONL results file:[/bold red] {e}")

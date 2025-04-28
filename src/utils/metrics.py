@@ -12,8 +12,9 @@ def compute_pass_at_k(n: int, c: int, k: int) -> float:
 
 
 def get_majority_vote(predictions: list[Any]) -> Any:
-    if not predictions:
+    filtered = [p for p in predictions if p is not None]
+    if not filtered:
         return None
 
-    counter = Counter(predictions)
+    counter = Counter(filtered)
     return counter.most_common(1)[0][0]

@@ -1,5 +1,6 @@
 ## R1 Recipe
 
+Example script:
 ```bash
 # serve model
 vllm serve "$HOME/models/DeepSeek-R1-Distill-Qwen-7B" -dp 8 --port 30000
@@ -26,11 +27,23 @@ evalhub eval --tasks gpqa --solutions "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B
 evalhub view --results "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/gpqa_results.jsonl" --max-display 10
 ```
 
-Reported results:
+> [!NOTE]
+> Adjust `num_workers` for different models.
 
-| Model                          | AIME 2024 (pass@1) | AIME 2024 (cons@64) | MATH-500 (pass@1)  | GOQA Diamond (pass@1) | LiveCodeBench pass@1 |
-|--------------------------------|--------------------|---------------------|--------------------|-----------------------|---------------------|
-| DeepSeek-R1-Distill-Qwen-1.5B  | 28.9               | 52.7                | 83.9               | 33.8                  | 16.9                |
-| DeepSeek-R1-Distill-Qwen-7B    | 55.5               | 83.3                | 92.8               | 49.1                  | 37.6                |
-| DeepSeek-R1-Distill-Qwen-14B   | 69.7               | 80.0                | 93.9               | 59.1                  | 53.1                |
-| DeepSeek-R1-Distill-Qwen-32B   | 72.6               | 83.3                | 94.3               | 62.1                  | 57.2                |
+Official Reported results:
+
+| Model                          | AIME 2024 (pass@1) | AIME 2024 (cons@64) | MATH-500 (pass@1) | GOQA Diamond (pass@1) | LiveCodeBench pass@1 |
+|--------------------------------|--------------------|---------------------|-------------------|-----------------------|---------------------|
+| DeepSeek-R1-Distill-Qwen-1.5B  | 28.9               | 52.7                | 83.9              | 33.8                  | 16.9                |
+| DeepSeek-R1-Distill-Qwen-7B    | 55.5               | 83.3                | 92.8              | 49.1                  | 37.6                |
+| DeepSeek-R1-Distill-Qwen-14B   | 69.7               | 80.0                | 93.9              | 59.1                  | 53.1                |
+| DeepSeek-R1-Distill-Qwen-32B   | 72.6               | 83.3                | 94.3              | 62.1                  | 57.2                |
+
+Reproduced results(vllm):
+
+| Model                          | AIME 2024 (pass@1) | AIME 2024 (cons@64) | MATH-500 (pass@1) | GOQA Diamond (pass@1) | LiveCodeBench pass@1 |
+|--------------------------------|--------------------|---------------------|-------------------|-----------------------|---------------------|
+| DeepSeek-R1-Distill-Qwen-1.5B  | 29.4               | 56.7                | 83.0              | 38.0                  | 17.3                |
+| DeepSeek-R1-Distill-Qwen-7B    | 52.0               | 76.7                | 91.7              | 49.5                  | 37.5                |
+| DeepSeek-R1-Distill-Qwen-14B   | 69.0               | 80.0                | 93.0              | 61.2                  | 50.3                |
+| DeepSeek-R1-Distill-Qwen-32B   | 69.7               | 83.3                | 93.6              | 62.3                  | 56.4                |

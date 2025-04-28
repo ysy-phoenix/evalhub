@@ -66,8 +66,9 @@ def eval(tasks, solutions, output_dir):
 
 @cli.command()
 @click.option("--results", required=True, help="Results file path")
-@click.option("--max-display", type=int, default=None, help="Maximum number of samples to display")
-def view(results, max_display):
+@click.option("--max-display", type=int, default=-1, help="Maximum number of samples to display")
+@click.option("--false-only", type=bool, default=True, help="Only display false samples")
+def view(results, max_display, false_only):
     r"""View and analyze evaluation results with rich formatting.
 
     Automatically detects the result format:
@@ -78,6 +79,7 @@ def view(results, max_display):
     view_results(
         results_path=Path(results),
         max_display=max_display,
+        false_only=false_only,
     )
 
 

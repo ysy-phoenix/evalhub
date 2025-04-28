@@ -9,4 +9,5 @@ done
 
 /usr/bin/python3 -m sglang_router.launch_router \
     --worker-urls "${worker_urls[@]}" \
+    --balance-abs-threshold 1 \
     --port 30000
