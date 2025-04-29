@@ -16,7 +16,7 @@ class LLMGenerator:
 
     def __init__(self, config: GenerationConfig, system_prompt: Optional[str] = None) -> None:
         self.config = config
-        self.client = OpenAICompletion(config.base_url, config.api_key)
+        self.client = OpenAICompletion(config)
         self.system_prompt = system_prompt
 
     async def generate_sample(

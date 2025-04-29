@@ -50,7 +50,7 @@ def display_math_results(
 
             rprint(
                 Panel.fit(
-                    f"[bold]Extracted Answers:[/]\n{result['extracted_answers']}",
+                    f"[bold]Extracted Answers:[/]\n{result['solutions']}",
                     title="Model Answers",
                     border_style="blue",
                 )

@@ -10,7 +10,7 @@ from rich.table import Table
 
 CODE_TASKS = ["humaneval", "mbpp", "livecodebench"]
 MATH_TASKS = ["aime2024", "math500", "gpqa"]
-INCLUDED_TASKS = [f"{task}_raw" for task in CODE_TASKS] + [f"{task}" for task in MATH_TASKS]
+INCLUDED_TASKS = CODE_TASKS + MATH_TASKS
 
 
 def get_stats_for_lengths(lengths: list[int]) -> dict[str, Any]:
@@ -37,7 +37,7 @@ def analyze_length_distribution(dir_path: Path, show_progress: bool = True):
     all_lengths = []
 
     for task in INCLUDED_TASKS:
-        file_path = dir_path / f"{task}.jsonl"
+        file_path = dir_path / f"{task}_raw.jsonl"
         try:
             with open(file_path, "rb") as f:
                 lines = f.readlines()
@@ -51,10 +51,9 @@ def analyze_length_distribution(dir_path: Path, show_progress: bool = True):
 
         for line in iter_lines:
             data = orjson.loads(line)
-            try:
-                length = len(data["solution"])
-            except KeyError:
-                length = len(data["response"])
+            length = len(data["response"].get("content", "")) + len(
+                data["response"].get("reasoning_content", "")
+            )
             task_lengths[task].append(length)
             all_lengths.append(length)
 
@@ -77,7 +76,7 @@ def analyze_length_distribution(dir_path: Path, show_progress: bool = True):
         ("Maximum Length", "max", "float", "K"),
         ("Mean Length", "mean", "float", "K"),
         ("Median Length", "median", "float", "K"),
-        ("Standard Deviation", "std", "float", "K"),
+        ("Std Length", "std", "float", "K"),
         ("25th Percentile", ("percentiles", "25"), "float", "K"),
         ("50th Percentile", ("percentiles", "50"), "float", "K"),
         ("75th Percentile", ("percentiles", "75"), "float", "K"),

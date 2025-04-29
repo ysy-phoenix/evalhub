@@ -107,7 +107,7 @@ class LiveCodeBenchDataset(CodeDataset):
         prompt += "### Answer: (use the provided format with backticks)\n\n"
         return prompt
 
-    def extract_code(self, task_id: str, response: str) -> str:
+    def extract_solution(self, task_id: str, response: str) -> str:
         r"""Extract the code from the response."""
         if response.count("```") == 2:
             return extract_livecodebench_code(response)

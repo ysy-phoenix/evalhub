@@ -61,5 +61,7 @@ def gen(
 
     generator = LLMGenerator(dataset.config, system_prompt)
     results = generator.generate(dataset)
-    save_path = dataset.save(results, output_dir)
-    logger.info(f"Successfully saved results to {save_path}")
+    raw_path, save_path = dataset.save(results, output_dir)
+    logger.info(f"Raw results saved to {raw_path}")
+    logger.info(f"Solutions saved to {save_path}")
+    return raw_path, save_path
