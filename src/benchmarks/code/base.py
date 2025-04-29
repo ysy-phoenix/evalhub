@@ -59,7 +59,7 @@ class CodeDataset(Dataset):
         r"""Save raw and processed results to a file."""
         os.makedirs(output_dir, exist_ok=True)
         output_dir = Path(output_dir)
-        raw_path = output_dir / f"{self.name}-raw.jsonl"
+        raw_path = output_dir / f"{self.name}_raw.jsonl"
         with open(raw_path, "wb") as f:
             for result in results:
                 for response in result.responses:
