@@ -1,12 +1,10 @@
-from typing import Dict, List, Union
-
 import numpy as np
 
 DEFAULT_K_LIST = [1, 5]
 
 
 def estimate_pass_at_k(
-    num_samples: Union[int, List[int]], num_correct: Union[int, List[int]], k: int
+    num_samples: int | list[int], num_correct: int | list[int], k: int
 ) -> np.ndarray:
     r"""Estimates pass@k of each problem and returns them in an array."""
 
@@ -27,7 +25,7 @@ def estimate_pass_at_k(
     return np.array([estimator(int(n), int(c), k) for n, c in zip(num_samples_it, num_correct)])
 
 
-def compute_metrics_from_results(results: Dict[str, List[List[int]]], k_list=DEFAULT_K_LIST):
+def compute_metrics_from_results(results: dict[str, list[list[int]]], k_list=DEFAULT_K_LIST):
     r"""Compute pass@k metrics from results.
 
     Args:
@@ -58,11 +56,11 @@ def compute_metrics_from_results(results: Dict[str, List[List[int]]], k_list=DEF
             }
         }
     """
-    total: List[int] = []
-    correct: List[int] = []
-    task_ids: List[str] = []
+    total: list[int] = []
+    correct: list[int] = []
+    task_ids: list[str] = []
     for task_id, res in results.items():
-        all_correct: List[bool] = []
+        all_correct: list[bool] = []
         for generation in res:
             gen = np.array(generation)
             all_correct.append(np.all(gen > 0))
@@ -85,7 +83,7 @@ def compute_metrics_from_results(results: Dict[str, List[List[int]]], k_list=DEF
     return pass_at_k
 
 
-def extract_instance_results(results: Dict[str, List[List[int]]]) -> List[List[int]]:
+def extract_instance_results(results: dict[str, list[list[int]]]) -> list[list[int]]:
     r"""Extract instance-wise results from results."""
     instance_wise_grades = {}
     for task_id, res in results.items():

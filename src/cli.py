@@ -61,35 +61,14 @@ def eval(tasks, solutions, output_dir):
         console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
         assert task in EVALUATE_DATASETS, f"Dataset {task} is not supported for evaluation"
         dataset = DATASET_MAP[task](name=task)
-        correct, total, accuracy = dataset.evaluate(solution, output_dir)
-        if correct is not None and total is not None and accuracy is not None:
-            console.print(f"[bold green]Evaluation results for {task}:[/bold green]")
-            console.print(f"  [green]Correct:[/green] {correct}")
-            console.print(f"  [blue]Total:[/blue] {total}")
-            console.print(f"  [bold yellow]Accuracy:[/bold yellow] {accuracy}")
+        dataset.evaluate(solution, output_dir)
 
 
 @cli.command()
 @click.option("--results", required=True, help="Results file path")
-@click.option("--max-display", type=int, default=None, help="Maximum number of samples to display")
-@click.option("--show-response/--no-show-response", default=False, help="Show response")
-@click.option("--task-ids", help="Filter by specific task ID pattern, separated by commas")
-@click.option(
-    "--sort-by",
-    type=click.Choice(["pass@1", "difficulty", "platform", "date"]),
-    default="pass@1",
-    help="Sort results by",
-)
-@click.option(
-    "--difficulty", type=click.Choice(["easy", "medium", "hard"]), help="Filter by difficulty"
-)
-@click.option(
-    "--platform",
-    type=click.Choice(["leetcode", "codeforces", "atcoder"]),
-    help="Filter by platform",
-)
-@click.option("--log-to-file/--no-log-to-file", default=False, help="Log to file")
-def view(results, max_display, show_response, task_ids, sort_by, difficulty, platform, log_to_file):
+@click.option("--max-display", type=int, default=-1, help="Maximum number of samples to display")
+@click.option("--false-only", type=bool, default=True, help="Only display false samples")
+def view(results, max_display, false_only):
     r"""View and analyze evaluation results with rich formatting.
 
     Automatically detects the result format:
@@ -100,12 +79,7 @@ def view(results, max_display, show_response, task_ids, sort_by, difficulty, pla
     view_results(
         results_path=Path(results),
         max_display=max_display,
-        show_response=show_response,
-        task_ids=task_ids,
-        sort_by=sort_by,
-        difficulty=difficulty,
-        platform=platform,
-        log_to_file=log_to_file,
+        false_only=false_only,
     )
 
 

@@ -3,7 +3,7 @@
 
 import ast
 import traceback
-from typing import Dict, Generator, List, Optional, Set, Tuple
+from typing import Generator, Optional
 
 import tree_sitter_python
 from tree_sitter import Language, Node, Parser
@@ -45,8 +45,8 @@ def code_extract(text: str) -> str:
     return "\n".join(lines[longest_line_pair[0] : longest_line_pair[1] + 1])
 
 
-def get_deps(nodes: List[Tuple[str, Node]]) -> Dict[str, Set[str]]:
-    def dfs_get_deps(node: Node, deps: Set[str]) -> None:
+def get_deps(nodes: list[tuple[str, Node]]) -> dict[str, set[str]]:
+    def dfs_get_deps(node: Node, deps: set[str]) -> None:
         for child in node.children:
             if child.type == IDENTIFIER_TYPE:
                 deps.add(child.text.decode("utf8"))
@@ -61,7 +61,7 @@ def get_deps(nodes: List[Tuple[str, Node]]) -> Dict[str, Set[str]]:
     return name2deps
 
 
-def get_function_dependency(entrypoint: str, call_graph: Dict[str, str]) -> Set[str]:
+def get_function_dependency(entrypoint: str, call_graph: dict[str, set[str]]) -> set[str]:
     queue = [entrypoint]
     visited = {entrypoint}
     while queue:

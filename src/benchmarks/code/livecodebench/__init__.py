@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import datetime
 from os import PathLike
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 import orjson
@@ -70,7 +70,7 @@ class LiveCodeBenchDataset(CodeDataset):
     r"""Dataset class for LiveCodeBench code generation benchmark."""
 
     def __init__(
-        self, name: str = "livecodebench", meta_data: Dict[str, Any] = LIVECODEBENCH_META_DATA
+        self, name: str = "livecodebench", meta_data: dict[str, Any] = LIVECODEBENCH_META_DATA
     ):
         super().__init__(name, meta_data=meta_data)
         for key, value in LIVECODEBENCH_CONFIG.items():
@@ -191,8 +191,8 @@ class LiveCodeBenchDataset(CodeDataset):
         return loop.run_until_complete(self.submit_async(eval_samples, model_outputs))
 
     def new_evaluate(
-        self, solution: PathLike, output_dir: PathLike, ks: List[int] = DEFAULT_KS
-    ) -> Tuple[int, int, float]:
+        self, solution: PathLike, output_dir: PathLike, ks: list[int] = DEFAULT_KS
+    ) -> None:
         r"""Evaluate solutions using LiveCodeBench's evaluator."""
         # Load model outputs
         model_outputs = defaultdict(list)
@@ -292,14 +292,13 @@ class LiveCodeBenchDataset(CodeDataset):
         with open(Path(output_dir) / f"{self.name}_results.json", "w") as f:
             json.dump(output_results, f, indent=2)
 
-        return None, None, None
-
     # Adapted from https://github.com/wasiahmad/livecodebench/blob/main/livecodebench/evaluate.py
-    def evaluate(self, solution: PathLike, output_dir: PathLike) -> Tuple[int, int, float]:
+    def evaluate(self, solution: PathLike, output_dir: PathLike) -> None:
         r"""Evaluate solutions using LiveCodeBench's evaluator."""
         if NEW_MODE:
             self.new_evaluate(solution, output_dir)
-            return None, None, None
+            return
+
         custom_outputs = defaultdict(list)
         with open(solution, "rb") as f:
             for line in f:
@@ -374,8 +373,6 @@ class LiveCodeBenchDataset(CodeDataset):
 
         with open(Path(output_dir) / f"{self.name}_results.json", "w") as f:
             json.dump(output_results, f, indent=2)
-
-        return None, None, None
 
 
 """

@@ -100,7 +100,7 @@ evalhub eval --tasks livecodebench --solutions $HOME/metrics/Qwen2.5-7B-Instruct
 evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/livecodebench_results.json --show-response --max-display 20 --log-to-file
 ```
 
-for more commands, please refer to [docs/cmds.md](docs/cmds.md)
+For more commands, please refer to [docs/cmds.md](docs/cmds.md).
 
 > [!Note]
 > `view` is supported for math and livecodebench tasks only now!
@@ -121,6 +121,8 @@ bash ./scripts/eval_code.sh --model Qwen2.5-Coder-7B-Instruct --temperature 0.6 
 - whereas our new evaluation will execute all test cases.
 - As a result, there is a significant difference in speed between the two approaches.
 - By default, the original evaluation method is used, but you can modify it [here](src/benchmarks/code/livecodebench/__init__.py).
+
+04/29/2025 update: Evaluation results of r1 recipe reproduction can be found in [docs/baseline.md](docs/baseline.md).
 
 ## 🛠 Development
 

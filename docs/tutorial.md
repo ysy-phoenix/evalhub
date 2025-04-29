@@ -22,9 +22,9 @@ First, create a new directory for your dataset in `src/benchmarks/`. The name sh
 In `src/benchmarks/your_dataset_name/__init__.py`, implement a class that inherits from the base dataset class. Your class must implement several required methods:
 
 - `load_tasks()`: Load tasks from the dataset
-- `format_prompt(item: Dict[str, Any]) -> str`: Format the prompt for the task
-- `save(results: List[GenerationResult], output_dir: PathLike) -> Path`: Save the results to a file
-- `evaluate(solution: PathLike, output_dir: PathLike) -> Tuple[int, int, float]`: Evaluate the results
+- `format_prompt(item: dict[str, Any]) -> str`: Format the prompt for the task
+- `save(results: list[GenerationResult], output_dir: PathLike) -> Path`: Save the results to a file
+- `evaluate(solution: PathLike, output_dir: PathLike) -> None`: Evaluate the results
 
 ### Step 3: Register the Dataset
 

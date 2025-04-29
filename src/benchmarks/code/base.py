@@ -1,7 +1,7 @@
 import os
 from os import PathLike
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import orjson
 
@@ -13,14 +13,14 @@ from src.utils.pbar import get_progress_bar
 class CodeDataset(Dataset):
     r"""Dataset class for code generation problems."""
 
-    def __init__(self, name: str = "code", meta_data: Dict[str, Any] = None):
+    def __init__(self, name: str = "code", meta_data: dict[str, Any] = None):
         super().__init__(name, meta_data=meta_data)
 
     def load_tasks(self):
         r"""Load tasks from math reasoning dataset."""
         raise NotImplementedError
 
-    def format_prompt(self, item: Dict[str, Any]) -> str:
+    def format_prompt(self, item: dict[str, Any]) -> str:
         r"""Format the prompt for math reasoning task."""
         raise NotImplementedError
 
@@ -55,11 +55,11 @@ class CodeDataset(Dataset):
 
         return save_path
 
-    def save(self, results: List[GenerationResult], output_dir: PathLike) -> Path:
+    def save(self, results: list[GenerationResult], output_dir: PathLike) -> Path:
         r"""Save raw and processed results to a file."""
         os.makedirs(output_dir, exist_ok=True)
         output_dir = Path(output_dir)
-        raw_path = output_dir / f"{self.name}-raw.jsonl"
+        raw_path = output_dir / f"{self.name}_raw.jsonl"
         with open(raw_path, "wb") as f:
             for result in results:
                 for response in result.responses:
