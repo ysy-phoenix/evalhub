@@ -111,13 +111,9 @@ class OpenAICompletion:
                     logger.warning(
                         f"Max tokens exceeded:\n{truncate(response.choices[0].message.content)}"
                     )
-                res = {"content": response.choices[0].message.content}
-                if self.config.think:
-                    res["reasoning_content"] = response.choices[0].message.reasoning_content
-                return res
             else:
                 response = await self.client.completions.create(prompt=messages, **params)
-                return {"content": response.choices[0].text}
+            return response.model_dump()
 
         except Exception as e:
             logger.error(f"API call failed: {str(e)}")

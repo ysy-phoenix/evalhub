@@ -1,6 +1,7 @@
 # Adapted from https://github.com/volcengine/verl/blob/main/verl/utils/reward_score/gsm8k.py
 
 import re
+from typing import Optional
 
 from src.utils.logger import logger
 
@@ -57,8 +58,10 @@ def remove_units(solution: str) -> str:
     return solution
 
 
-def gsm8k_patch(solution: str, ground_truth: str) -> bool:
+def gsm8k_patch(solution: Optional[str], ground_truth: str) -> bool:
     r"""Patch for GSM8K."""
+    if solution is None:
+        return False
     solution = remove_units(solution)
     if solution == "2:00" and ground_truth == "2":  # FIXME: patch for 2:00 PM
         return True

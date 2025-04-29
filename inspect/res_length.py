@@ -8,8 +8,8 @@ from rich.console import Console
 from rich.progress import track
 from rich.table import Table
 
-CODE_TASKS = ["humaneval", "mbpp", "livecodebench"]
-MATH_TASKS = ["aime2024", "math500", "gpqa"]
+CODE_TASKS = ["humaneval", "mbpp", "livecodebench", "bigcodebench"]
+MATH_TASKS = ["gsm8k", "hendrycks_math", "aime2024", "math500", "gpqa"]
 INCLUDED_TASKS = CODE_TASKS + MATH_TASKS
 
 
@@ -51,9 +51,7 @@ def analyze_length_distribution(dir_path: Path, show_progress: bool = True):
 
         for line in iter_lines:
             data = orjson.loads(line)
-            length = len(data["response"].get("content", "")) + len(
-                data["response"].get("reasoning_content", "")
-            )
+            length = data["response"]["usage"]["completion_tokens"]
             task_lengths[task].append(length)
             all_lengths.append(length)
 

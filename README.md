@@ -97,7 +97,7 @@ evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/hendrycks_math_results.
 # livecodebench
 evalhub run --model Qwen2.5-7B-Instruct --tasks livecodebench --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
 evalhub eval --tasks livecodebench --solutions $HOME/metrics/Qwen2.5-7B-Instruct/livecodebench.jsonl --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
-evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/livecodebench_results.json --show-response --max-display 20
+evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/livecodebench_results.json --max-display 20
 ```
 
 For more commands, please refer to [docs/cmds.md](docs/cmds.md).
