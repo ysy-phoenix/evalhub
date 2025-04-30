@@ -139,7 +139,7 @@ class Dataset(ABC):
             for result in results:
                 task_id = result.task_id
                 for response in result.responses:
-                    content = response["choices"][0]["message"]["content"]
+                    content = response.get("choices", [{}])[0].get("message", {}).get("content", "")
                     solution = self.extract_solution(task_id, content)
                     save_file.write(
                         orjson.dumps({"task_id": task_id, "solution": solution}) + b"\n"

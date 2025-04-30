@@ -117,4 +117,7 @@ class OpenAICompletion:
 
         except Exception as e:
             logger.error(f"API call failed: {str(e)}")
-            return ""
+            if response is not None:
+                return response.model_dump()
+            else:
+                return {}
