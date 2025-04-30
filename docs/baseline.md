@@ -37,7 +37,7 @@ evalhub view --results "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/gpqa_results.j
 
 Official Reported results:
 
-| Model                          | AIME 2024 (pass@1) | AIME 2024 (cons@64) | MATH-500 (pass@1) | GOQA Diamond (pass@1) | LiveCodeBench pass@1 |
+| Model                          | AIME 2024 (pass@1) | AIME 2024 (cons@64) | MATH-500 (pass@1) | GPQA iamond (pass@1) | LiveCodeBench pass@1 |
 |--------------------------------|--------------------|---------------------|-------------------|-----------------------|---------------------|
 | DeepSeek-R1-Distill-Qwen-1.5B  | 28.9               | 52.7                | 83.9              | 33.8                  | 16.9                |
 | DeepSeek-R1-Distill-Qwen-7B    | 55.5               | 83.3                | 92.8              | 49.1                  | 37.6                |
@@ -46,7 +46,7 @@ Official Reported results:
 
 Reproduced results(vllm):
 
-| Model                          | AIME 2024 (pass@1) | AIME 2024 (cons@64) | MATH-500 (pass@1) | GOQA Diamond (pass@1) | LiveCodeBench pass@1 |
+| Model                          | AIME 2024 (pass@1) | AIME 2024 (cons@64) | MATH-500 (pass@1) | GPQA Diamond (pass@1) | LiveCodeBench pass@1 |
 |--------------------------------|--------------------|---------------------|-------------------|-----------------------|---------------------|
 | DeepSeek-R1-Distill-Qwen-1.5B  | 29.4               | 56.7                | 83.0              | 38.0                  | 17.3                |
 | DeepSeek-R1-Distill-Qwen-7B    | 52.0               | 76.7                | 91.7              | 49.5                  | 37.5                |
@@ -55,9 +55,20 @@ Reproduced results(vllm):
 
 Reproduced results(sglang):
 
-| Model                          | AIME 2024 (pass@1) | AIME 2024 (cons@64) | MATH-500 (pass@1) | GOQA Diamond (pass@1) | LiveCodeBench pass@1 |
+| Model                          | AIME 2024 (pass@1) | AIME 2024 (cons@64) | MATH-500 (pass@1) | GPQA Diamond (pass@1) | LiveCodeBench pass@1 |
 |--------------------------------|--------------------|---------------------|-------------------|-----------------------|---------------------|
 | DeepSeek-R1-Distill-Qwen-1.5B  | 29.3               | 60.0                | 82.0              | 35.7                  | 16.5                |
 | DeepSeek-R1-Distill-Qwen-7B    | 53.9               | 76.7                | 91.9              | 50.4                  | 38.3                |
 | DeepSeek-R1-Distill-Qwen-14B   | 68.0               | 83.3                | 93.0              | 58.0                  | 51.6                |
 | DeepSeek-R1-Distill-Qwen-32B   | 70.2               | 83.3                | 93.2              | 60.5                  | 57.2                |
+
+## Qwen3 recipe
+
+Example commands:
+```bash
+python -m sglang_router.launch_server --model-path "$HOME/models/Qwen3-4B" --router-worker-startup-check-interval 20 --router-balance-abs-threshold 1 --context-length 32768 --dp 8 --port 30000 --reasoning-parser qwen3
+
+evalhub run --model "$HOME/models/Qwen3-4B" --tasks aime2025 --output-dir "$HOME/metrics/Qwen3-4B" -p max_tokens=30720 -p temperature=0.6 -p top_p=0.95 -p n_samples=32 -p num_workers=1024 -p timeout=3600 --system-prompt ""
+evalhub eval --tasks aime2025 --solutions "$HOME/metrics/Qwen3-4B/aime2025.jsonl" --output-dir "$HOME/metrics/Qwen3-4B"
+evalhub view --results "$HOME/metrics/Qwen3-4B/aime2025_results.jsonl" --max-display 10
+```

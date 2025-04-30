@@ -1,4 +1,5 @@
 from collections import defaultdict
+from os import PathLike
 from pathlib import Path
 from typing import Any
 
@@ -6,7 +7,6 @@ import orjson
 
 from src.benchmarks.base import Dataset
 from src.benchmarks.math.utils import extract_answer, grade_answer
-from src.inference.utils import GenerationResult
 from src.utils.logger import logger
 from src.utils.metrics import compute_pass_at_k, get_majority_vote
 from src.utils.pbar import get_progress_bar
@@ -28,77 +28,61 @@ class MathDataset(Dataset):
         r"""Format the prompt for math reasoning task."""
         raise NotImplementedError
 
+    def extract_solution(self, task_id: str, response: str) -> str:
+        r"""Extract the solution from the response."""
+        return extract_answer(response)
+
     def check_correct(self, extracted_answer: str, ground_truth: str) -> bool:
         r"""Check if the extracted answer is correct."""
         return grade_answer(extracted_answer, ground_truth)
 
-    def save(self, results: list[GenerationResult], output_dir: str | Path) -> Path:
-        r"""Save raw results to a JSONL file."""
-        output_dir = Path(output_dir)
-        output_dir.mkdir(exist_ok=True, parents=True)
-        save_path = output_dir / f"{self.name}.jsonl"
-
-        with open(save_path, "wb") as save_file:
-            for sample in results:
-                task_id = sample.task_id
-                for response in sample.responses:
-                    save_file.write(
-                        orjson.dumps({"task_id": task_id, "response": response}) + b"\n"
-                    )
-
-        return save_path
-
-    def _load_solutions(self, solution_path: str | Path) -> dict[str, list[str]]:
+    def _load_solutions(self, solution_path: PathLike) -> dict[str, list[str]]:
         r"""Load predictions from solution file."""
-        predictions = defaultdict(list)
+        solutions = defaultdict(list)
         solution_path = Path(solution_path)
 
         with open(solution_path, "rb") as f:
             for line in f:
                 sample = orjson.loads(line)
                 task_id = sample["task_id"]
-                response = sample["response"]
-                predictions[task_id].append(response)
+                solution = sample["solution"]
+                solutions[task_id].append(solution)
 
-        return predictions
+        return solutions
 
-    def evaluate(self, solution: str | Path, output_dir: str | Path) -> None:
+    def evaluate(self, solution: PathLike, output_dir: PathLike) -> None:
         r"""Evaluate the solution."""
         output_dir = Path(output_dir)
         output_dir.mkdir(exist_ok=True, parents=True)
 
-        solutions = self._load_solutions(solution)
-        assert len(solutions) == len(self.groundtruth), (
-            f"Predictions ({len(solutions)}) must match groundtruths ({len(self.groundtruth)})"
+        id2solutions = self._load_solutions(solution)
+        assert len(id2solutions) == len(self.groundtruth), (
+            f"Predictions ({len(id2solutions)}) must match groundtruths ({len(self.groundtruth)})"
         )
 
-        results, correct, total = [], 0, len(solutions)
+        results, correct, total = [], 0, len(id2solutions)
         progress = get_progress_bar()
         with progress:
             eval_task = progress.add_task("[bold blue]Evaluating", total=total)
 
-            for task_id, responses in solutions.items():
-                extracted_answers = [extract_answer(response) for response in responses]
+            for task_id, solutions in id2solutions.items():
                 ground_truth = self.groundtruth[task_id].answer
-                is_correct = [
-                    self.check_correct(answer, ground_truth) for answer in extracted_answers
-                ]
+                is_correct = [self.check_correct(solution, ground_truth) for solution in solutions]
 
                 # Calculate pass@k metrics
                 pass_at_k = defaultdict(float)
                 for k in DEFAULT_KS:
-                    if k > len(responses):
+                    if k > len(solutions):
                         continue
-                    pass_at_k[str(k)] = compute_pass_at_k(len(responses), sum(is_correct), k)
+                    pass_at_k[str(k)] = compute_pass_at_k(len(solutions), sum(is_correct), k)
 
                 # Calculate majority vote
-                majority_vote = get_majority_vote(extracted_answers)
+                majority_vote = get_majority_vote(solutions)
                 is_correct_majority = self.check_correct(majority_vote, ground_truth)
 
                 result = {
                     "task_id": task_id,
-                    "responses": responses,
-                    "extracted_answers": extracted_answers,
+                    "solutions": solutions,
                     "ground_truth": self.groundtruth[task_id].answer,
                     "correct": is_correct,
                     "pass_at_k": pass_at_k,
@@ -120,7 +104,7 @@ class MathDataset(Dataset):
         # Log metrics
         for k, value in pass_at_k.items():
             logger.info(f"Pass@{k}: {value:.2%}")
-        logger.info(f"Cons@{len(results[0]['responses'])}: {cons_at_k:.2%}")
+        logger.info(f"Cons@{len(results[0]['solutions'])}: {cons_at_k:.2%}")
 
         # Save detailed results
         result_path = output_dir / f"{self.name}_results.jsonl"

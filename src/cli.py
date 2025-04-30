@@ -108,7 +108,6 @@ def list_configs():
         "base_url": "Base URL for API endpoint",
         "api_key": "API key for model access",
         "output_dir": "Directory to save generation outputs",
-        "baseline": "Whether to run as baseline evaluation",
     }
 
     # Get default values from GenerationConfig

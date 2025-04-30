@@ -50,6 +50,6 @@ class BigCodeBenchDataset(CodeDataset):
         prompt = item[f"{split}_prompt"].strip()
         return INSTRUCTION_PREFIX + prompt.strip()
 
-    def extract_code(self, task_id: str, response: str) -> str:
+    def extract_solution(self, task_id: str, response: str) -> str:
         r"""Extract the code from the response."""
         return sanitize(response, self.tasks[task_id].metadata["entry_point"])

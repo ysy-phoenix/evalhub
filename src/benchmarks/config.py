@@ -9,4 +9,5 @@ DATASET_HUB = {
     "aime2024": "HuggingFaceH4/aime_2024",
     "bigcodebench": "bigcode/bigcodebench",
     "gpqa": "Idavidrein/gpqa",
+    "aime2025": "opencompass/AIME2025",
 }

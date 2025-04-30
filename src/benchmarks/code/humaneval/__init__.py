@@ -70,7 +70,7 @@ class HumanEvalDataset(CodeDataset):
             + f"Here is the given code to do completion:\n```{lang.lower()}\n{prompt}\n```"
         )
 
-    def extract_code(self, task_id: str, response: str) -> str:
+    def extract_solution(self, task_id: str, response: str) -> str:
         r"""Extract the code from the response."""
         if self.name == "humaneval":
             return sanitize(response, self.tasks[task_id].metadata["entry_point"])

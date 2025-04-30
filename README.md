@@ -49,11 +49,11 @@ All-in-one benchmarking platform for evaluating Large Language Models (LLMs) wit
 
 ```bash
 # Create a new environment
-conda create -n evalhub python=3.11 -y
+conda create -n evalhub python=3.12 -y
 conda activate evalhub
 
 # Recommend using uv to install the package
-uv venv --python 3.11
+uv venv --python 3.12
 source .venv/bin/activate
 
 # Install the package
@@ -87,17 +87,17 @@ evalplus.evaluate --dataset mbpp --samples $HOME/metrics/Qwen2.5-7B-Instruct/mbp
 # gsm8k
 evalhub run --model Qwen2.5-7B-Instruct --tasks gsm8k --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
 evalhub eval --tasks gsm8k --solutions $HOME/metrics/Qwen2.5-7B-Instruct/gsm8k.jsonl --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
-evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/gsm8k_results.jsonl --max-display 20 --log-to-file
+evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/gsm8k_results.jsonl --max-display 20
 
 # hendrycks_math
 evalhub run --model Qwen2.5-7B-Instruct --tasks hendrycks_math --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
 evalhub eval --tasks hendrycks_math --solutions $HOME/metrics/Qwen2.5-7B-Instruct/hendrycks_math.jsonl --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
-evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/hendrycks_math_results.jsonl --max-display 20 --log-to-file
+evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/hendrycks_math_results.jsonl --max-display 20
 
 # livecodebench
 evalhub run --model Qwen2.5-7B-Instruct --tasks livecodebench --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
 evalhub eval --tasks livecodebench --solutions $HOME/metrics/Qwen2.5-7B-Instruct/livecodebench.jsonl --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
-evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/livecodebench_results.json --show-response --max-display 20 --log-to-file
+evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/livecodebench_results.json --max-display 20
 ```
 
 For more commands, please refer to [docs/cmds.md](docs/cmds.md).

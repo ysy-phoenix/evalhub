@@ -16,13 +16,14 @@ class LLMGenerator:
 
     def __init__(self, config: GenerationConfig, system_prompt: Optional[str] = None) -> None:
         self.config = config
-        self.client = OpenAICompletion(config.base_url, config.api_key)
+        self.client = OpenAICompletion(config)
         self.system_prompt = system_prompt
 
     async def generate_sample(
         self, task_id: str, prompt: str, sample_id: int
-    ) -> tuple[str, int, Optional[str]]:
+    ) -> tuple[str, int, Optional[dict[str, str]]]:
         r"""generate a single sample asynchronously"""
+        # TODO: support for non-chat models
         messages = (
             [
                 {"role": "system", "content": self.system_prompt},
@@ -33,18 +34,7 @@ class LLMGenerator:
         )
 
         try:
-            response = await self.client.completion(
-                is_chat=self.config.is_chat,
-                model_name=self.config.model_name,
-                prompt=messages,
-                temperature=self.config.temperature,
-                max_tokens=self.config.max_tokens,
-                top_p=self.config.top_p,
-                frequency_penalty=self.config.frequency_penalty,
-                presence_penalty=self.config.presence_penalty,
-                stop=self.config.stop,
-                timeout=self.config.timeout,
-            )
+            response = await self.client.completion(messages)
             return (task_id, sample_id, response)
         except Exception as e:
             logger.error(f"Error processing task {task_id} sample {sample_id}: {str(e)}")
