@@ -70,11 +70,11 @@ all = [
 ]
 
 [project.scripts]
-evalhub = "src.cli:main"
+evalhub = "evalhub.cli:main"
 
 [tool.setuptools]
-packages = ["src"]
-package-dir = {"src" = "src"}
+packages = ["evalhub"]
+package-dir = {"evalhub" = "evalhub"}
 
 [tool.ruff]
 line-length = 100
@@ -85,4 +85,4 @@ select = ["E", "F", "B", "I", "UP", "N", "C", "W"]
 ignore = ["C901", "N818"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["src"]
+known-first-party = ["evalhub"]

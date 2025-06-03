@@ -120,7 +120,7 @@ bash ./scripts/eval_code.sh --model Qwen2.5-Coder-7B-Instruct --temperature 0.6 
 - The original LiveCodeBench would return upon encountering the first failed test case
 - whereas our new evaluation will execute all test cases.
 - As a result, there is a significant difference in speed between the two approaches.
-- By default, the original evaluation method is used, but you can modify it [here](src/benchmarks/code/livecodebench/__init__.py).
+- By default, the original evaluation method is used, but you can modify it [here](evalhub/benchmarks/code/livecodebench/__init__.py).
 
 04/29/2025 update: Evaluation results of r1 recipe reproduction can be found in [docs/baseline.md](docs/baseline.md).
 

@@ -15,11 +15,11 @@ To add a new dataset, you'll need to:
 
 ### Step 1: Create Dataset Directory Structure
 
-First, create a new directory for your dataset in `src/benchmarks/`. The name should reflect the dataset (e.g., `gsm8k`, `humaneval`).
+First, create a new directory for your dataset in `evalhub/benchmarks/`. The name should reflect the dataset (e.g., `gsm8k`, `humaneval`).
 
 ### Step 2: Implement the Dataset Class
 
-In `src/benchmarks/your_dataset_name/__init__.py`, implement a class that inherits from the base dataset class. Your class must implement several required methods:
+In `evalhub/benchmarks/your_dataset_name/__init__.py`, implement a class that inherits from the base dataset class. Your class must implement several required methods:
 
 - `load_tasks()`: Load tasks from the dataset
 - `format_prompt(item: dict[str, Any]) -> str`: Format the prompt for the task
@@ -28,10 +28,10 @@ In `src/benchmarks/your_dataset_name/__init__.py`, implement a class that inheri
 
 ### Step 3: Register the Dataset
 
-In `src/benchmarks/__init__.py`, add your dataset to the appropriate dictionaries:
+In `evalhub/benchmarks/__init__.py`, add your dataset to the appropriate dictionaries:
 
 ```python
-from src.benchmarks.your_dataset_name.dataset import YourDatasetName
+from evalhub.benchmarks.your_dataset_name.dataset import YourDatasetName
 
 # Add to dataset map
 DATASET_MAP = {
