@@ -9,7 +9,7 @@ from rich.table import Table
 from src.benchmarks import DATASET_MAP, EVALUATE_DATASETS, THIRD_PARTY_DATASETS
 from src.benchmarks.config import DATASET_HUB
 from src.gen import gen, parse_sampling_params
-from src.inference.utils import GenerationConfig
+from src.inference.schemas import GenerationConfig
 from src.view import view_results
 
 console = Console()

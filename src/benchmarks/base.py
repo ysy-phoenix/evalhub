@@ -10,7 +10,7 @@ from typing import Any, ClassVar, Optional
 
 import orjson
 
-from src.inference.utils import GenerationConfig, GenerationResult
+from src.inference.schemas import GenerationConfig, GenerationResult
 from src.utils.logger import logger
 from src.utils.pbar import get_progress_bar
 

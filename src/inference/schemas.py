@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, field
+from typing import Optional
 
 from openai import AsyncOpenAI
 
@@ -29,35 +30,45 @@ class GenerationResult:
 
 
 @dataclass
-class GenerationConfig:
-    r"""Configuration for generation."""
+class SampleParams:
+    r"""Parameters related to model sampling behavior."""
 
-    chat: bool = True
-    model_name: str = "Qwen/Qwen2.5-Coder7B-Instruct"
+    model: str = "Qwen/Qwen2.5-Coder7B-Instruct"
     temperature: float = 0.2
     top_p: float = 0.95
     max_tokens: int = 2048
     frequency_penalty: float = 0
     presence_penalty: float = 0
-    n_samples: int = 1
-    num_workers: int = 1024
+    stop: Optional[list[str]] = None
     timeout: int = 1800
-    stop: list[str] = None
-    base_url: str = "http://localhost:30000/v1"
-    api_key: str = "EMPTY"
-    backend: str = "sglang"
-    think: bool = False
-    output_dir: str = "outputs"
 
     def __post_init__(self):
         r"""Ensure stop tokens are set."""
         if self.stop is None:
-            self.stop = ["</s>", "<|endoftext|>", "<|eos_token|>"]
+            self.stop = DEFAULT_CHAT_STOP_TOKENS
+
+
+@dataclass
+class GenerationConfig:
+    r"""Configuration for generation with separated concerns."""
+
+    # Sampling parameters
+    sample_params: SampleParams = field(default_factory=SampleParams)
+
+    # Generation parameters
+    chat: bool = True
+    n_samples: int = 1
+    num_workers: int = 1024
+    base_url: str = "http://localhost:30000/v1"
+    api_key: str = "EMPTY"
+    output_dir: str = "outputs"
 
     def __setitem__(self, key, value):
         r"""Support dictionary-style item assignment."""
         if hasattr(self, key):
             setattr(self, key, value)
+        elif key in asdict(self.sample_params):
+            setattr(self.sample_params, key, value)
         else:
             raise KeyError(f"GenerationConfig has no attribute '{key}'")
 
@@ -65,59 +76,34 @@ class GenerationConfig:
         r"""Support dictionary-style item access."""
         if hasattr(self, key):
             return getattr(self, key)
+        elif key in asdict(self.sample_params):
+            return getattr(self.sample_params, key)
         raise KeyError(f"GenerationConfig has no attribute '{key}'")
 
-    def update(self, **kwargs):
-        r"""Update multiple configuration attributes at once."""
-        for key, value in kwargs.items():
-            self[key] = value
-        return self
 
-
-class OpenAICompletion:
-    r"""Class for completing OpenAI Compatible APIs."""
+class OpenAIClient:
+    r"""High-performance API client for OpenAI compatible APIs."""
 
     def __init__(self, config: GenerationConfig) -> None:
-        r"""Initialize the AsyncOpenAI client."""
         self.config = config
         self.client = AsyncOpenAI(base_url=config.base_url, api_key=config.api_key)
 
-    async def completion(self, messages: list[dict[str, str]] | list[str]) -> dict[str, str]:
-        r"""Execute a completion request, supporting both chat and text completion."""
-        if self.config.stop is None:
-            stop = DEFAULT_CHAT_STOP_TOKENS if self.config.chat else DEFAULT_TEXT_STOP_TOKENS
-        else:
-            stop = self.config.stop
-
+    async def complete(self, messages: list[dict[str, str]]) -> Optional[dict[str, str]]:
+        r"""Execute a completion request with optimized error handling."""
         try:
-            extra_body = {}
-            if self.config.backend == "sglang" and self.config.think:
-                extra_body["separate_reasoning"] = True
-            params = {
-                "model": self.config.model_name,
-                "temperature": self.config.temperature,
-                "max_tokens": self.config.max_tokens,
-                "top_p": self.config.top_p,
-                "frequency_penalty": self.config.frequency_penalty,
-                "presence_penalty": self.config.presence_penalty,
-                "stop": stop,
-                "timeout": self.config.timeout,
-                **(extra_body or {}),
-            }
+            params = asdict(self.config.sample_params)
 
             if self.config.chat:
                 response = await self.client.chat.completions.create(messages=messages, **params)
-                if response.choices[0].finish_reason == "length":  # FIXME: maybe hallucination
+                if response.choices[0].finish_reason == "length":
                     logger.warning(
                         f"Max tokens exceeded:\n{truncate(response.choices[0].message.content)}"
                     )
             else:
                 response = await self.client.completions.create(prompt=messages, **params)
+
             return response.model_dump()
 
         except Exception as e:
             logger.error(f"API call failed: {str(e)}")
-            if response is not None:
-                return response.model_dump()
-            else:
-                return {}
+            return None

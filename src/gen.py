@@ -42,7 +42,7 @@ def gen(
     r"""Generate results for a given model and dataset."""
     assert ds_name in DATASET_MAP, f"Dataset {ds_name} not supported for generation"
     dataset = DATASET_MAP[ds_name](name=ds_name)
-    dataset.config["model_name"] = model
+    dataset.config["model"] = model
     for key, value in sampling_params.items():
         try:
             dataset.config[key] = value
