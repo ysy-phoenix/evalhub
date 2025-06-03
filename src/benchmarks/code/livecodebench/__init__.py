@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import datetime
 from os import PathLike
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import orjson
@@ -81,7 +81,7 @@ class LiveCodeBenchDataset(CodeDataset):
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     @property
-    def system_prompt(self) -> Optional[str]:
+    def system_prompt(self) -> str | None:
         r"""Get system prompt for the dataset."""
         return SYSTEM_MESSAGE_GENERIC
 
@@ -332,7 +332,7 @@ class LiveCodeBenchDataset(CodeDataset):
                 metadata=meta,
             )
             for instance, code_list, graded_list, meta in zip(
-                benchmark, generations, graded, metadatas
+                benchmark, generations, graded, metadatas, strict=False
             )
         ]
 

@@ -1,5 +1,3 @@
-from typing import Optional
-
 from src.benchmarks import DATASET_MAP
 from src.inference.generator import LLMGenerator
 from src.utils.logger import logger
@@ -37,7 +35,7 @@ def gen(
     ds_name: str,
     output_dir: str,
     sampling_params: dict,
-    system_prompt: Optional[str] = None,
+    system_prompt: str | None = None,
 ) -> None:
     r"""Generate results for a given model and dataset."""
     assert ds_name in DATASET_MAP, f"Dataset {ds_name} not supported for generation"

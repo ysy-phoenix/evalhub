@@ -57,7 +57,7 @@ def eval(tasks, solutions, output_dir):
     tasks = tasks.split(",")
     solutions = solutions.split(",")
     assert len(tasks) == len(solutions), "Number of tasks and solutions must be the same"
-    for task, solution in zip(tasks, solutions):
+    for task, solution in zip(tasks, solutions, strict=False):
         console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
         assert task in EVALUATE_DATASETS, f"Dataset {task} is not supported for evaluation"
         dataset = DATASET_MAP[task](name=task)

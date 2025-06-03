@@ -1,6 +1,6 @@
 import random
 import re
-from typing import Any, Optional
+from typing import Any
 
 from datasets import load_dataset
 
@@ -69,7 +69,7 @@ class GPQADataset(MathDataset):
         match = re.search(ANSWER_PATTERN_MULTICHOICE, response)
         return match.group(1) if match else None
 
-    def check_correct(self, extracted_answer: Optional[str], ground_truth: str) -> bool:
+    def check_correct(self, extracted_answer: str | None, ground_truth: str) -> bool:
         r"""Check if the extracted answer is correct."""
         if extracted_answer is None:
             return False

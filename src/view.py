@@ -1,7 +1,6 @@
 """View utilities for EvalHub."""
 
 from pathlib import Path
-from typing import Optional
 
 import orjson
 from rich import print as rprint
@@ -15,7 +14,7 @@ console = Console()
 
 def display_math_results(
     results_path: Path,
-    max_display: Optional[int] = -1,
+    max_display: int | None = -1,
     false_only: bool = True,
 ):
     r"""Display math evaluation results."""
@@ -64,7 +63,7 @@ def display_math_results(
 
 def display_livecodebench_results(
     results_path: Path,
-    max_display: Optional[int] = -1,
+    max_display: int | None = -1,
     false_only: bool = True,
 ):
     r"""Display LiveCodeBench evaluation results."""
@@ -132,7 +131,7 @@ def display_livecodebench_results(
 
 def view_results(
     results_path: Path,
-    max_display: Optional[int] = -1,
+    max_display: int | None = -1,
     false_only: bool = True,
 ):
     r"""Unified view function that handles different result formats."""

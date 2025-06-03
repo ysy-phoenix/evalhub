@@ -126,7 +126,7 @@ def make_function(code: str) -> str:
         all_other_stmts = []
         astree = ast.parse(code)
         for stmt in astree.body:
-            if isinstance(stmt, (ast.Import, ast.ImportFrom)):
+            if isinstance(stmt, ast.Import | ast.ImportFrom):
                 import_stmts.append(stmt)
             else:
                 all_other_stmts.append(stmt)
@@ -241,7 +241,7 @@ def grade_call_based(code: str, all_inputs: list, all_outputs: list, fn_name: st
 
     total_execution = 0
     all_results = []
-    for _, (gt_inp, gt_out) in enumerate(zip(all_inputs, all_outputs)):
+    for _, (gt_inp, gt_out) in enumerate(zip(all_inputs, all_outputs, strict=False)):
         signal.alarm(timeout)
         faulthandler.enable()
         try:
@@ -321,7 +321,7 @@ def grade_stdio(
 
     all_results = []
     total_execution_time = 0
-    for _, (gt_inp, gt_out) in enumerate(zip(all_inputs, all_outputs)):
+    for _, (gt_inp, gt_out) in enumerate(zip(all_inputs, all_outputs, strict=False)):
         signal.alarm(timeout)
         faulthandler.enable()
 
@@ -380,7 +380,7 @@ def grade_stdio(
         for output_line_idx, (
             stripped_prediction_line,
             stripped_gt_out_line,
-        ) in enumerate(zip(stripped_prediction_lines, stripped_gt_out_lines)):
+        ) in enumerate(zip(stripped_prediction_lines, stripped_gt_out_lines, strict=False)):
             wa_send_args["error_message"] = (
                 f"Wrong answer at {output_line_idx=}: "
                 f"{truncatefn(stripped_prediction_line)} != {truncatefn(stripped_gt_out_line)}"

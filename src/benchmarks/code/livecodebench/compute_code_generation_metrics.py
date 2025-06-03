@@ -178,7 +178,9 @@ def codegen_metrics(
     remap_index = []
     results = defaultdict(list)
     metadatas = defaultdict(list)
-    for idx, (sample, generation_list) in enumerate(zip(samples_list, generations_list)):
+    for idx, (sample, generation_list) in enumerate(
+        zip(samples_list, generations_list, strict=False)
+    ):
         assert isinstance(generation_list, list), generations_list[0]
         for generation in generation_list:
             assert isinstance(generation, str), generations_list[0]

@@ -8,7 +8,6 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Union
 
 from rich.console import Console
 from rich.logging import RichHandler
@@ -39,9 +38,9 @@ class EvalHubLogger:
     def __init__(
         self,
         name: str = "evalhub",
-        level: Union[int, str] = "INFO",
-        log_file: Optional[str] = None,
-        log_dir: Optional[str] = None,
+        level: int | str = "INFO",
+        log_file: str | None = None,
+        log_dir: str | None = None,
     ):
         r"""Initialize the logger.
 

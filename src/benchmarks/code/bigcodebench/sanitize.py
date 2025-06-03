@@ -3,7 +3,7 @@
 
 import ast
 import traceback
-from typing import Generator, Optional
+from collections.abc import Generator
 
 import tree_sitter_python
 from tree_sitter import Language, Node, Parser
@@ -108,7 +108,7 @@ def has_return_statement(node: Node) -> bool:
     return False
 
 
-def extract_target_code_or_empty(code: str, entrypoint: Optional[str] = None) -> str:
+def extract_target_code_or_empty(code: str, entrypoint: str | None = None) -> str:
     code = code_extract(code.strip())
     code_bytes = bytes(code, "utf8")
     parser = Parser(Language(tree_sitter_python.language()))
@@ -172,7 +172,7 @@ def extract_target_code_or_empty(code: str, entrypoint: Optional[str] = None) ->
     return sanitized_output
 
 
-def sanitize(code: str, entrypoint: Optional[str] = None) -> str:
+def sanitize(code: str, entrypoint: str | None = None) -> str:
     sanitized_code = extract_target_code_or_empty(code, entrypoint).strip()
     if not sanitized_code:
         return code_extract(code)

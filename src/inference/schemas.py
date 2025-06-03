@@ -1,5 +1,4 @@
 from dataclasses import asdict, dataclass, field
-from typing import Optional
 
 from openai import AsyncOpenAI
 
@@ -39,7 +38,7 @@ class SampleParams:
     max_tokens: int = 2048
     frequency_penalty: float = 0
     presence_penalty: float = 0
-    stop: Optional[list[str]] = None
+    stop: list[str] | None = None
     timeout: int = 1800
 
     def __post_init__(self):
@@ -88,7 +87,7 @@ class OpenAIClient:
         self.config = config
         self.client = AsyncOpenAI(base_url=config.base_url, api_key=config.api_key)
 
-    async def complete(self, messages: list[dict[str, str]]) -> Optional[dict[str, str]]:
+    async def complete(self, messages: list[dict[str, str]]) -> dict[str, str] | None:
         r"""Execute a completion request with optimized error handling."""
         try:
             params = asdict(self.config.sample_params)

@@ -58,7 +58,7 @@ source .venv/bin/activate
 
 # Install the package
 uv pip install -r requirements.txt
-uv pip install -e ".[dev]" # optional, for development
+uv pip install -e ".[all]" # other options: [dev], [base], [sglang]
 
 # Recommend cleaning up cache after pulling the latest changes
 rm -rf ~/.cache/evalhub/

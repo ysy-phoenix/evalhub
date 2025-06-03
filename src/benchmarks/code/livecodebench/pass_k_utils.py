@@ -22,7 +22,9 @@ def estimate_pass_at_k(
         assert len(num_samples) == len(num_correct)
         num_samples_it = iter(num_samples)
 
-    return np.array([estimator(int(n), int(c), k) for n, c in zip(num_samples_it, num_correct)])
+    return np.array(
+        [estimator(int(n), int(c), k) for n, c in zip(num_samples_it, num_correct, strict=False)]
+    )
 
 
 def compute_metrics_from_results(results: dict[str, list[list[int]]], k_list=DEFAULT_K_LIST):
@@ -78,7 +80,7 @@ def compute_metrics_from_results(results: dict[str, list[list[int]]], k_list=DEF
     pass_at_k = {
         f"pass@{k}": estimate_pass_at_k(total, correct, k).mean() for k in ks if (total >= k).all()
     }
-    detail_metrics = {k: dict(zip(task_ids, v)) for k, v in detail_pass_at_k.items()}
+    detail_metrics = {k: dict(zip(task_ids, v, strict=False)) for k, v in detail_pass_at_k.items()}
     pass_at_k["detail"] = detail_metrics
     return pass_at_k
 

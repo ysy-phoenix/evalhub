@@ -1,5 +1,4 @@
 import asyncio
-from typing import Optional
 
 from src.benchmarks.base import Dataset
 from src.inference.schemas import (
@@ -51,7 +50,7 @@ class ProgressTracker:
 class LLMGenerator:
     r"""High-performance class for generating responses via OpenAI Compatible APIs."""
 
-    def __init__(self, config: GenerationConfig, system_prompt: Optional[str] = None) -> None:
+    def __init__(self, config: GenerationConfig, system_prompt: str | None = None) -> None:
         self.config = config
         self.client = OpenAIClient(config)
         self.system_prompt = system_prompt
@@ -69,7 +68,7 @@ class LLMGenerator:
 
     async def _generate_single_sample(
         self, task_id: str, prompt: str, sample_id: int
-    ) -> tuple[str, int, Optional[dict[str, str]]]:
+    ) -> tuple[str, int, dict[str, str] | None]:
         r"""Generate a single sample with enhanced error handling."""
         messages = self._build_messages(prompt)
         try:
@@ -100,7 +99,7 @@ class LLMGenerator:
             async with semaphore:
                 try:
                     return await asyncio.wait_for(coro, timeout=self.config.sample_params.timeout)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.warning(f"Task timed out after {self.config.sample_params.timeout}s")
                     return (None, None, None)
 

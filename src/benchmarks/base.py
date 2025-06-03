@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from os import PathLike
 from pathlib import Path
-from typing import Any, ClassVar, Optional
+from typing import Any, ClassVar
 
 import orjson
 
@@ -23,8 +23,8 @@ class Task:
 
     task_id: str
     prompt: str
-    sys_prompt: Optional[str] = None
-    metadata: Optional[dict[str, Any]] = None
+    sys_prompt: str | None = None
+    metadata: dict[str, Any] | None = None
 
     def __post_init__(self):
         r"""Ensure prompt ends with newline."""
@@ -49,8 +49,8 @@ class Dataset(ABC):
 
     def __init__(
         self,
-        name: Optional[str] = None,
-        meta_data: Optional[dict[str, Any]] = None,
+        name: str | None = None,
+        meta_data: dict[str, Any] | None = None,
         reload: bool = False,
     ):
         self.name = name or self.__class__.name
@@ -67,7 +67,7 @@ class Dataset(ABC):
             self.save_cache()
 
     @property
-    def system_prompt(self) -> Optional[str]:
+    def system_prompt(self) -> str | None:
         r"""Get system prompt for the dataset."""
         return None
 
@@ -171,7 +171,7 @@ class Dataset(ABC):
         r"""Get task by index."""
         return list(self.tasks.values())[idx]
 
-    def get_by_task_id(self, task_id: str) -> Optional[Task]:
+    def get_by_task_id(self, task_id: str) -> Task | None:
         r"""Get a task by its task_id with O(1) complexity."""
         return self.tasks.get(task_id)
 

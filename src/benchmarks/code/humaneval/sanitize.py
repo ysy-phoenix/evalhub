@@ -1,7 +1,6 @@
 # Copied from https://github.com/evalplus/evalplus/blob/master/evalplus/lecacy_sanitize.py
 
 import re
-from typing import Optional
 
 from src.benchmarks.code.utils import syntax_check
 
@@ -46,7 +45,7 @@ def to_four_space_indents(old_code):
 def sanitize(
     old_code: str,
     entry_point: str,
-    rm_prefix_lines: Optional[str] = None,
+    rm_prefix_lines: str | None = None,
     eofs: list = None,
 ):
     new_code = old_code
