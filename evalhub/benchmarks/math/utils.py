@@ -25,8 +25,8 @@ def mathd_normalize_answer(answer: str | None) -> str | None:
             answer = m.group("text").strip()
         return _strip_string(answer)
     except Exception as e:
-        logger.warning(f"Failed to normalize answer: {answer}")
-        logger.warning(f"Error: {e}")
+        logger.debug(f"Failed to normalize answer: {answer}")
+        logger.debug(f"Error: {e}")
     return answer
 
 
@@ -46,8 +46,8 @@ def _strip_string(string):
                     try:
                         assert len(substr) >= 2
                     except Exception as e:
-                        logger.warning(f"Failed to fix fracs: {string}")
-                        logger.warning(f"Error: {e}")
+                        logger.debug(f"Failed to fix fracs: {string}")
+                        logger.debug(f"Error: {e}")
                         return string
                     a = substr[0]
                     b = substr[1]
@@ -78,8 +78,8 @@ def _strip_string(string):
             new_string = "\\frac{" + str(a) + "}{" + str(b) + "}"
             return new_string
         except Exception as e:
-            logger.warning(f"Failed to fix a/b: {string}")
-            logger.warning(f"Error: {e}")
+            logger.debug(f"Failed to fix a/b: {string}")
+            logger.debug(f"Error: {e}")
             return string
 
     def _remove_right_units(string):
@@ -228,8 +228,8 @@ def _is_int(x: float) -> bool:
     try:
         return abs(x - int(round(x))) <= 1e-7
     except Exception as e:
-        logger.warning(f"Failed to check if {x} is an int")
-        logger.warning(f"Error: {e}")
+        logger.debug(f"Failed to check if {x} is an int")
+        logger.debug(f"Error: {e}")
         return False
 
 
@@ -245,8 +245,8 @@ def _str_is_int(x: str) -> bool:
         x = float(x)
         return abs(x - int(round(x))) <= 1e-7
     except Exception as e:
-        logger.warning(f"Failed to check if {x} is an int")
-        logger.warning(f"Error: {e}")
+        logger.debug(f"Failed to check if {x} is an int")
+        logger.debug(f"Error: {e}")
         return False
 
 
@@ -327,8 +327,8 @@ def _normalize(expr: str) -> str:
         try:
             expr = _parse_latex(expr)
         except Exception as e:
-            logger.warning(f"Failed to parse latex: {expr}")
-            logger.warning(f"Error: {e}")
+            logger.debug(f"Failed to parse latex: {expr}")
+            logger.debug(f"Error: {e}")
 
     # edge case with mixed numbers and negative signs
     expr = re.sub("- *", "-", expr)
@@ -385,10 +385,10 @@ def are_equal_under_sympy(ground_truth_normalized: str, given_normalized: str):
             if simplified == 0:
                 are_correct = True
     except Exception as e:
-        logger.warning(
+        logger.debug(
             f"Failed to check if {ground_truth_normalized} and {given_normalized} are equal"
         )
-        logger.warning(f"Error: {e}")
+        logger.debug(f"Error: {e}")
     return are_correct
 
 
@@ -449,8 +449,8 @@ def remove_boxed(s):
         assert s[-1] == "}"
         return s[len(left) : -1]
     except Exception as e:
-        logger.warning(f"Failed to remove \\boxed command from {s}")
-        logger.warning(f"Error: {e}")
+        logger.debug(f"Failed to remove \\boxed command from {s}")
+        logger.debug(f"Error: {e}")
         return None
 
 
@@ -520,7 +520,7 @@ def extract_answer(passage: str) -> str:
         passage = passage.split("</think>")[-1]
     if "\\boxed" in passage:
         return extract_boxed_answer(passage)
-    return None
+    return passage
 
 
 def grade_answer(given_answer: str, ground_truth: str) -> bool:

@@ -46,6 +46,13 @@ class MultiTurnGenerator(LLMGenerator):
             )
             self.available_tools[tool.name] = tool
 
+    async def get_response_with_retry(self, messages: list[dict], max_retries: int = 3):
+        for _ in range(max_retries):
+            response = await self.complete(messages, tools=self.tool_schemas)
+            if response is not None:
+                return response
+        return None
+
     async def _generate_single_sample(
         self, task_id: str, sample_id: str, prompt: str, metadata: dict | None = None
     ) -> tuple[str, str, dict[str, str] | None]:
@@ -60,7 +67,10 @@ class MultiTurnGenerator(LLMGenerator):
         # multi-turn generation
         messages = self._build_messages(prompt)
         for _ in range(self.config.max_turns):
-            response = await self.complete(messages, tools=self.tool_schemas)
+            response = await self.get_response_with_retry(messages)
+            if response is None:
+                break
+
             message = response.choices[0].message
             messages.append(message)
 

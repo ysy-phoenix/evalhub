@@ -54,7 +54,7 @@ class GenerationConfig:
     api_key: str = "EMPTY"
     output_dir: Path = Path("outputs")
     tool_config_path: Path | None = None
-    max_turns: int = 5
+    max_turns: int = 3
 
     def __post_init__(self):
         self.output_dir = Path(self.output_dir)
