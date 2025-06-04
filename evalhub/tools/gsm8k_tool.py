@@ -31,20 +31,35 @@ class Gsm8kTool(BaseTool):
         }
         return instance_id
 
-    async def execute(self, instance_id: str, parameters: dict) -> tuple[str, float, dict]:
-        answer = parameters.get("answer", "")
-        if not isinstance(answer, str):
-            answer = str(answer)
+    async def execute(self, instance_id: str, parameters: dict, **kwargs) -> str:
+        try:
+            if isinstance(parameters, int):
+                answer = parameters
+            elif isinstance(parameters, dict):
+                answer = parameters.get("answer", "")
+            else:
+                return "Invalid parameters"
 
-        self.instances[instance_id]["answer"] = answer
-        reward = compute_score(
+            if not isinstance(answer, str):
+                answer = str(answer)
+
+            self.instances[instance_id]["answer"] = answer
+            reward = await self.calc_reward(instance_id)
+            self.instances[instance_id]["reward"] = reward
+        except Exception as e:
+            return f"Error: {e}"
+
+        return f"Current parsed {answer=} {reward=}"
+
+    async def calc_reward(self, instance_id: str, **kwargs) -> float:
+        return compute_score(
             self.instances[instance_id]["answer"],
             self.instances[instance_id]["ground_truth"],
             format_score=0.0,
             score=1.0,
         )
 
-        return f"Current parsed {answer=} {reward=}", reward, {}
-
-    async def release(self, instance_id: str, **kwargs) -> None:
+    async def release(self, instance_id: str, **kwargs) -> float:
+        reward = self.instances[instance_id].pop("reward", 0.0)
         del self.instances[instance_id]
+        return reward

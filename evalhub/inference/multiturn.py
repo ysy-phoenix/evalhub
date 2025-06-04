@@ -68,10 +68,9 @@ class MultiTurnGenerator(LLMGenerator):
                 tool_call_routines = []
                 for tool_call in message.tool_calls:
                     tool_name = tool_call.function.name
-                    if isinstance(tool_call.function.arguments, str):
-                        arguments = json.loads(tool_call.function.arguments)
-                    else:
-                        arguments = tool_call.function.arguments
+                    arguments = tool_call.function.arguments
+                    while isinstance(arguments, str):
+                        arguments = json.loads(arguments)
                     tool_call_routines.append(
                         self.available_tools[tool_name].execute(instance_id, arguments)
                     )
@@ -92,6 +91,10 @@ class MultiTurnGenerator(LLMGenerator):
         tool_release_coroutines = []
         for tool in self.available_tools.values():
             tool_release_coroutines.append(tool.release(instance_id))
-        await asyncio.gather(*tool_release_coroutines)
+        rewards = await asyncio.gather(*tool_release_coroutines)
 
-        return task_id, sample_id, response.model_dump()
+        response = response.model_dump()
+        response["messages"] = [m if isinstance(m, dict) else m.model_dump() for m in messages]
+        response["reward"] = dict(zip(self.available_tools.keys(), rewards, strict=False))
+
+        return task_id, sample_id, response

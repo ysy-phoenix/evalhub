@@ -15,10 +15,10 @@ class BaseTool:
         else:
             return instance_id
 
-    async def execute(
-        self, instance_id: str, parameters: dict[str, Any], **kwargs
-    ) -> tuple[str, float, dict]:
-        return "Updated the tool state.", 0.0, {}
+    async def execute(self, instance_id: str, parameters: dict[str, Any], **kwargs) -> str:
+        return "Updated the tool state."
 
-    async def release(self, instance_id: str, **kwargs) -> None:
-        pass
+    async def release(self, instance_id: str, **kwargs) -> float:
+        reward = self.instances[instance_id].pop("reward", 0.0)
+        del self.instances[instance_id]
+        return reward
