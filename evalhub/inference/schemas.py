@@ -1,8 +1,5 @@
 from dataclasses import asdict, dataclass, field
-
-from openai import AsyncOpenAI
-
-from evalhub.utils.logger import logger
+from pathlib import Path
 
 DEFAULT_CHAT_STOP_TOKENS = [
     "<|eot_id|>",
@@ -13,11 +10,6 @@ DEFAULT_CHAT_STOP_TOKENS = [
     "<|eos|>",
 ]
 DEFAULT_TEXT_STOP_TOKENS = ["</s>", "<|endoftext|>", "<|eos_token|>"]
-
-
-def truncate(text: str, max_tokens: int = 1024) -> str:
-    r"""Truncate text to max_tokens."""
-    return text[: max_tokens // 2] + "\n...[truncated]...\n" + text[-max_tokens // 2 :]
 
 
 @dataclass
@@ -60,7 +52,14 @@ class GenerationConfig:
     num_workers: int = 1024
     base_url: str = "http://localhost:30000/v1"
     api_key: str = "EMPTY"
-    output_dir: str = "outputs"
+    output_dir: Path = Path("outputs")
+    tool_config_path: Path | None = None
+    max_turns: int = 5
+
+    def __post_init__(self):
+        self.output_dir = Path(self.output_dir)
+        if self.tool_config_path:
+            self.tool_config_path = Path(self.tool_config_path)
 
     def __setitem__(self, key, value):
         r"""Support dictionary-style item assignment."""
@@ -78,31 +77,3 @@ class GenerationConfig:
         elif key in asdict(self.sample_params):
             return getattr(self.sample_params, key)
         raise KeyError(f"GenerationConfig has no attribute '{key}'")
-
-
-class OpenAIClient:
-    r"""High-performance API client for OpenAI compatible APIs."""
-
-    def __init__(self, config: GenerationConfig) -> None:
-        self.config = config
-        self.client = AsyncOpenAI(base_url=config.base_url, api_key=config.api_key)
-
-    async def complete(self, messages: list[dict[str, str]]) -> dict[str, str] | None:
-        r"""Execute a completion request with optimized error handling."""
-        try:
-            params = asdict(self.config.sample_params)
-
-            if self.config.chat:
-                response = await self.client.chat.completions.create(messages=messages, **params)
-                if response.choices[0].finish_reason == "length":
-                    logger.warning(
-                        f"Max tokens exceeded:\n{truncate(response.choices[0].message.content)}"
-                    )
-            else:
-                response = await self.client.completions.create(prompt=messages, **params)
-
-            return response.model_dump()
-
-        except Exception as e:
-            logger.error(f"API call failed: {str(e)}")
-            return None

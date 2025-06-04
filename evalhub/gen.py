@@ -1,5 +1,6 @@
 from evalhub.benchmarks import DATASET_MAP
 from evalhub.inference.generator import LLMGenerator
+from evalhub.inference.multiturn import MultiTurnGenerator
 from evalhub.utils.logger import logger
 
 
@@ -36,6 +37,7 @@ def gen(
     output_dir: str,
     sampling_params: dict,
     system_prompt: str | None = None,
+    enable_multiturn: bool = False,
 ) -> None:
     r"""Generate results for a given model and dataset."""
     assert ds_name in DATASET_MAP, f"Dataset {ds_name} not supported for generation"
@@ -57,7 +59,10 @@ def gen(
     else:
         logger.info("Not using system prompt!")
 
-    generator = LLMGenerator(dataset.config, system_prompt)
+    if enable_multiturn:
+        generator = MultiTurnGenerator(dataset.config, system_prompt)
+    else:
+        generator = LLMGenerator(dataset.config, system_prompt)
     results = generator.generate(dataset)
     raw_path, save_path = dataset.save(results, output_dir)
     logger.info(f"Raw results saved to {raw_path}")

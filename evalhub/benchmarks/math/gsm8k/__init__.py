@@ -27,13 +27,21 @@ class GSM8KDataset(MathDataset):
         r"""Load tasks from GSM8K dataset."""
         dataset = load_dataset(DATASET_HUB[self.name], "main", split="test")
         for i, item in enumerate(dataset):
+            answer = extract_ground_truth(item["answer"])
             task = Task(
                 task_id=f"GSM8K/{i}",
                 prompt=self.format_prompt(item),
+                metadata={
+                    "tools": {
+                        "calc_gsm8k_reward": {
+                            "create_kwargs": {"ground_truth": answer},
+                        },
+                    },
+                },
             )
             groundtruth = GroundTruth(
                 task_id=f"GSM8K/{i}",
-                answer=extract_ground_truth(item["answer"]),
+                answer=answer,
             )
             self.add_task(task)
             self.add_groundtruth(groundtruth)

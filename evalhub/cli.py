@@ -26,6 +26,7 @@ def cli():
 @click.option("--model", required=True, help="Model to evaluate")
 @click.option("--tasks", required=True, help="Tasks to evaluate on, separated by commas")
 @click.option("--output-dir", required=True, help="Output directory")
+@click.option("--enable-multiturn", is_flag=True, help="Enable multiturn generation")
 @click.option("--system-prompt", help="System prompt for the model")
 # Advanced: support for arbitrary model parameters
 @click.option(
@@ -34,7 +35,7 @@ def cli():
     multiple=True,
     help="Additional sampling parameters in format: key=value",
 )
-def run(model, tasks, output_dir, sampling_param, system_prompt):
+def run(model, tasks, output_dir, sampling_param, system_prompt, enable_multiturn):
     r"""Run evaluation on a model with specified dataset."""
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     sampling_params = parse_sampling_params(sampling_param)
@@ -45,7 +46,7 @@ def run(model, tasks, output_dir, sampling_param, system_prompt):
     # Execute generation with model parameters
     for task in tasks.split(","):
         console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
-        gen(model, task, output_dir, sampling_params, system_prompt)
+        gen(model, task, output_dir, sampling_params, system_prompt, enable_multiturn)
 
 
 @cli.command()

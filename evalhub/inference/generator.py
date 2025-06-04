@@ -1,13 +1,21 @@
 import asyncio
+from dataclasses import asdict
+
+from openai import AsyncOpenAI
+from openai.types.chat.chat_completion import ChatCompletion
 
 from evalhub.benchmarks.base import Dataset
 from evalhub.inference.schemas import (
     GenerationConfig,
     GenerationResult,
-    OpenAIClient,
 )
 from evalhub.utils.logger import logger
 from evalhub.utils.pbar import get_progress_bar
+
+
+def truncate(text: str, max_tokens: int = 1024) -> str:
+    r"""Truncate text to max_tokens."""
+    return text[: max_tokens // 2] + "\n...[truncated]...\n" + text[-max_tokens // 2 :]
 
 
 class ProgressTracker:
@@ -52,7 +60,7 @@ class LLMGenerator:
 
     def __init__(self, config: GenerationConfig, system_prompt: str | None = None) -> None:
         self.config = config
-        self.client = OpenAIClient(config)
+        self.client = AsyncOpenAI(base_url=config.base_url, api_key=config.api_key)
         self.system_prompt = system_prompt
 
     def _build_messages(self, prompt: str) -> list[dict[str, str]]:
@@ -66,27 +74,47 @@ class LLMGenerator:
             messages = [{"role": "user", "content": prompt}]
         return messages
 
+    async def complete(
+        self, messages: list[dict[str, str]], tools: list[dict[str, str]] | None = None
+    ) -> ChatCompletion | None:
+        try:
+            params = asdict(self.config.sample_params)
+            if tools:
+                params["tools"] = tools
+            if self.config.chat:
+                response = await self.client.chat.completions.create(messages=messages, **params)
+                if response.choices[0].finish_reason == "length":
+                    logger.warning(
+                        f"Max tokens exceeded:\n{truncate(response.choices[0].message.content)}"
+                    )
+            else:
+                response = await self.client.completions.create(prompt=messages, **params)
+            return response
+        except Exception as e:
+            logger.error(f"API call failed: {str(e)}")
+            return None
+
     async def _generate_single_sample(
-        self, task_id: str, prompt: str, sample_id: int
-    ) -> tuple[str, int, dict[str, str] | None]:
+        self, task_id: str, sample_id: str, prompt: str, metadata: dict | None = None
+    ) -> tuple[str, str, dict[str, str] | None]:
         r"""Generate a single sample with enhanced error handling."""
         messages = self._build_messages(prompt)
         try:
-            response = await self.client.complete(messages)
-            return (task_id, sample_id, response)
+            response = await self.complete(messages)
+            return (task_id, sample_id, response.model_dump())
         except Exception as e:
             logger.error(f"Error processing task {task_id} sample {sample_id}: {str(e)}")
             return (task_id, sample_id, None)
 
     async def generate_async(self, dataset: Dataset) -> list[GenerationResult]:
         r"""Generate responses asynchronously with optimized performance."""
-        tasks_list = list(dataset.tasks.values())
+        tasks_list = list(dataset.tasks.values())[:8]
         total_tasks = len(tasks_list)
         total_samples = total_tasks * self.config.n_samples
         results: dict[str, list[str]] = {task.task_id: [] for task in tasks_list}
 
         coroutines = [
-            self._generate_single_sample(task.task_id, task.prompt, sample_id)
+            self._generate_single_sample(task.task_id, str(sample_id), task.prompt, task.metadata)
             for task in tasks_list
             for sample_id in range(self.config.n_samples)
         ]
