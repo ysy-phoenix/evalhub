@@ -32,6 +32,8 @@ class Task:
             self.prompt += "\n"
         if not self.sys_prompt:
             self.sys_prompt = None
+        if self.metadata is None:
+            self.metadata = {}
 
 
 @dataclass
