@@ -44,6 +44,8 @@ class MiniProblem:
     question_content: str
     question_id: str
     starter_code: str
+    public_test_cases: list[Test]
+    metadata: dict
 
 
 @dataclass
@@ -153,6 +155,8 @@ def load_mini_problems(meta_data: dict) -> list[MiniProblem]:
             question_content=p["question_content"],
             question_id=p["question_id"],
             starter_code=p["starter_code"],
+            public_test_cases=[Test(**t) for t in orjson.loads(p["public_test_cases"])],
+            metadata=orjson.loads(p["metadata"]),
         )
         for p in dataset
     ]

@@ -14,6 +14,7 @@ from evalhub.benchmarks.base import Task
 from evalhub.benchmarks.code.base import CodeDataset
 from evalhub.benchmarks.code.livecodebench.code_generation import (
     CodeGenerationProblem,
+    MiniProblem,
     load_code_generation_dataset,
     load_mini_problems,
 )
@@ -85,6 +86,16 @@ class LiveCodeBenchDataset(CodeDataset):
         r"""Get system prompt for the dataset."""
         return SYSTEM_MESSAGE_GENERIC
 
+    def build_test_cases(self, problem: MiniProblem) -> str:
+        r"""Build test cases for the problem."""
+        return json.dumps(
+            {
+                "inputs": [test.input for test in problem.public_test_cases],
+                "outputs": [test.output for test in problem.public_test_cases],
+                "fn_name": problem.metadata.get("func_name", None),
+            }
+        )
+
     def load_tasks(self):
         r"""Load tasks from LiveCodeBench dataset with caching support."""
         problems = load_mini_problems(meta_data=self.meta_data)
@@ -93,10 +104,8 @@ class LiveCodeBenchDataset(CodeDataset):
                 task_id=problem.question_id,
                 prompt=self.format_prompt(problem),
                 metadata={
-                    "tools": {
-                        "code_interpreter": {
-                            "create_kwargs": {"ground_truth": None},
-                        },
+                    "callback": {
+                        "create_kwargs": {"test_cases": self.build_test_cases(problem)},
                     },
                 },
             )

@@ -69,10 +69,10 @@ docker exec -it bcb-eval bash
 python3 -m bigcodebench.evaluate -execution local --split instruct --subset full --samples /app/data/bigcodebench.jsonl
 ```
 
-### multi-turn & tool call
+### multi-turn & tool call or callback
 
+#### gsm8k with tool call
 ```bash
-# gsm8k
 temperature=0.6
 top_p=0.95
 max_tokens=4096
@@ -80,4 +80,17 @@ tool_config_path="$HOME/projects/evalhub/evalhub/tools/config/gsm8k_tool_config.
 system_prompt="You are a math expert. You are given a question and you need to solve it step by step. Reasoning step by step before any tool call. You should use the \`calc_gsm8k_reward\` tool after step by step solving the question, before generate final answer at least once and refine your answer if necessary."
 
 evalhub run --model "$HOME/models/Qwen2.5-7B-Instruct" --tasks gsm8k --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ -p max_tokens=$max_tokens -p temperature=$temperature -p top_p=$top_p -p tool_config_path=$tool_config_path --enable-multiturn --system-prompt "$system_prompt"
+```
+
+#### livecodebench with callback
+```bash
+temperature=0.6
+top_p=0.95
+max_tokens=4096
+system_prompt="You are an expert Python programmer. \
+You will be given a question (problem specification) and \
+will generate a correct Python program that matches the specification and passes all tests. \
+We will provide you with feedback of public test cases results to help you improve your code."
+
+evalhub run --model "$HOME/models/Qwen2.5-7B-Instruct" --tasks livecodebench --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ -p max_tokens=$max_tokens -p temperature=$temperature -p top_p=$top_p  --enable-multiturn --system-prompt "$system_prompt" -p callback="evalhub.callback.code_callback.CodeCallback"
 ```
