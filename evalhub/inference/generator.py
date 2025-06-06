@@ -108,7 +108,7 @@ class LLMGenerator:
 
     async def generate_async(self, dataset: Dataset) -> list[GenerationResult]:
         r"""Generate responses asynchronously with optimized performance."""
-        tasks_list = list(dataset.tasks.values())[:10]
+        tasks_list = list(dataset.tasks.values())
         total_tasks = len(tasks_list)
         total_samples = total_tasks * self.config.n_samples
         results: dict[str, list[str]] = {task.task_id: [] for task in tasks_list}

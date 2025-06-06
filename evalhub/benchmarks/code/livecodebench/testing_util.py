@@ -16,6 +16,7 @@ from io import StringIO
 
 # from pyext import RuntimeModule
 from types import ModuleType
+from typing import Any
 
 # used for testing the code that reads from input
 from unittest.mock import mock_open, patch
@@ -61,10 +62,8 @@ import_string = (
 )
 
 
-def truncatefn(s, length=300):
-    if isinstance(s, str):
-        pass
-    else:
+def truncatefn(s: Any, length: int = 300) -> str:
+    if not isinstance(s, str):
         s = str(s)
     if len(s) <= length:
         return s
@@ -102,6 +101,39 @@ class Capturing(list):
         self.append(self._stringio.getvalue())
         del self._stringio  # free up some memory
         sys.stdout = self._stdout
+
+
+# Custom mock for sys.stdin that supports buffer attribute
+class MockStdinWithBuffer:
+    def __init__(self, inputs: str):
+        self.inputs = inputs
+        self._stringio = StringIO(inputs)
+        self.buffer = MockBuffer(inputs)
+
+    def read(self, *args):
+        return self.inputs
+
+    def readline(self, *args):
+        return self._stringio.readline(*args)
+
+    def readlines(self, *args):
+        return self.inputs.split("\n")
+
+    def __getattr__(self, name):
+        # Delegate other attributes to StringIO
+        return getattr(self._stringio, name)
+
+
+class MockBuffer:
+    def __init__(self, inputs: str):
+        self.inputs = inputs.encode("utf-8")  # Convert to bytes
+
+    def read(self, *args):
+        # Return as byte strings that can be split
+        return self.inputs
+
+    def readline(self, *args):
+        return self.inputs.split(b"\n")[0] + b"\n"
 
 
 def clean_if_name(code: str) -> str:
@@ -156,11 +188,14 @@ def call_method(method, inputs):
 
     inputs_line_iterator = iter(inputs.split("\n"))
 
+    # Create custom stdin mock with buffer support
+    mock_stdin = MockStdinWithBuffer(inputs)
+
     # sys.setrecursionlimit(10000)
 
     # @patch('builtins.input', side_effect=inputs.split("\n"))
     @patch("builtins.open", mock_open(read_data=inputs))
-    @patch("sys.stdin", StringIO(inputs))
+    @patch("sys.stdin", mock_stdin)  # Use our custom mock instead of StringIO
     @patch("sys.stdin.readline", lambda *args: next(inputs_line_iterator))
     @patch("sys.stdin.readlines", lambda *args: inputs.split("\n"))
     @patch("sys.stdin.read", lambda *args: inputs)
@@ -518,7 +553,7 @@ def reliability_guard(maximum_memory_bytes=None):
 
     import builtins
 
-    builtins.exit = None
+    # builtins.exit = None
     builtins.quit = None
 
     import os

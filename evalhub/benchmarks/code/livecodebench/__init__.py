@@ -318,8 +318,8 @@ class LiveCodeBenchDataset(CodeDataset):
 
         assert len(custom_outputs) == len(benchmark), f"{len(custom_outputs)} != {len(benchmark)}"
 
-        eval_samples = [instance.get_evaluation_sample() for instance in benchmark]
-        generations = [
+        eval_samples: list[dict] = [instance.get_evaluation_sample() for instance in benchmark]
+        generations: list[list[str]] = [
             [output["solution"] for output in custom_outputs[instance.question_id]]
             for instance in benchmark
         ]
