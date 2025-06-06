@@ -92,6 +92,13 @@ class LiveCodeBenchDataset(CodeDataset):
             task = Task(
                 task_id=problem.question_id,
                 prompt=self.format_prompt(problem),
+                metadata={
+                    "tools": {
+                        "code_interpreter": {
+                            "create_kwargs": {"ground_truth": None},
+                        },
+                    },
+                },
             )
             self.add_task(task)
 

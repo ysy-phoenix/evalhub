@@ -3,11 +3,10 @@ import importlib.util
 import json
 import sys
 from collections import defaultdict
-from collections.abc import Callable
 from pathlib import Path
 
 from omegaconf import OmegaConf
-from transformers import AutoTokenizer
+from openai.types.chat.chat_completion_message import ChatCompletionMessage
 
 from evalhub.inference.generator import LLMGenerator
 from evalhub.inference.schemas import GenerationConfig
@@ -17,13 +16,16 @@ from evalhub.tools.base_tool import BaseTool
 class MultiTurnGenerator(LLMGenerator):
     def __init__(self, config: GenerationConfig, system_prompt: str | None = None) -> None:
         super().__init__(config, system_prompt)
-        self.tokenizer = AutoTokenizer.from_pretrained(config.sample_params.model)
         self._initialize_tools(config.tool_config_path)
 
-    def _initialize_tools(self, tool_config_path: Path) -> None:
-        tools_config = OmegaConf.load(tool_config_path)
-        self.available_tools = defaultdict(Callable)
+    def _initialize_tools(self, tool_config_path: Path | None = None) -> None:
+        self.available_tools = defaultdict(BaseTool)
         self.tool_schemas: list[dict] = []
+
+        if tool_config_path is None:
+            return
+
+        tools_config = OmegaConf.load(tool_config_path)
         for tool_config in tools_config.tools:
             cls_name = tool_config.class_name
             module_name, class_name = cls_name.rsplit(".", 1)
@@ -53,6 +55,32 @@ class MultiTurnGenerator(LLMGenerator):
                 return response
         return None
 
+    async def _handle_tool_call(
+        self, messages: list, message: ChatCompletionMessage, instance_id: str
+    ):
+        tool_call_routines = []
+        for tool_call in message.tool_calls:
+            tool_name = tool_call.function.name
+            arguments = tool_call.function.arguments
+            while isinstance(arguments, str):
+                try:
+                    arguments = json.loads(arguments)
+                except json.JSONDecodeError:
+                    arguments = arguments
+            tool_call_routines.append(
+                self.available_tools[tool_name].execute(instance_id, arguments)
+            )
+        results = await asyncio.gather(*tool_call_routines)
+        for tool_call, result in zip(message.tool_calls, results, strict=False):
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": result,
+                    "name": tool_call.function.name,
+                }
+            )
+
     async def _generate_single_sample(
         self, task_id: str, sample_id: str, prompt: str, metadata: dict | None = None
     ) -> tuple[str, str, dict[str, str] | None]:
@@ -74,26 +102,9 @@ class MultiTurnGenerator(LLMGenerator):
             message = response.choices[0].message
             messages.append(message)
 
+            # tool call handler
             if message.tool_calls:
-                tool_call_routines = []
-                for tool_call in message.tool_calls:
-                    tool_name = tool_call.function.name
-                    arguments = tool_call.function.arguments
-                    while isinstance(arguments, str):
-                        arguments = json.loads(arguments)
-                    tool_call_routines.append(
-                        self.available_tools[tool_name].execute(instance_id, arguments)
-                    )
-                results = await asyncio.gather(*tool_call_routines)
-                for tool_call, result in zip(message.tool_calls, results, strict=False):
-                    messages.append(
-                        {
-                            "role": "tool",
-                            "tool_call_id": tool_call.id,
-                            "content": result,
-                            "name": tool_call.function.name,
-                        }
-                    )
+                await self._handle_tool_call(messages, message, instance_id)
             else:
                 break
 
@@ -103,7 +114,7 @@ class MultiTurnGenerator(LLMGenerator):
             tool_release_coroutines.append(tool.release(instance_id))
         rewards = await asyncio.gather(*tool_release_coroutines)
 
-        response = response.model_dump()
+        response = response.model_dump() if response is not None else {}
         response["messages"] = [m if isinstance(m, dict) else m.model_dump() for m in messages]
         response["reward"] = dict(zip(self.available_tools.keys(), rewards, strict=False))
 
