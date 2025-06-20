@@ -33,7 +33,7 @@ from evalhub.utils.logger import logger
 from evalhub.utils.pbar import get_progress_bar
 
 LIVECODEBENCH_META_DATA = {
-    "release_version": "release_latest",
+    "release_version": "v5_v6",
     "start_date": "2024-08-00T00:00:00",
     "end_date": "2025-01-00T00:00:00",
 }
@@ -125,6 +125,8 @@ class LiveCodeBenchDataset(CodeDataset):
 
     def extract_solution(self, task_id: str, response: str) -> str:
         r"""Extract the code from the response."""
+        if "</think>" in response:
+            response = response.split("</think>")[-1]
         if response.count("```") == 2:
             return extract_livecodebench_code(response)
         else:

@@ -1,7 +1,8 @@
 import asyncio
+import json
 from dataclasses import asdict
 
-from openai import AsyncOpenAI
+import aiohttp
 from openai.types.chat.chat_completion import ChatCompletion
 
 from evalhub.benchmarks.base import Dataset
@@ -60,7 +61,6 @@ class LLMGenerator:
 
     def __init__(self, config: GenerationConfig, system_prompt: str | None = None) -> None:
         self.config = config
-        self.client = AsyncOpenAI(base_url=config.base_url, api_key=config.api_key)
         self.system_prompt = system_prompt
 
     def _build_messages(self, prompt: str) -> list[dict[str, str]]:
@@ -74,6 +74,18 @@ class LLMGenerator:
             messages = [{"role": "user", "content": prompt}]
         return messages
 
+    async def _create_session(self):
+        timeout = aiohttp.ClientTimeout(total=None)
+        connector = aiohttp.TCPConnector(limit=0)
+        self._session = aiohttp.ClientSession(
+            timeout=timeout,
+            connector=connector,
+            headers={"Authorization": f"Bearer {self.config.api_key}"},
+        )
+
+    async def _close_session(self):
+        await self._session.close()
+
     async def complete(
         self, messages: list[dict[str, str]], tools: list[dict[str, str]] | None = None
     ) -> ChatCompletion | None:
@@ -82,13 +94,16 @@ class LLMGenerator:
             if tools:
                 params["tools"] = tools
             if self.config.chat:
-                response = await self.client.chat.completions.create(messages=messages, **params)
+                async with self._session.post(
+                    url=f"{self.config.base_url}/chat/completions",
+                    json={"messages": messages, **params},
+                ) as resp:
+                    data = await resp.read()
+                    response = ChatCompletion(**json.loads(data))
                 if response.choices[0].finish_reason == "length":
                     logger.warning(
                         f"Max tokens exceeded:\n{truncate(response.choices[0].message.content)}"
                     )
-            else:
-                response = await self.client.completions.create(prompt=messages, **params)
             return response
         except Exception as e:
             logger.error(f"API call failed: {str(e)}")
@@ -108,6 +123,7 @@ class LLMGenerator:
 
     async def generate_async(self, dataset: Dataset) -> list[GenerationResult]:
         r"""Generate responses asynchronously with optimized performance."""
+        await self._create_session()
         tasks_list = list(dataset.tasks.values())
         total_tasks = len(tasks_list)
         total_samples = total_tasks * self.config.n_samples
@@ -119,7 +135,7 @@ class LLMGenerator:
             for sample_id in range(self.config.n_samples)
         ]
 
-        optimal_workers = min(len(coroutines), self.config.num_workers, 1024)
+        optimal_workers = min(len(coroutines), self.config.num_workers)
         semaphore = asyncio.Semaphore(optimal_workers)
 
         async def bounded_task(coro):
@@ -143,6 +159,8 @@ class LLMGenerator:
                     if response:
                         results[task_id].append(response)
                         tracker.update_task_progress(task_id, len(results[task_id]))
+
+        await self._close_session()
 
         return [
             GenerationResult(task_id=task_id, responses=responses)

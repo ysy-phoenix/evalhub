@@ -19,7 +19,7 @@ sys.set_int_max_str_digits(50000)
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-DEFAULT_K_LIST = [1, 5, 10, 20, 40, 50, 75, 100, 125, 150, 200, 500, 1000]
+DEFAULT_K_LIST = [2**i for i in range(11)]
 GLOBAL_TIMEOUT = 180
 
 
