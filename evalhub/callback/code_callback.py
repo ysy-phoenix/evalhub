@@ -15,6 +15,15 @@ EMPTY_TEST_CASES = [
 ]
 
 
+def truncate_output(output: str | None, max_length: int = 512) -> str | None:
+    if output is None:
+        return None
+    if len(output) <= max_length:
+        return output
+    else:
+        return output[: max_length // 2] + "[... truncated ...]" + output[-max_length // 2 :]
+
+
 def extract_solution(response: str) -> str:
     r"""Extract the code from the response."""
     if response.count("```") == 2:
@@ -40,39 +49,41 @@ class CodeCallback(BaseCallback):
         return instance_id
 
     async def check(self, instance_id: str, response: str, **kwargs) -> bool:
-        return self.instances[instance_id]["status"] != "accepted"
+        return self.instances[instance_id]["status"] == "accepted"
 
     async def execute(self, instance_id: str, response: str, **kwargs) -> str:
         try:
             code = extract_solution(response)
             self.instances[instance_id]["code"] = code
             result = await self.submit(instance_id)
-
-            metadata: dict = result.get("metadata", {})
-            passed: int = metadata.get("passed", 0)
-            total: int = metadata.get("total", 0)
+            metadata: dict = result.get("metadata", None)
             status: str = result.get("status", None)
             self.instances[instance_id]["status"] = status
-            message = ""
             if status == "accepted":
-                message = "All public test cases passed."
+                self.instances[instance_id]["reward"] = 1
+                return "All public test cases passed."
+
+            msg = ""
+            if metadata is not None:
+                passed = metadata.get("passed", 0)
+                total = metadata.get("total", 0)
+                msg = f"Passed {passed} out of {total} public test cases.\n"
+                msg += "Detail of first failed test case:\n"
+                test_case_results = result.get("test_case_results", [])
+                if test_case_results is not None and len(test_case_results) > 0:
+                    msg += f"Input:\n{truncate_output(test_case_results[0].get('input', ''))}\n"
+                    msg += (
+                        f"Expected:\n{truncate_output(test_case_results[0].get('expected', ''))}\n"
+                    )
+                    msg += f"Actual:\n{truncate_output(test_case_results[0].get('actual', ''))}\n"
+                msg += f"Error message:\n{truncate_output(result.get('error_message', ''))}\n"
+                self.instances[instance_id]["reward"] += passed / total if total > 0 else 0
             else:
-                message += f"Passed {passed} out of {total} public test cases.\n"
-                test_case_results = result.get("test_case_results", [{}])
-                for i, test_case_result in enumerate(test_case_results):
-                    if test_case_result.get("status", None) != "accepted":
-                        message += f"Detail of test case {i + 1}:\n"
-                        inp = self.instances[instance_id]["test_cases"]["inputs"][i]
-                        expected_output = self.instances[instance_id]["test_cases"]["outputs"][i]
-                        actual_output = test_case_result.get("actual_output", "")
-                        error_message = test_case_result.get("error_message", "")
-                        message += (
-                            f"Input:\n{inp}\nExpected output:\n{expected_output}\n"
-                            f"Actual output:\n{actual_output}\nError message:\n{error_message}\n"
-                        )
-                        break
-            self.instances[instance_id]["reward"] += passed / total
-            return message
+                msg = "Code block execution failed.\n"
+                msg += f"Error message:\n{truncate_output(result.get('error_message', ''))}\n"
+                self.instances[instance_id]["reward"] = 0
+
+            return msg
         except Exception as e:
             import traceback
 

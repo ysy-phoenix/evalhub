@@ -13,6 +13,8 @@ from evalhub.inference.schemas import (
 from evalhub.utils.logger import logger
 from evalhub.utils.pbar import get_progress_bar
 
+MAX_RETRIES = 3
+
 
 def truncate(text: str, max_tokens: int = 1024) -> str:
     r"""Truncate text to max_tokens."""
@@ -101,11 +103,12 @@ class LLMGenerator:
                     data = await resp.read()
                     response = ChatCompletion(**json.loads(data))
                 if response.choices[0].finish_reason == "length":
-                    logger.warning(
-                        f"Max tokens exceeded:\n{truncate(response.choices[0].message.content)}"
-                    )
+                    logger.warning("Max tokens exceeded!")
             return response
         except Exception as e:
+            import traceback
+
+            traceback.print_exc()
             logger.error(f"API call failed: {str(e)}")
             return None
 
@@ -115,7 +118,10 @@ class LLMGenerator:
         r"""Generate a single sample with enhanced error handling."""
         messages = self._build_messages(prompt)
         try:
-            response = await self.complete(messages)
+            for _ in range(MAX_RETRIES):
+                response = await self.complete(messages)
+                if response is not None:
+                    break
             return (task_id, sample_id, response.model_dump())
         except Exception as e:
             logger.error(f"Error processing task {task_id} sample {sample_id}: {str(e)}")

@@ -154,22 +154,29 @@ class MultiTurnGenerator(LLMGenerator):
                 break
 
             message = response.choices[0].message
-            messages.append(message)
+            messages.append({"role": "assistant", "content": message.content})
+            content = message.content
+
+            # Reached max tokens
+            if response.choices[0].finish_reason == "length":
+                break
 
             # tool call handler
             if message.tool_calls:
                 await self._handle_tool_call(messages, message, instance_id)
-            elif self.callback is not None and await self.callback.check(
-                instance_id, message.content
-            ):
+            elif self.callback is not None:
                 await self._handle_callback(messages, message, instance_id)
             else:
+                break
+
+            if self.callback is not None and await self.callback.check(instance_id, content):
                 break
 
         rewards = await self._postprocess(instance_id)
 
         response = response.model_dump() if response is not None else {}
         response["messages"] = [m if isinstance(m, dict) else m.model_dump() for m in messages]
+        response["content"] = content
         response["reward"] = dict(zip(self.available_tools.keys(), rewards, strict=False))
 
         return task_id, sample_id, response
