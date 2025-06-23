@@ -35,7 +35,8 @@ def cli():
     multiple=True,
     help="Additional sampling parameters in format: key=value",
 )
-def run(model, tasks, output_dir, sampling_param, system_prompt, enable_multiturn):
+@click.option("--resume", is_flag=True, help="Resume generation from existing results")
+def run(model, tasks, output_dir, sampling_param, system_prompt, enable_multiturn, resume):
     r"""Run evaluation on a model with specified dataset."""
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     sampling_params = parse_sampling_params(sampling_param)
@@ -46,7 +47,7 @@ def run(model, tasks, output_dir, sampling_param, system_prompt, enable_multitur
     # Execute generation with model parameters
     for task in tasks.split(","):
         console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
-        gen(model, task, output_dir, sampling_params, system_prompt, enable_multiturn)
+        gen(model, task, output_dir, sampling_params, system_prompt, enable_multiturn, resume)
 
 
 @cli.command()

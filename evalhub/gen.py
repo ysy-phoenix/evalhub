@@ -38,6 +38,7 @@ def gen(
     sampling_params: dict,
     system_prompt: str | None = None,
     enable_multiturn: bool = False,
+    resume: bool = False,
 ) -> None:
     r"""Generate results for a given model and dataset."""
     assert ds_name in DATASET_MAP, f"Dataset {ds_name} not supported for generation"
@@ -63,7 +64,9 @@ def gen(
         generator = MultiTurnGenerator(dataset.config, system_prompt)
     else:
         generator = LLMGenerator(dataset.config, system_prompt)
-    results = generator.generate(dataset)
+    if resume:
+        logger.info(f"Resuming generation from {output_dir}")
+    results = generator.generate(dataset, output_dir, resume)
     raw_path, save_path = dataset.save(results, output_dir)
     logger.info(f"Raw results saved to {raw_path}")
     logger.info(f"Solutions saved to {save_path}")

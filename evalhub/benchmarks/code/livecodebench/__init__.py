@@ -322,12 +322,15 @@ class LiveCodeBenchDataset(CodeDataset):
             for line in f:
                 sample = orjson.loads(line)
                 custom_outputs[sample["task_id"]].append(sample)
+        logger.info(f"Loaded {sum(len(res) for res in custom_outputs.values())} responses")
 
         benchmark = load_code_generation_dataset(meta_data=self.meta_data)
         benchmark = [problem for problem in benchmark if problem.question_id in custom_outputs]
         logger.info(f"Loaded {len(benchmark)} problems")
 
         assert len(custom_outputs) == len(benchmark), f"{len(custom_outputs)} != {len(benchmark)}"
+        lengths = {len(res) for res in custom_outputs.values()}
+        assert len(lengths) == 1, f"Number of responses for each task should be the same: {lengths}"
 
         eval_samples: list[dict] = [instance.get_evaluation_sample() for instance in benchmark]
         generations: list[list[str]] = [

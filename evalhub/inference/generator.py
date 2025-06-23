@@ -1,8 +1,12 @@
 import asyncio
 import json
+from collections import defaultdict
 from dataclasses import asdict
+from os import PathLike
+from pathlib import Path
 
 import aiohttp
+import orjson
 from openai.types.chat.chat_completion import ChatCompletion
 
 from evalhub.benchmarks.base import Dataset
@@ -127,19 +131,30 @@ class LLMGenerator:
             logger.error(f"Error processing task {task_id} sample {sample_id}: {str(e)}")
             return (task_id, sample_id, None)
 
-    async def generate_async(self, dataset: Dataset) -> list[GenerationResult]:
+    async def generate_async(
+        self, dataset: Dataset, output_dir: PathLike, resume: bool = False
+    ) -> list[GenerationResult]:
         r"""Generate responses asynchronously with optimized performance."""
         await self._create_session()
-        tasks_list = list(dataset.tasks.values())
-        total_tasks = len(tasks_list)
-        total_samples = total_tasks * self.config.n_samples
-        results: dict[str, list[str]] = {task.task_id: [] for task in tasks_list}
+        task_ids, tasks_list = list(dataset.tasks.keys()), list(dataset.tasks.values())
+        results: dict[str, list[dict[str, str]]] = {task_id: [] for task_id in task_ids}
+
+        if resume:
+            results = self.load_results(dataset, output_dir)
+            resume_tasks = defaultdict(int)
+            for task_id in task_ids:
+                exist = len(results[task_id]) if task_id in results else 0
+                resume_tasks[task_id] = max(self.config.n_samples - exist, 0)
+        else:
+            resume_tasks = dict.fromkeys(task_ids, self.config.n_samples)
 
         coroutines = [
             self._generate_single_sample(task.task_id, str(sample_id), task.prompt, task.metadata)
             for task in tasks_list
-            for sample_id in range(self.config.n_samples)
+            for sample_id in range(resume_tasks[task.task_id])
         ]
+        total_tasks = sum(1 if resume_tasks[task_id] > 0 else 0 for task_id in task_ids)
+        total_samples = sum(resume_tasks.values())
 
         optimal_workers = min(len(coroutines), self.config.num_workers)
         semaphore = asyncio.Semaphore(optimal_workers)
@@ -161,7 +176,6 @@ class LLMGenerator:
 
                 if task_id is not None:  # Skip timed out tasks
                     tracker.update_sample_progress()
-
                     if response:
                         results[task_id].append(response)
                         tracker.update_task_progress(task_id, len(results[task_id]))
@@ -173,6 +187,23 @@ class LLMGenerator:
             for task_id, responses in sorted(results.items())
         ]
 
-    def generate(self, dataset: Dataset) -> list[GenerationResult]:
+    def generate(
+        self, dataset: Dataset, output_dir: PathLike, resume: bool = False
+    ) -> list[GenerationResult]:
         r"""Synchronous API."""
-        return asyncio.run(self.generate_async(dataset))
+        return asyncio.run(self.generate_async(dataset, output_dir, resume))
+
+    def load_results(
+        self, dataset: Dataset, output_dir: PathLike
+    ) -> dict[str, list[dict[str, str]]]:
+        r"""Load results from a file."""
+        output_dir = Path(output_dir)
+        output_dir.mkdir(exist_ok=True, parents=True)
+        raw_path = output_dir / f"{dataset.name}_raw.jsonl"
+        results = defaultdict(list)
+        with open(raw_path, "rb") as f:
+            for line in f:
+                data = orjson.loads(line)
+                results[data["task_id"]].append(data["response"])
+        logger.info(f"Loaded {sum(len(res) for res in results.values())} responses")
+        return results
