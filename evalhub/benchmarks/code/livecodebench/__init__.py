@@ -33,9 +33,9 @@ from evalhub.utils.logger import logger
 from evalhub.utils.pbar import get_progress_bar
 
 LIVECODEBENCH_META_DATA = {
-    "release_version": "v5_v6",
-    "start_date": "2024-08-00T00:00:00",
-    "end_date": "2025-01-00T00:00:00",
+    "release_version": "v4_v5",
+    "start_date": None,  # "2024-08-00T00:00:00",
+    "end_date": None,  # "2025-01-00T00:00:00",
 }
 DEFAULT_TIME_LIMIT = 10
 DEFAULT_MEMORY_LIMIT = 4 * 1024

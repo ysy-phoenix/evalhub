@@ -9,6 +9,7 @@ import sympy
 from pylatexenc import latex2text
 from sympy.parsing import sympy_parser
 
+from evalhub.benchmarks.math.verifier import verify_dapo
 from evalhub.utils.logger import logger
 
 
@@ -514,11 +515,11 @@ def extract_answer(passage: str) -> str:
         passage = passage.split("</think>")[-1]
     if "\\boxed" in passage:
         return extract_boxed_answer(passage)
-    return passage
+    return passage[:-300]  # Limit solution length for efficiency
 
 
 def grade_answer(given_answer: str, ground_truth: str) -> bool:
     r"""Grade the answer."""
-    if grade_answer_mathd(given_answer, ground_truth):
-        return True
-    return grade_answer_sympy(given_answer, ground_truth)
+    return any(
+        verifier(given_answer, ground_truth) for verifier in [verify_dapo, grade_answer_mathd, grade_answer_sympy]
+    )

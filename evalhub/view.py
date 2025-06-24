@@ -12,6 +12,12 @@ from rich.table import Table
 console = Console()
 
 
+def truncate_text(text: str, max_length: int = 32) -> str:
+    if len(text) <= max_length:
+        return text
+    return text[: max_length // 2] + "..." + text[-max_length // 2 :]
+
+
 def display_math_results(
     results_path: Path,
     max_display: int | None = -1,
@@ -25,7 +31,7 @@ def display_math_results(
     with open(results_path, "rb") as f:
         for line in f:
             result = orjson.loads(line)
-            if false_only and result.get("pass_at_k", {}).get("1", 0) == 1.0:
+            if false_only and result.get("pass_at_k", {}).get("1", 0) > 0.0:
                 continue
             rprint(
                 Panel.fit(
@@ -49,7 +55,7 @@ def display_math_results(
 
             rprint(
                 Panel.fit(
-                    f"[bold]Extracted Answers:[/]\n{result['solutions']}",
+                    f"[bold]Extracted Answers:[/]\n{list(map(truncate_text, result['solutions']))}",
                     title="Model Answers",
                     border_style="blue",
                 )

@@ -25,8 +25,9 @@ class SampleParams:
     r"""Parameters related to model sampling behavior."""
 
     model: str = "Qwen/Qwen2.5-Coder7B-Instruct"
-    temperature: float = 0.2
+    temperature: float = 0.6
     top_p: float = 0.95
+    top_k: int = 20
     max_tokens: int = 2048
     frequency_penalty: float = 0
     presence_penalty: float = 0

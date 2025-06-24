@@ -9,7 +9,7 @@ from rich.progress import track
 from rich.table import Table
 
 CODE_TASKS = ["humaneval", "mbpp", "livecodebench", "bigcodebench"]
-MATH_TASKS = ["gsm8k", "hendrycks_math", "aime2024", "math500", "gpqa"]
+MATH_TASKS = ["gsm8k", "hendrycks_math", "aime2024", "aime2025", "math500", "gpqa"]
 INCLUDED_TASKS = CODE_TASKS + MATH_TASKS
 
 
