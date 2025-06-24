@@ -39,12 +39,8 @@ class ProgressTracker:
 
     def __enter__(self):
         self.progress.__enter__()
-        self.sample_progress = self.progress.add_task(
-            "[bold blue]Generating samples", total=self.total_samples
-        )
-        self.task_progress = self.progress.add_task(
-            "[bold blue]Completing tasks", total=self.total_tasks
-        )
+        self.sample_progress = self.progress.add_task("[bold blue]Generating samples", total=self.total_samples)
+        self.task_progress = self.progress.add_task("[bold blue]Completing tasks", total=self.total_tasks)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -183,19 +179,14 @@ class LLMGenerator:
         await self._close_session()
 
         return [
-            GenerationResult(task_id=task_id, responses=responses)
-            for task_id, responses in sorted(results.items())
+            GenerationResult(task_id=task_id, responses=responses) for task_id, responses in sorted(results.items())
         ]
 
-    def generate(
-        self, dataset: Dataset, output_dir: PathLike, resume: bool = False
-    ) -> list[GenerationResult]:
+    def generate(self, dataset: Dataset, output_dir: PathLike, resume: bool = False) -> list[GenerationResult]:
         r"""Synchronous API."""
         return asyncio.run(self.generate_async(dataset, output_dir, resume))
 
-    def load_results(
-        self, dataset: Dataset, output_dir: PathLike
-    ) -> dict[str, list[dict[str, str]]]:
+    def load_results(self, dataset: Dataset, output_dir: PathLike) -> dict[str, list[dict[str, str]]]:
         r"""Load results from a file."""
         output_dir = Path(output_dir)
         output_dir.mkdir(exist_ok=True, parents=True)

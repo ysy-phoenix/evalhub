@@ -70,15 +70,11 @@ FORMATTING_WITHOUT_STARTER_CODE = (
 class LiveCodeBenchDataset(CodeDataset):
     r"""Dataset class for LiveCodeBench code generation benchmark."""
 
-    def __init__(
-        self, name: str = "livecodebench", meta_data: dict[str, Any] = LIVECODEBENCH_META_DATA
-    ):
+    def __init__(self, name: str = "livecodebench", meta_data: dict[str, Any] = LIVECODEBENCH_META_DATA):
         super().__init__(name, meta_data=meta_data)
         for key, value in LIVECODEBENCH_CONFIG.items():
             self.config[key] = value
-        self.cache_dir = Path(
-            os.environ.get("EVALHUB_CACHE_DIR", Path.home() / ".cache" / "evalhub")
-        )
+        self.cache_dir = Path(os.environ.get("EVALHUB_CACHE_DIR", Path.home() / ".cache" / "evalhub"))
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     @property
@@ -143,16 +139,11 @@ class LiveCodeBenchDataset(CodeDataset):
                 outputs = input_output["outputs"]
                 if input_output.get("fn_name", None) is not None:
                     mode = "leetcode"
-                    inputs = [
-                        [json.loads(line) for line in inputs.split("\n")] for inputs in inputs
-                    ]
+                    inputs = [[json.loads(line) for line in inputs.split("\n")] for inputs in inputs]
                     outputs = [json.loads(output) for output in outputs]
                 else:
                     mode = "acm"
-                test_cases = [
-                    {"input": inp, "expected": out}
-                    for inp, out in zip(inputs, outputs, strict=False)
-                ]
+                test_cases = [{"input": inp, "expected": out} for inp, out in zip(inputs, outputs, strict=False)]
                 entry_point = input_output.get("fn_name", None)
                 submission = {
                     "code": solution,
@@ -170,9 +161,7 @@ class LiveCodeBenchDataset(CodeDataset):
         completed = passed = 0
 
         with progress:
-            eval_task = progress.add_task(
-                "[bold blue]Evaluating submissions", total=len(submissions)
-            )
+            eval_task = progress.add_task("[bold blue]Evaluating submissions", total=len(submissions))
 
             semaphore = asyncio.Semaphore(min(16, os.cpu_count()))
 
@@ -208,9 +197,7 @@ class LiveCodeBenchDataset(CodeDataset):
 
         return loop.run_until_complete(self.submit_async(eval_samples, model_outputs))
 
-    def new_evaluate(
-        self, solution: PathLike, output_dir: PathLike, ks: list[int] = DEFAULT_KS
-    ) -> None:
+    def new_evaluate(self, solution: PathLike, output_dir: PathLike, ks: list[int] = DEFAULT_KS) -> None:
         r"""Evaluate solutions using LiveCodeBench's evaluator."""
         # Load model outputs
         model_outputs = defaultdict(list)
@@ -222,17 +209,11 @@ class LiveCodeBenchDataset(CodeDataset):
         # Load benchmark problems
         logger.info("Loading benchmark problems")
         benchmark = load_code_generation_dataset(meta_data=self.meta_data)
-        problems = {
-            instance.question_id: instance
-            for instance in benchmark
-            if instance.question_id in model_outputs
-        }
+        problems = {instance.question_id: instance for instance in benchmark if instance.question_id in model_outputs}
         logger.info(f"Loaded {len(problems)} problems")
 
         # Load eval samples
-        eval_samples = {
-            instance.question_id: instance.get_evaluation_sample() for instance in problems.values()
-        }
+        eval_samples = {instance.question_id: instance.get_evaluation_sample() for instance in problems.values()}
         logger.info(f"Loaded {len(eval_samples)} eval samples")
 
         # Submit solutions
@@ -281,12 +262,8 @@ class LiveCodeBenchDataset(CodeDataset):
             code_list = [model_outputs[id][i] for i in range(len(model_outputs[id]))]
             graded_list = [response["status"] == "accepted" for response in results[id]]
             try:
-                passed += sum(
-                    response.get("metadata", {}).get("passed", 0) for response in results[id]
-                )
-                total += sum(
-                    response.get("metadata", {}).get("total", 0) for response in results[id]
-                )
+                passed += sum(response.get("metadata", {}).get("passed", 0) for response in results[id])
+                total += sum(response.get("metadata", {}).get("total", 0) for response in results[id])
             except Exception as e:
                 logger.error(f"Error processing results for {id}: {e}")
                 passed += 0
@@ -334,8 +311,7 @@ class LiveCodeBenchDataset(CodeDataset):
 
         eval_samples: list[dict] = [instance.get_evaluation_sample() for instance in benchmark]
         generations: list[list[str]] = [
-            [output["solution"] for output in custom_outputs[instance.question_id]]
-            for instance in benchmark
+            [output["solution"] for output in custom_outputs[instance.question_id]] for instance in benchmark
         ]
         metrics, results, metadatas = codegen_metrics(
             eval_samples,
@@ -352,9 +328,7 @@ class LiveCodeBenchDataset(CodeDataset):
                 graded_list,
                 metadata=meta,
             )
-            for instance, code_list, graded_list, meta in zip(
-                benchmark, generations, graded, metadatas, strict=False
-            )
+            for instance, code_list, graded_list, meta in zip(benchmark, generations, graded, metadatas, strict=False)
         ]
 
         # save_eval_results

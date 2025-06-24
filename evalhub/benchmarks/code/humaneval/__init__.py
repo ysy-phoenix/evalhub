@@ -25,9 +25,7 @@ def get_mbpp_entry_point(item: dict) -> str:
     functions = [name for name, _ in getmembers(module, isfunction)]
     functions = [func for func in functions if func in assertion]
     if len(functions) > 1:
-        logger.warning(
-            f"More than one matching function found for task {item['task_id']}: {functions}"
-        )
+        logger.warning(f"More than one matching function found for task {item['task_id']}: {functions}")
     return functions[0] if functions else None
 
 
@@ -48,9 +46,7 @@ class HumanEvalDataset(CodeDataset):
             else:
                 entry_point = item["entry_point"]
             task = Task(
-                task_id=str(item["task_id"])
-                if self.name == "humaneval"
-                else f"Mbpp/{item['task_id']}",
+                task_id=str(item["task_id"]) if self.name == "humaneval" else f"Mbpp/{item['task_id']}",
                 prompt=self.format_prompt(item, "python"),  # TODO: add more languages
                 metadata={"entry_point": entry_point},
             )

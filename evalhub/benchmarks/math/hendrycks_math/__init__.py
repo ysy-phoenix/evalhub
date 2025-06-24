@@ -40,9 +40,7 @@ class HendrycksMathDataset(MathDataset):
     def format_prompt(self, item: dict[str, Any]) -> str:
         r"""Format the prompt for Hendrycks Math task."""
         question = item["problem"].strip()
-        instruction_following = (
-            "Let's think step by step and output the final answer within \\boxed{}."
-        )
+        instruction_following = "Let's think step by step and output the final answer within \\boxed{}."
 
         question += " " + instruction_following
         return question

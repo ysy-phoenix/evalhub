@@ -189,10 +189,7 @@ def _sympy_parse(expr: str):
     py_expr = expr.replace("^", "**")
     return sympy_parser.parse_expr(
         py_expr,
-        transformations=(
-            sympy_parser.standard_transformations
-            + (sympy_parser.implicit_multiplication_application,)
-        ),
+        transformations=(sympy_parser.standard_transformations + (sympy_parser.implicit_multiplication_application,)),
     )
 
 
@@ -385,9 +382,7 @@ def are_equal_under_sympy(ground_truth_normalized: str, given_normalized: str):
             if simplified == 0:
                 are_correct = True
     except Exception as e:
-        logger.debug(
-            f"Failed to check if {ground_truth_normalized} and {given_normalized} are equal"
-        )
+        logger.debug(f"Failed to check if {ground_truth_normalized} and {given_normalized} are equal")
         logger.debug(f"Error: {e}")
     return are_correct
 
@@ -479,8 +474,7 @@ def grade_answer_sympy(given_answer: str, ground_truth: str) -> bool:
     given_elems = split_tuple(given_normalized)
 
     if len(ground_truth_elems) > 1 and (
-        ground_truth_normalized[0] != given_normalized[0]
-        or ground_truth_normalized[-1] != given_normalized[-1]
+        ground_truth_normalized[0] != given_normalized[0] or ground_truth_normalized[-1] != given_normalized[-1]
     ):
         is_correct = False
     elif len(ground_truth_elems) != len(given_elems):

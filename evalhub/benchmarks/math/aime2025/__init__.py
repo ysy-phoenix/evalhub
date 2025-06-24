@@ -24,9 +24,7 @@ class AIME2025Dataset(MathDataset):
     def load_tasks(self):
         r"""Load tasks from AIME2025 dataset."""
         configs = get_dataset_config_names(DATASET_HUB[self.name])
-        all_datasets = [
-            load_dataset(DATASET_HUB[self.name], name, split="test") for name in configs
-        ]
+        all_datasets = [load_dataset(DATASET_HUB[self.name], name, split="test") for name in configs]
         dataset = concatenate_datasets(all_datasets)
         for i, item in enumerate(dataset):
             task = Task(
@@ -43,9 +41,7 @@ class AIME2025Dataset(MathDataset):
     def format_prompt(self, item: dict[str, Any]) -> str:
         r"""Format the prompt for AIME2025 task."""
         question = item["question"].strip()
-        instruction_following = (
-            "Let's think step by step and output the final answer within \\boxed{}."
-        )
+        instruction_following = "Let's think step by step and output the final answer within \\boxed{}."
 
         question += " " + instruction_following
         return question

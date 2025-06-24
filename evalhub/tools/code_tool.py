@@ -17,9 +17,7 @@ class CodeTool(BaseTool):
     def __init__(self, name: str, config: dict):
         super().__init__(name, config)
 
-    async def create(
-        self, instance_id: str | None = None, ground_truth: str | None = None, **kwargs
-    ) -> str:
+    async def create(self, instance_id: str | None = None, ground_truth: str | None = None, **kwargs) -> str:
         if instance_id is None:
             instance_id = str(uuid4())
         self.instances[instance_id] = {

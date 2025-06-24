@@ -60,9 +60,7 @@ class Dataset(ABC):
         self.groundtruth: dict[str, GroundTruth] = {}
         self.config = DEFAULT_GENERATION_CONFIG
         self.meta_data: dict[str, Any] = meta_data or {}
-        self.cache_dir = Path(
-            os.environ.get("EVALHUB_CACHE_DIR", Path.home() / ".cache" / "evalhub")
-        )
+        self.cache_dir = Path(os.environ.get("EVALHUB_CACHE_DIR", Path.home() / ".cache" / "evalhub"))
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         if not self.load_cache() or reload:
             self.load_tasks()
@@ -134,9 +132,7 @@ class Dataset(ABC):
         total_samples = sum(len(result.responses) for result in results)
 
         with open(save_path, "wb") as save_file, get_progress_bar() as progress:
-            task = progress.add_task(
-                "[bold blue]Sanitizing and saving results", total=total_samples
-            )
+            task = progress.add_task("[bold blue]Sanitizing and saving results", total=total_samples)
 
             for result in results:
                 task_id = result.task_id
@@ -144,13 +140,9 @@ class Dataset(ABC):
                     if "content" in response:  # FIXME: multiturn
                         content = response.get("content", "")
                     else:
-                        content = (
-                            response.get("choices", [{}])[0].get("message", {}).get("content", "")
-                        )
+                        content = response.get("choices", [{}])[0].get("message", {}).get("content", "")
                     solution = self.extract_solution(task_id, content)
-                    save_file.write(
-                        orjson.dumps({"task_id": task_id, "solution": solution}) + b"\n"
-                    )
+                    save_file.write(orjson.dumps({"task_id": task_id, "solution": solution}) + b"\n")
                     progress.update(task, advance=1)
 
         return save_path

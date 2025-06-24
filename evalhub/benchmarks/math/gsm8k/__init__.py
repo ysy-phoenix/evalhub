@@ -49,15 +49,11 @@ class GSM8KDataset(MathDataset):
     def format_prompt(self, item: dict[str, Any]) -> str:
         r"""Format the prompt for GSM8K task."""
         question = item["question"].strip()
-        instruction_following = (
-            "Let's think step by step and output the final answer within \\boxed{}."
-        )
+        instruction_following = "Let's think step by step and output the final answer within \\boxed{}."
 
         question += " " + instruction_following
         return question
 
     def check_correct(self, extracted_answer: str, ground_truth: str) -> bool:
         r"""Check if the extracted answer is correct."""
-        return grade_answer(extracted_answer, ground_truth) or gsm8k_patch(
-            extracted_answer, ground_truth
-        )
+        return grade_answer(extracted_answer, ground_truth) or gsm8k_patch(extracted_answer, ground_truth)

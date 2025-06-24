@@ -18,17 +18,14 @@ BIGCODEBENCH_CONFIG = {
 }
 BIGCODEBENCH_VERSION = "v0.1.4"
 INSTRUCTION_PREFIX = (
-    "Please provide a self-contained Python script that"
-    "solves the following problem in a markdown code block:"
+    "Please provide a self-contained Python script thatsolves the following problem in a markdown code block:"
 )
 
 
 class BigCodeBenchDataset(CodeDataset):
     r"""Dataset class for BigCodeBench."""
 
-    def __init__(
-        self, name: str = "bigcodebench", meta_data: dict[str, Any] = BIGCODEBENCH_META_DATA
-    ):
+    def __init__(self, name: str = "bigcodebench", meta_data: dict[str, Any] = BIGCODEBENCH_META_DATA):
         super().__init__(name, meta_data=meta_data)
         for key, value in BIGCODEBENCH_CONFIG.items():
             self.config[key] = value

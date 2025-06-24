@@ -96,8 +96,7 @@ class MathDataset(Dataset):
 
         # Calculate aggregate metrics
         pass_at_k = {
-            k: sum(result["pass_at_k"].get(k, 0) for result in results) / total
-            for k in results[0]["pass_at_k"]
+            k: sum(result["pass_at_k"].get(k, 0) for result in results) / total for k in results[0]["pass_at_k"]
         }
         cons_at_k = correct / total
 

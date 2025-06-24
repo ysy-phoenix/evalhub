@@ -52,9 +52,7 @@ def check_correctness(sample, generation, timeout, debug=True):
         in_outs = json.loads(sample["input_output"])
         # consider that all tests failed
         result = [[-1 for i in range(len(in_outs["inputs"]))]]
-        logger.warning(
-            f"Triggered GLOBAL_TIMEOUT: {GLOBAL_TIMEOUT=} while original timeout: {_timeout=}"
-        )
+        logger.warning(f"Triggered GLOBAL_TIMEOUT: {GLOBAL_TIMEOUT=} while original timeout: {_timeout=}")
         if debug:
             print("global timeout")
     return result[0], metadata_list[0]
@@ -138,10 +136,7 @@ def evaluate_generations(
 
     with tqdm(total=len(inputs)) as pbar:
         with ProcessPoolExecutor(max_workers=1 if debug else num_process_evaluate) as executor:
-            futures = {
-                executor.submit(evaluate_generations_by_problem, arg): index
-                for arg, index in inputs
-            }
+            futures = {executor.submit(evaluate_generations_by_problem, arg): index for arg, index in inputs}
 
             results = {}
             metadata = {}
@@ -157,9 +152,7 @@ def evaluate_generations(
                     )
                 pbar.update(1)
 
-    assert len(results) == len(inputs), (
-        f"results = {len(results)} inputs = {len(inputs)} {results=}"
-    )
+    assert len(results) == len(inputs), f"results = {len(results)} inputs = {len(inputs)} {results=}"
     # results = {i: r for r, (_, i) in zip(results, inputs)}
 
     return results, metadata
@@ -178,9 +171,7 @@ def codegen_metrics(
     remap_index = []
     results = defaultdict(list)
     metadatas = defaultdict(list)
-    for idx, (sample, generation_list) in enumerate(
-        zip(samples_list, generations_list, strict=False)
-    ):
+    for idx, (sample, generation_list) in enumerate(zip(samples_list, generations_list, strict=False)):
         assert isinstance(generation_list, list), generations_list[0]
         for generation in generation_list:
             assert isinstance(generation, str), generations_list[0]

@@ -4,9 +4,7 @@ from evalhub.benchmarks.math.utils import extract_answer, grade_answer
 from evalhub.tools.base_tool import BaseTool
 
 
-def compute_score(
-    solution_str: str, ground_truth: str, format_score: float = 0.0, score: float = 1.0
-):
+def compute_score(solution_str: str, ground_truth: str, format_score: float = 0.0, score: float = 1.0):
     answer = extract_answer(solution_str)
     if answer is None:
         return 0
@@ -21,9 +19,7 @@ class Gsm8kTool(BaseTool):
     def __init__(self, name: str, config: dict):
         super().__init__(name, config)
 
-    async def create(
-        self, instance_id: str | None = None, ground_truth: str | None = None, **kwargs
-    ) -> str:
+    async def create(self, instance_id: str | None = None, ground_truth: str | None = None, **kwargs) -> str:
         if instance_id is None:
             instance_id = str(uuid4())
         self.instances[instance_id] = {

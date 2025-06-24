@@ -36,9 +36,7 @@ class CodeCallback(BaseCallback):
     def __init__(self):
         super().__init__()
 
-    async def create(
-        self, instance_id: str | None = None, test_cases: str | None = None, **kwargs
-    ) -> str:
+    async def create(self, instance_id: str | None = None, test_cases: str | None = None, **kwargs) -> str:
         if instance_id is None:
             instance_id = str(uuid4())
         self.instances[instance_id] = {
@@ -72,9 +70,7 @@ class CodeCallback(BaseCallback):
                 test_case_results = result.get("test_case_results", [])
                 if test_case_results is not None and len(test_case_results) > 0:
                     msg += f"Input:\n{truncate_output(test_case_results[0].get('input', ''))}\n"
-                    msg += (
-                        f"Expected:\n{truncate_output(test_case_results[0].get('expected', ''))}\n"
-                    )
+                    msg += f"Expected:\n{truncate_output(test_case_results[0].get('expected', ''))}\n"
                     msg += f"Actual:\n{truncate_output(test_case_results[0].get('actual', ''))}\n"
                 msg += f"Error message:\n{truncate_output(result.get('error_message', ''))}\n"
                 self.instances[instance_id]["reward"] += passed / total if total > 0 else 0
@@ -101,9 +97,7 @@ class CodeCallback(BaseCallback):
             outputs = [json.loads(output) for output in outputs]
         else:
             mode = "acm"
-        test_cases = [
-            {"input": inp, "expected": out} for inp, out in zip(inputs, outputs, strict=False)
-        ]
+        test_cases = [{"input": inp, "expected": out} for inp, out in zip(inputs, outputs, strict=False)]
         submission = {
             "code": self.instances[instance_id]["code"],
             "language": DEFAULT_LANGUAGE,

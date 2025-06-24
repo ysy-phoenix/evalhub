@@ -66,18 +66,14 @@ class MultiTurnGenerator(LLMGenerator):
         callback_cls = getattr(module, class_name)
         self.callback: BaseCallback = callback_cls()
 
-    async def get_response_with_retry(
-        self, messages: list[dict], max_retries: int = 3
-    ) -> ChatCompletion | None:
+    async def get_response_with_retry(self, messages: list[dict], max_retries: int = 3) -> ChatCompletion | None:
         for _ in range(max_retries):
             response = await self.complete(messages, tools=self.tool_schemas)
             if response is not None:
                 return response
         return None
 
-    async def _handle_tool_call(
-        self, messages: list, message: ChatCompletionMessage, instance_id: str
-    ) -> None:
+    async def _handle_tool_call(self, messages: list, message: ChatCompletionMessage, instance_id: str) -> None:
         tool_call_routines = []
         for tool_call in message.tool_calls:
             tool_name = tool_call.function.name
@@ -87,9 +83,7 @@ class MultiTurnGenerator(LLMGenerator):
                     arguments = json.loads(arguments)
                 except json.JSONDecodeError:
                     arguments = arguments
-            tool_call_routines.append(
-                self.available_tools[tool_name].execute(instance_id, arguments)
-            )
+            tool_call_routines.append(self.available_tools[tool_name].execute(instance_id, arguments))
         results = await asyncio.gather(*tool_call_routines)
         for tool_call, result in zip(message.tool_calls, results, strict=False):
             messages.append(
@@ -101,9 +95,7 @@ class MultiTurnGenerator(LLMGenerator):
                 }
             )
 
-    async def _handle_callback(
-        self, messages: list, message: ChatCompletionMessage, instance_id: str
-    ) -> None:
+    async def _handle_callback(self, messages: list, message: ChatCompletionMessage, instance_id: str) -> None:
         raw_text = message.content
         feedback = await self.callback.execute(instance_id, raw_text)
         messages.append(

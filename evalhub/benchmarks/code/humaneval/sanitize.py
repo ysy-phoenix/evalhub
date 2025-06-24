@@ -5,9 +5,7 @@ import re
 from evalhub.benchmarks.code.utils import syntax_check
 
 
-def remove_unindented_lines(
-    code: str, protect_before: str, execeptions: list[str], trim_tails: list[str]
-) -> str:
+def remove_unindented_lines(code: str, protect_before: str, execeptions: list[str], trim_tails: list[str]) -> str:
     lines = code.splitlines()
     cut_idx = []
     cut_enabled = False
@@ -50,9 +48,7 @@ def sanitize(
 ):
     new_code = old_code
     if rm_prefix_lines is not None:
-        new_code = "\n".join(
-            [line for line in old_code.splitlines() if not line.startswith(rm_prefix_lines)]
-        )
+        new_code = "\n".join([line for line in old_code.splitlines() if not line.startswith(rm_prefix_lines)])
 
     new_code = "\n" + new_code
     def_left = "def " + entry_point

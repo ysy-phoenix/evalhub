@@ -164,9 +164,7 @@ def list_tasks():
 
     # Print usage examples
     console.print("\n[bold yellow]Generation Examples:[/bold yellow]")
-    console.print(
-        'evalhub run --model "Qwen2.5-7B-Instruct" --tasks humaneval,mbpp --output-dir ./results'
-    )
+    console.print('evalhub run --model "Qwen2.5-7B-Instruct" --tasks humaneval,mbpp --output-dir ./results')
 
     console.print("\n[bold yellow]Evaluation Examples:[/bold yellow]")
     for task in DATASET_MAP.keys():
@@ -174,10 +172,7 @@ def list_tasks():
             console.print(f"evalplus.evaluate --dataset {task} --samples ./results/{task}.jsonl")
         else:
             assert task in EVALUATE_DATASETS, f"Dataset {task} is not supported for evaluation"
-            console.print(
-                f"evalhub eval --tasks {task} --solutions ./results/{task}.jsonl "
-                f"--output-dir ./results"
-            )
+            console.print(f"evalhub eval --tasks {task} --solutions ./results/{task}.jsonl --output-dir ./results")
 
 
 def main():

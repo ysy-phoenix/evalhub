@@ -3,9 +3,7 @@ import numpy as np
 DEFAULT_K_LIST = [1, 5]
 
 
-def estimate_pass_at_k(
-    num_samples: int | list[int], num_correct: int | list[int], k: int
-) -> np.ndarray:
+def estimate_pass_at_k(num_samples: int | list[int], num_correct: int | list[int], k: int) -> np.ndarray:
     r"""Estimates pass@k of each problem and returns them in an array."""
 
     def estimator(n: int, c: int, k: int) -> float:
@@ -22,9 +20,7 @@ def estimate_pass_at_k(
         assert len(num_samples) == len(num_correct)
         num_samples_it = iter(num_samples)
 
-    return np.array(
-        [estimator(int(n), int(c), k) for n, c in zip(num_samples_it, num_correct, strict=False)]
-    )
+    return np.array([estimator(int(n), int(c), k) for n, c in zip(num_samples_it, num_correct, strict=False)])
 
 
 def compute_metrics_from_results(results: dict[str, list[list[int]]], k_list=DEFAULT_K_LIST):
@@ -72,14 +68,8 @@ def compute_metrics_from_results(results: dict[str, list[list[int]]], k_list=DEF
     total = np.array(total)
     correct = np.array(correct)
     ks = k_list
-    detail_pass_at_k = {
-        f"pass@{k}": estimate_pass_at_k(total, correct, k).tolist()
-        for k in ks
-        if (total >= k).all()
-    }
-    pass_at_k = {
-        f"pass@{k}": estimate_pass_at_k(total, correct, k).mean() for k in ks if (total >= k).all()
-    }
+    detail_pass_at_k = {f"pass@{k}": estimate_pass_at_k(total, correct, k).tolist() for k in ks if (total >= k).all()}
+    pass_at_k = {f"pass@{k}": estimate_pass_at_k(total, correct, k).mean() for k in ks if (total >= k).all()}
     detail_metrics = {k: dict(zip(task_ids, v, strict=False)) for k, v in detail_pass_at_k.items()}
     pass_at_k["detail"] = detail_metrics
     return pass_at_k
@@ -95,7 +85,5 @@ def extract_instance_results(results: dict[str, list[list[int]]]) -> list[list[i
                 generation = [generation]
             instance_wise_grades[task_id].append(all(g > 0 for g in generation))
 
-    instance_wise_grades = [
-        v for _, v in sorted(instance_wise_grades.items(), key=lambda item: item[0])
-    ]
+    instance_wise_grades = [v for _, v in sorted(instance_wise_grades.items(), key=lambda item: item[0])]
     return instance_wise_grades

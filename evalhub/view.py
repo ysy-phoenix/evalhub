@@ -117,9 +117,7 @@ def display_livecodebench_results(
 
         if "code_list" in problem:
             code = problem["code_list"][0] if problem["code_list"] else "No code available"
-            syntax = Syntax(
-                code, lexer="python", theme="monokai", line_numbers=True, indent_guides=True
-            )
+            syntax = Syntax(code, lexer="python", theme="monokai", line_numbers=True, indent_guides=True)
             code_panel = Panel(syntax, title="Solution Code", border_style="green")
             console.print(code_panel)
 
