@@ -3,9 +3,11 @@ from typing import Any
 from datasets import load_dataset
 
 from evalhub.benchmarks.base import GroundTruth, Task
-from evalhub.benchmarks.config import DATASET_HUB
 from evalhub.benchmarks.math.base import MathDataset
+from evalhub.benchmarks.registry import register_dataset
 
+AIME2024 = "aime2024"
+AIME2024_HUB = "HuggingFaceH4/aime_2024"
 AIME2024_CONFIG = {
     "temperature": 0.0,
     "top_p": 0.95,
@@ -13,17 +15,18 @@ AIME2024_CONFIG = {
 }
 
 
+@register_dataset((AIME2024, AIME2024_HUB, True))
 class AIME2024Dataset(MathDataset):
     """Dataset class for AIME2024 problems."""
 
-    def __init__(self, name: str = "aime2024"):
+    def __init__(self, name: str = AIME2024):
         super().__init__(name)
         for key, value in AIME2024_CONFIG.items():
             self.config[key] = value
 
     def load_tasks(self):
         r"""Load tasks from AIME2024 dataset."""
-        dataset = load_dataset(DATASET_HUB[self.name], split="train")
+        dataset = load_dataset(AIME2024_HUB, split="train")
         for _, item in enumerate(dataset):
             task = Task(
                 task_id=f"AIME2024/{item['id']}",

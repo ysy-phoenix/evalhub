@@ -3,10 +3,12 @@ from typing import Any
 from datasets import load_dataset
 
 from evalhub.benchmarks.base import GroundTruth, Task
-from evalhub.benchmarks.config import DATASET_HUB
 from evalhub.benchmarks.math.base import MathDataset
 from evalhub.benchmarks.math.math500.utils import math500_patch
+from evalhub.benchmarks.registry import register_dataset
 
+MATH500 = "math500"
+MATH500_HUB = "HuggingFaceH4/MATH-500"
 MATH500_CONFIG = {
     "temperature": 0.0,
     "top_p": 0.95,
@@ -14,17 +16,18 @@ MATH500_CONFIG = {
 }
 
 
+@register_dataset((MATH500, MATH500_HUB, True))
 class Math500Dataset(MathDataset):
     """Dataset class for Math500 problems."""
 
-    def __init__(self, name: str = "math500"):
+    def __init__(self, name: str = MATH500):
         super().__init__(name)
         for key, value in MATH500_CONFIG.items():
             self.config[key] = value
 
     def load_tasks(self):
         r"""Load tasks from Math500 dataset."""
-        dataset = load_dataset(DATASET_HUB[self.name], split="test")
+        dataset = load_dataset(MATH500_HUB, split="test")
         for i, item in enumerate(dataset):
             task = Task(
                 task_id=f"MATH500/{i}",

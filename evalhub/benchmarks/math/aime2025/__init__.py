@@ -3,9 +3,11 @@ from typing import Any
 from datasets import concatenate_datasets, get_dataset_config_names, load_dataset
 
 from evalhub.benchmarks.base import GroundTruth, Task
-from evalhub.benchmarks.config import DATASET_HUB
 from evalhub.benchmarks.math.base import MathDataset
+from evalhub.benchmarks.registry import register_dataset
 
+AIME2025 = "aime2025"
+AIME2025_HUB = "opencompass/AIME2025"
 AIME2025_CONFIG = {
     "temperature": 0.0,
     "top_p": 0.95,
@@ -13,18 +15,19 @@ AIME2025_CONFIG = {
 }
 
 
+@register_dataset((AIME2025, AIME2025_HUB, True))
 class AIME2025Dataset(MathDataset):
     """Dataset class for AIME2025 problems."""
 
-    def __init__(self, name: str = "aime2025"):
+    def __init__(self, name: str = AIME2025):
         super().__init__(name)
         for key, value in AIME2025_CONFIG.items():
             self.config[key] = value
 
     def load_tasks(self):
         r"""Load tasks from AIME2025 dataset."""
-        configs = get_dataset_config_names(DATASET_HUB[self.name])
-        all_datasets = [load_dataset(DATASET_HUB[self.name], name, split="test") for name in configs]
+        configs = get_dataset_config_names(AIME2025_HUB)
+        all_datasets = [load_dataset(AIME2025_HUB, name, split="test") for name in configs]
         dataset = concatenate_datasets(all_datasets)
         for i, item in enumerate(dataset):
             task = Task(

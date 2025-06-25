@@ -5,8 +5,10 @@ from datasets import load_dataset
 from evalhub.benchmarks.base import Task
 from evalhub.benchmarks.code.base import CodeDataset
 from evalhub.benchmarks.code.bigcodebench.sanitize import sanitize
-from evalhub.benchmarks.config import DATASET_HUB
+from evalhub.benchmarks.registry import register_dataset
 
+BIGCODEBENCH = "bigcodebench"
+BIGCODEBENCH_HUB = "bigcode/bigcodebench"
 BIGCODEBENCH_META_DATA = {
     "split": "instruct",
     "subset": "full",
@@ -22,10 +24,11 @@ INSTRUCTION_PREFIX = (
 )
 
 
+@register_dataset((BIGCODEBENCH, "bigcode/bigcodebench", False))
 class BigCodeBenchDataset(CodeDataset):
     r"""Dataset class for BigCodeBench."""
 
-    def __init__(self, name: str = "bigcodebench", meta_data: dict[str, Any] = BIGCODEBENCH_META_DATA):
+    def __init__(self, name: str = BIGCODEBENCH, meta_data: dict[str, Any] = BIGCODEBENCH_META_DATA):
         super().__init__(name, meta_data=meta_data)
         for key, value in BIGCODEBENCH_CONFIG.items():
             self.config[key] = value
@@ -33,7 +36,7 @@ class BigCodeBenchDataset(CodeDataset):
     def load_tasks(self):
         r"""Load tasks from BigCodeBench dataset."""
         extra = "-" + self.meta_data["subset"] if self.meta_data["subset"] != "full" else ""
-        dataset = load_dataset(DATASET_HUB[self.name] + extra, split=BIGCODEBENCH_VERSION)
+        dataset = load_dataset(BIGCODEBENCH_HUB + extra, split=BIGCODEBENCH_VERSION)
         for item in dataset:
             task = Task(
                 task_id=str(item["task_id"]),

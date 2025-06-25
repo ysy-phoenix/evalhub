@@ -54,8 +54,8 @@ class GenerationConfig:
     base_url: str = "http://localhost:30000/v1"
     api_key: str = "EMPTY"
     output_dir: Path = Path("outputs")
-    tool_config_path: Path | None = None
-    callback: str | None = None
+    tool_config_path: Path | None = Path("tool_config.json")
+    callback: str | None = Path("callback.py")
     max_turns: int = 3
 
     def __post_init__(self):

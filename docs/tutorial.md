@@ -15,51 +15,26 @@ To add a new dataset, you'll need to:
 
 ### Step 1: Create Dataset Directory Structure
 
-First, create a new directory for your dataset in `evalhub/benchmarks/`. The name should reflect the dataset (e.g., `gsm8k`, `humaneval`).
+First, create a new directory for your dataset in `evalhub/benchmarks/type_of_dataset/your_dataset_name`. The name should reflect the dataset (e.g., `gsm8k`, `humaneval`).
 
 ### Step 2: Implement the Dataset Class
 
-In `evalhub/benchmarks/your_dataset_name/__init__.py`, implement a class that inherits from the base dataset class. Your class must implement several required methods:
+In `evalhub/benchmarks/type_of_dataset/your_dataset_name/__init__.py`, implement a class that inherits from the base dataset class. Your class must implement several required methods:
 
+- `register_dataset()`: Register the dataset in the configuration files
 - `load_tasks()`: Load tasks from the dataset
 - `format_prompt(item: dict[str, Any]) -> str`: Format the prompt for the task
-- `save(results: list[GenerationResult], output_dir: PathLike) -> Path`: Save the results to a file
-- `evaluate(solution: PathLike, output_dir: PathLike) -> None`: Evaluate the results
+- `extract_solution(task_id: str, response: str) -> str`: Extract the solution from the response
+- other methods needed
 
 ### Step 3: Register the Dataset
 
-In `evalhub/benchmarks/__init__.py`, add your dataset to the appropriate dictionaries:
+In `evalhub/benchmarks/type_of_dataset/__init__.py`, add your dataset to the appropriate dictionaries:
 
 ```python
-from evalhub.benchmarks.your_dataset_name.dataset import YourDatasetName
+from .your_dataset_name import YourDatasetName
 
-# Add to dataset map
-DATASET_MAP = {
-    # Existing datasets...
-    "your_dataset_name": YourDatasetName,
-}
-
-# If the dataset can be evaluated by EvalHub directly
-EVALUATE_DATASETS = [
-    # Existing datasets...
-    "your_dataset_name",
-]
-
-# If it requires third-party evaluation
-# THIRD_PARTY_DATASETS = [
-#     # Existing datasets...
-#     "your_dataset_name",
-# ]
-```
-
-Also, ensure your dataset is added to the Hugging Face dataset mapping:
-
-```python
-# Add to dataset hub mapping
-DATASET_HUB = {
-    # Existing mappings...
-    "your_dataset_name": "org/dataset_name_on_hf",
-}
+__all__ = [..., "YourDatasetName"]
 ```
 
 ### Step 4: Testing Your Dataset

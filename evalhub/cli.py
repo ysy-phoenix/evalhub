@@ -6,8 +6,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from evalhub.benchmarks import DATASET_MAP, EVALUATE_DATASETS, THIRD_PARTY_DATASETS
-from evalhub.benchmarks.config import DATASET_HUB
+from evalhub.benchmarks import DATASET_HUB, DATASET_MAP, EVALUATE_DATASETS, THIRD_PARTY_DATASETS
 from evalhub.gen import gen, parse_sampling_params
 from evalhub.inference.schemas import GenerationConfig
 from evalhub.view import view_results
@@ -96,13 +95,9 @@ def list_configs():
     table.add_column("Description", style="magenta")
 
     config_descriptions = {
-        "is_chat": "Whether to use chat format for prompts",
-        "model_name": "Name or path of the model to use",
-        "temperature": "Sampling temperature (higher = more random)",
-        "top_p": "Top-p sampling parameter (nucleus sampling)",
-        "max_tokens": "Maximum number of tokens to generate",
-        "frequency_penalty": "Penalty for repeating tokens (higher = less repetition)",
-        "presence_penalty": "Penalty for new tokens (higher = less new topics)",
+        "sample_params": "Sampling parameters for the model",
+        "chat": "Whether to use chat format for prompts",
+        "model": "Name or path of the model to use",
         "n_samples": "Number of samples to generate per prompt",
         "num_workers": "Number of parallel workers for generation",
         "timeout": "API request timeout in seconds",
@@ -110,6 +105,9 @@ def list_configs():
         "base_url": "Base URL for API endpoint",
         "api_key": "API key for model access",
         "output_dir": "Directory to save generation outputs",
+        "tool_config_path": "Path to the tool configuration file",
+        "callback": "Path to the callback function",
+        "max_turns": "Maximum number of turns in the conversation",
     }
 
     # Get default values from GenerationConfig
@@ -137,7 +135,7 @@ def list_configs():
 
     console.print("\n[bold yellow]Usage Example:[/bold yellow]")
     console.print(
-        'evalhub run --model "Qwen2.5-7B-Instruct" --tasks [humaneval,mbpp] --output-dir ./results '
+        'evalhub run --model "Qwen2.5-7B-Instruct" --tasks humaneval,mbpp --output-dir "./results" '
         "-p temperature=0.2 -p top_p=0.95"
     )
 
@@ -167,7 +165,9 @@ def list_tasks():
     console.print('evalhub run --model "Qwen2.5-7B-Instruct" --tasks humaneval,mbpp --output-dir ./results')
 
     console.print("\n[bold yellow]Evaluation Examples:[/bold yellow]")
-    for task in DATASET_MAP.keys():
+    for task in list(DATASET_MAP.keys())[:6]:
+        if task == "bigcodebench":
+            continue
         if task in THIRD_PARTY_DATASETS:
             console.print(f"evalplus.evaluate --dataset {task} --samples ./results/{task}.jsonl")
         else:

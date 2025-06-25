@@ -29,11 +29,14 @@ from evalhub.benchmarks.code.utils import (
     judge,
     process_output,
 )
+from evalhub.benchmarks.registry import register_dataset
 from evalhub.utils.logger import logger
 from evalhub.utils.pbar import get_progress_bar
 
+LIVECODEBENCH = "livecodebench"
+LIVECODEBENCH_HUB = "livecodebench/code_generation_lite"
 LIVECODEBENCH_META_DATA = {
-    "release_version": "v4_v5",
+    "release_version": "v6",
     "start_date": None,  # "2024-08-00T00:00:00",
     "end_date": None,  # "2025-01-00T00:00:00",
 }
@@ -67,15 +70,14 @@ FORMATTING_WITHOUT_STARTER_CODE = (
 )
 
 
+@register_dataset((LIVECODEBENCH, LIVECODEBENCH_HUB, True))
 class LiveCodeBenchDataset(CodeDataset):
     r"""Dataset class for LiveCodeBench code generation benchmark."""
 
-    def __init__(self, name: str = "livecodebench", meta_data: dict[str, Any] = LIVECODEBENCH_META_DATA):
+    def __init__(self, name: str = LIVECODEBENCH, meta_data: dict[str, Any] = LIVECODEBENCH_META_DATA):
         super().__init__(name, meta_data=meta_data)
         for key, value in LIVECODEBENCH_CONFIG.items():
             self.config[key] = value
-        self.cache_dir = Path(os.environ.get("EVALHUB_CACHE_DIR", Path.home() / ".cache" / "evalhub"))
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     @property
     def system_prompt(self) -> str | None:

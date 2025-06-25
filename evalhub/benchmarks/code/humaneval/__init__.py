@@ -6,9 +6,13 @@ from datasets import load_dataset
 from evalhub.benchmarks.base import Task
 from evalhub.benchmarks.code.base import CodeDataset
 from evalhub.benchmarks.code.humaneval.sanitize import sanitize
-from evalhub.benchmarks.config import DATASET_HUB
+from evalhub.benchmarks.registry import register_dataset
 from evalhub.utils.logger import logger
 
+HUMANEVAL = "humaneval"
+MBPP = "mbpp"
+HUMANEVAL_HUB = "evalplus/humanevalplus"
+MBPP_HUB = "evalplus/mbppplus"
 HUMANEVAL_CONFIG = {
     "temperature": 0.0,
     "top_p": 0.95,
@@ -29,6 +33,7 @@ def get_mbpp_entry_point(item: dict) -> str:
     return functions[0] if functions else None
 
 
+@register_dataset((HUMANEVAL, HUMANEVAL_HUB, False), (MBPP, MBPP_HUB, False))
 class HumanEvalDataset(CodeDataset):
     r"""Dataset class for HumanEval/MBPP."""
 
@@ -36,10 +41,11 @@ class HumanEvalDataset(CodeDataset):
         super().__init__(name)
         for key, value in HUMANEVAL_CONFIG.items():
             self.config[key] = value
+        self.hub = HUMANEVAL_HUB if self.name == HUMANEVAL else MBPP_HUB
 
     def load_tasks(self):
         r"""Load tasks from HumanEval dataset."""
-        dataset = load_dataset(DATASET_HUB[self.name], split="test")
+        dataset = load_dataset(self.hub, split="test")
         for item in dataset:
             if self.name == "mbpp":
                 entry_point = get_mbpp_entry_point(item)

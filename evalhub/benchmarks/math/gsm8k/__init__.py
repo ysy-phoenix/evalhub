@@ -3,10 +3,12 @@ from typing import Any
 from datasets import load_dataset
 
 from evalhub.benchmarks.base import GroundTruth, Task
-from evalhub.benchmarks.config import DATASET_HUB
 from evalhub.benchmarks.math.base import MathDataset
 from evalhub.benchmarks.math.gsm8k.utils import extract_ground_truth, gsm8k_patch
+from evalhub.benchmarks.registry import register_dataset
 
+GSM8K = "gsm8k"
+GSM8K_HUB = "openai/gsm8k"
 GSM8K_CONFIG = {
     "temperature": 0.0,
     "top_p": 0.95,
@@ -14,17 +16,18 @@ GSM8K_CONFIG = {
 }
 
 
+@register_dataset((GSM8K, GSM8K_HUB, True))
 class GSM8KDataset(MathDataset):
     """Dataset class for GSM8K math reasoning problems."""
 
-    def __init__(self, name: str = "gsm8k"):
+    def __init__(self, name: str = GSM8K):
         super().__init__(name)
         for key, value in GSM8K_CONFIG.items():
             self.config[key] = value
 
     def load_tasks(self):
         r"""Load tasks from GSM8K dataset."""
-        dataset = load_dataset(DATASET_HUB[self.name], "main", split="test")
+        dataset = load_dataset(GSM8K_HUB, "main", split="test")
         for i, item in enumerate(dataset):
             answer = extract_ground_truth(item["answer"])
             task = Task(
