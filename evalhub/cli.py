@@ -46,7 +46,7 @@ def run(model, tasks, output_dir, sampling_param, system_prompt, enable_multitur
     # Execute generation with model parameters
     for task in tasks.split(","):
         console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
-        gen(model, task, output_dir, sampling_params, system_prompt, enable_multiturn, resume)
+        gen(model, task.lower(), output_dir, sampling_params, system_prompt, enable_multiturn, resume)
 
 
 @cli.command()
@@ -61,7 +61,7 @@ def eval(tasks, solutions, output_dir):
     for task, solution in zip(tasks, solutions, strict=False):
         console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
         assert task in EVALUATE_DATASETS, f"Dataset {task} is not supported for evaluation"
-        dataset = DATASET_MAP[task](name=task)
+        dataset = DATASET_MAP[task](name=task.lower())
         dataset.evaluate(solution, output_dir)
 
 
