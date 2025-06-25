@@ -32,7 +32,7 @@ class MathDataset(Dataset):
         r"""Extract the solution from the response."""
         return extract_answer(response)
 
-    def check_correct(self, extracted_answer: str, ground_truth: str, task_id: str) -> bool:
+    def check_correct(self, extracted_answer: str, ground_truth: str, task_id: str = None) -> bool:
         r"""Check if the extracted answer is correct."""
         return grade_answer(extracted_answer, ground_truth) or self.patch(extracted_answer, ground_truth, task_id)
 
@@ -82,7 +82,7 @@ class MathDataset(Dataset):
 
                 # Calculate majority vote
                 majority_vote = get_majority_vote(solutions)
-                is_correct_majority = self.check_correct(majority_vote, ground_truth)
+                is_correct_majority = self.check_correct(majority_vote, ground_truth, task_id)
 
                 result = {
                     "task_id": task_id,

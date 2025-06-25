@@ -1,4 +1,3 @@
-import random
 import re
 from typing import Any
 
@@ -8,7 +7,7 @@ from evalhub.benchmarks.base import GroundTruth, Task
 from evalhub.benchmarks.config import DATASET_HUB
 from evalhub.benchmarks.math.base import MathDataset
 
-GPQA_QUERY_TEMPLATE = (
+MMLU_REDUX_QUERY_TEMPLATE = (
     "Answer the following multiple choice question.\n"
     "The last line of your response should be of the following format:\n"
     "'Answer: $LETTER' (without quotes) where LETTER is one of ABCD.\n"
@@ -24,42 +23,35 @@ ANSWER_PATTERN_MULTICHOICE = r"(?i)Answer[ \t]*:[ \t]*\$?([A-D])\$?"
 DEFAULT_KS = [1, 5, 10]
 
 
-class GPQADataset(MathDataset):
-    r"""Dataset class for GPQA problems."""
+class MMLUReduxDataset(MathDataset):
+    r"""Dataset class for MMLU-Redux problems."""
 
-    def __init__(self, name: str = "gpqa"):
+    def __init__(self, name: str = "mmlu_redux"):
         super().__init__(name)
 
     def load_tasks(self) -> None:
-        r"""Load tasks from GPQA dataset."""
-        dataset = load_dataset(DATASET_HUB[self.name], "gpqa_diamond", split="train")
+        r"""Load tasks from MMLU-Redux dataset."""
+        dataset = load_dataset(DATASET_HUB[self.name], "clean", split="test")
         for i, item in enumerate(dataset):
             prompt, answer = self.format_prompt(item)
             task = Task(
-                task_id=f"GPQA/{i}",
+                task_id=f"MMLU_REDUX/{i}",
                 prompt=prompt,
             )
             groundtruth = GroundTruth(
-                task_id=f"GPQA/{i}",
+                task_id=f"MMLU_REDUX/{i}",
                 answer=answer,
             )
             self.add_task(task)
             self.add_groundtruth(groundtruth)
 
     def format_prompt(self, item: dict[str, Any]) -> tuple[str, str]:
-        r"""Format the prompt for GPQA task."""
-        choices = [
-            item["Incorrect Answer 1"],
-            item["Incorrect Answer 2"],
-            item["Incorrect Answer 3"],
-        ]
-        random.shuffle(choices)
-        gold_index = random.randint(0, 3)
-        choices.insert(gold_index, item["Correct Answer"])
-        query_prompt = GPQA_QUERY_TEMPLATE.format(
-            A=choices[0], B=choices[1], C=choices[2], D=choices[3], Question=item["Question"]
+        r"""Format the prompt for MMLU-Redux task."""
+        choices = item["choices"]
+        query_prompt = MMLU_REDUX_QUERY_TEMPLATE.format(
+            A=choices[0], B=choices[1], C=choices[2], D=choices[3], Question=item["question"]
         )
-        gold_choice = "ABCD"[gold_index]
+        gold_choice = "ABCD"[item["answer"]]
         return query_prompt, gold_choice
 
     def extract_solution(self, task_id: str, response: str) -> str:
@@ -69,7 +61,7 @@ class GPQADataset(MathDataset):
         match = re.search(ANSWER_PATTERN_MULTICHOICE, response)
         return match.group(1) if match else None
 
-    def check_correct(self, extracted_answer: str | None, ground_truth: str, task_id: str = None) -> bool:
+    def check_correct(self, extracted_answer: str | None, ground_truth: str, task_id: str) -> bool:
         r"""Check if the extracted answer is correct."""
         if extracted_answer is None:
             return False

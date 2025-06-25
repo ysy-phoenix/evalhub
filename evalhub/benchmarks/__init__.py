@@ -2,6 +2,7 @@ from evalhub.benchmarks.code.bigcodebench import BigCodeBenchDataset
 from evalhub.benchmarks.code.humaneval import HumanEvalDataset
 from evalhub.benchmarks.code.livecodebench import LiveCodeBenchDataset
 from evalhub.benchmarks.general.gpqa import GPQADataset
+from evalhub.benchmarks.general.mmlu_redux import MMLUReduxDataset
 from evalhub.benchmarks.math.aime2024 import AIME2024Dataset
 from evalhub.benchmarks.math.aime2025 import AIME2025Dataset
 from evalhub.benchmarks.math.gsm8k import GSM8KDataset
@@ -19,6 +20,7 @@ DATASET_MAP = {
     "aime2025": AIME2025Dataset,
     "bigcodebench": BigCodeBenchDataset,
     "gpqa": GPQADataset,
+    "mmlu_redux": MMLUReduxDataset,
 }
 
 EVALUATE_DATASETS = {
@@ -29,6 +31,7 @@ EVALUATE_DATASETS = {
     "aime2024",
     "aime2025",
     "gpqa",
+    "mmlu_redux",
 }
 
 THIRD_PARTY_DATASETS = {"humaneval", "mbpp", "bigcodebench"}

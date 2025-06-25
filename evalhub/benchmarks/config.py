@@ -10,4 +10,5 @@ DATASET_HUB = {
     "bigcodebench": "bigcode/bigcodebench",
     "gpqa": "Idavidrein/gpqa",
     "aime2025": "opencompass/AIME2025",
+    "mmlu_redux": "edinburgh-dawg/labelchaos",
 }
