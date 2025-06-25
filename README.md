@@ -57,7 +57,6 @@ uv venv --python 3.12
 source .venv/bin/activate
 
 # Install the package
-uv pip install -r requirements.txt
 uv pip install -e ".[all]" # other options: [dev], [base], [sglang]
 
 # Recommend cleaning up cache after pulling the latest changes
@@ -154,6 +153,13 @@ pre-commit install
 
 # Run all checks manually
 pre-commit run --all-files
+```
+
+### Test
+
+```bash
+# Run all tests
+pytest -W ignore::Warning
 ```
 
 ## 🛣 Roadmap

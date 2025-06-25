@@ -140,13 +140,8 @@ def normalize_final_answer(final_answer: str) -> str:
     return final_answer.strip()
 
 
-def is_correct_minerva(
-    solution_str: str, gt: str, gt_need_extract: bool = False, answer_pattern: str = r"(?i)Answer\s*:\s*([^\n]+)"
-) -> tuple[bool, str]:
+def is_correct_minerva(extracted_answer: str, gt: str, gt_need_extract: bool = False) -> tuple[bool, str]:
     r"""Check if the solution is correct according to Minerva criteria."""
-    # Extract answer from solution
-    match = re.findall(answer_pattern, solution_str)
-    extracted_answer = match[-1] if match else "[INVALID]"
     pred = normalize_final_answer(extracted_answer)
 
     # Process ground truth
@@ -158,27 +153,7 @@ def is_correct_minerva(
     return (pred == gt), pred
 
 
-def is_correct_strict_box(pred: str, gt: str, pause_tokens_index: list[int] | None = None) -> tuple[int, str | None]:
-    r"""Check if the prediction is correct using strict boxed answer criteria."""
-    # Extract the relevant part of the prediction
-    if pause_tokens_index is not None:
-        assert len(pause_tokens_index) == 4
-        pred = pred[pause_tokens_index[-1] - 100 :]
-    else:
-        pred = pred[-100:]
-
-    # Extract and check the boxed answer
-    boxed_pred = last_boxed_only_string(pred)
-    extracted_pred = remove_boxed(boxed_pred) if boxed_pred is not None else None
-
-    return 1 if (extracted_pred == gt) else -1, extracted_pred
-
-
-def verify_dapo(solution_str: str, answer: str, pause_tokens_index: list[int] | None = None) -> bool:
+def verify_dapo(extracted_answer: str, ground_truth: str) -> bool:
     r"""Verify if the solution is correct."""
-    correct, _ = is_correct_strict_box(solution_str, answer, pause_tokens_index)
-    if correct == 1:
-        return True
-
-    correct, _ = is_correct_minerva(solution_str, answer)
+    correct, _ = is_correct_minerva(extracted_answer, ground_truth)
     return correct

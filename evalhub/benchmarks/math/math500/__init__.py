@@ -5,6 +5,7 @@ from datasets import load_dataset
 from evalhub.benchmarks.base import GroundTruth, Task
 from evalhub.benchmarks.config import DATASET_HUB
 from evalhub.benchmarks.math.base import MathDataset
+from evalhub.benchmarks.math.math500.utils import math500_patch
 
 MATH500_CONFIG = {
     "temperature": 0.0,
@@ -43,3 +44,7 @@ class Math500Dataset(MathDataset):
 
         question += " " + instruction_following
         return question
+
+    def patch(self, extracted_answer: str, ground_truth: str, task_id: str) -> bool:
+        r"""Patch the extracted answer."""
+        return math500_patch(extracted_answer, ground_truth, task_id)

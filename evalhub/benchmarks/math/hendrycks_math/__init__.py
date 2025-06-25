@@ -5,7 +5,7 @@ from datasets import load_dataset
 from evalhub.benchmarks.base import GroundTruth, Task
 from evalhub.benchmarks.config import DATASET_HUB
 from evalhub.benchmarks.math.base import MathDataset
-from evalhub.benchmarks.math.utils import extract_answer
+from evalhub.benchmarks.math.verifier import extract_answer
 
 HENDRYCKS_MATH_CONFIG = {
     "temperature": 0.0,

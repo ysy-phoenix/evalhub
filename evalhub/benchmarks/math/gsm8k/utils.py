@@ -5,7 +5,7 @@ import re
 from evalhub.utils.logger import logger
 
 
-def extract_ground_truth(solution_str):
+def extract_ground_truth(solution_str: str) -> str:
     r"""Extract the ground truth from the solution string."""
     solution = re.search("#### (\\-?[0-9\\.\\,]+)", solution_str)
     assert solution is not None

@@ -6,7 +6,7 @@ from typing import Any
 import orjson
 
 from evalhub.benchmarks.base import Dataset
-from evalhub.benchmarks.math.utils import extract_answer, grade_answer
+from evalhub.benchmarks.math.verifier import extract_answer, grade_answer
 from evalhub.utils.logger import logger
 from evalhub.utils.metrics import compute_pass_at_k, get_majority_vote
 from evalhub.utils.pbar import get_progress_bar
@@ -32,9 +32,13 @@ class MathDataset(Dataset):
         r"""Extract the solution from the response."""
         return extract_answer(response)
 
-    def check_correct(self, extracted_answer: str, ground_truth: str) -> bool:
+    def check_correct(self, extracted_answer: str, ground_truth: str, task_id: str) -> bool:
         r"""Check if the extracted answer is correct."""
-        return grade_answer(extracted_answer, ground_truth)
+        return grade_answer(extracted_answer, ground_truth) or self.patch(extracted_answer, ground_truth, task_id)
+
+    def patch(self, extracted_answer: str, ground_truth: str, task_id: str) -> bool:
+        r"""Patch the extracted answer."""
+        return False
 
     def _load_solutions(self, solution_path: PathLike) -> dict[str, list[str]]:
         r"""Load predictions from solution file."""
@@ -67,7 +71,7 @@ class MathDataset(Dataset):
 
             for task_id, solutions in id2solutions.items():
                 ground_truth = self.groundtruth[task_id].answer
-                is_correct = [self.check_correct(solution, ground_truth) for solution in solutions]
+                is_correct = [self.check_correct(solution, ground_truth, task_id) for solution in solutions]
 
                 # Calculate pass@k metrics
                 pass_at_k = defaultdict(float)

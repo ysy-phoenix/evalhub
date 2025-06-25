@@ -6,7 +6,6 @@ from evalhub.benchmarks.base import GroundTruth, Task
 from evalhub.benchmarks.config import DATASET_HUB
 from evalhub.benchmarks.math.base import MathDataset
 from evalhub.benchmarks.math.gsm8k.utils import extract_ground_truth, gsm8k_patch
-from evalhub.benchmarks.math.utils import grade_answer
 
 GSM8K_CONFIG = {
     "temperature": 0.0,
@@ -54,6 +53,6 @@ class GSM8KDataset(MathDataset):
         question += " " + instruction_following
         return question
 
-    def check_correct(self, extracted_answer: str, ground_truth: str) -> bool:
-        r"""Check if the extracted answer is correct."""
-        return grade_answer(extracted_answer, ground_truth) or gsm8k_patch(extracted_answer, ground_truth)
+    def patch(self, extracted_answer: str, ground_truth: str, task_id: str) -> bool:
+        r"""Patch the extracted answer."""
+        return gsm8k_patch(extracted_answer, ground_truth)
