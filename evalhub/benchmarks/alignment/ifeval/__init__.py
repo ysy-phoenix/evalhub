@@ -47,8 +47,6 @@ class IFEVALDataset(MathDataset):
         r"""Format the prompt for IFEVAL task."""
         return item["prompt"]
 
-    def extract_solution(self, task_id: str, response: str) -> str:
+    def extract_solution(self, task_id: str, response: str | None) -> str:
         r"""Extract the answer from the response."""
-        if response is not None and "</think>" in response:
-            response = response.split("</think>")[-1]
         return response or ""

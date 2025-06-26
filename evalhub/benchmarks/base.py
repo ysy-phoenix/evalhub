@@ -4,6 +4,7 @@ import os
 import pickle
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from functools import wraps
 from os import PathLike
 from pathlib import Path
 from typing import Any, ClassVar
@@ -41,6 +42,21 @@ class GroundTruth:
     answer: str
 
 
+def preprocess_response(func):
+    r"""Preprocess the response."""
+
+    @wraps(func)
+    def wrapper(self, task_id: str, response: str | None, *args, **kwargs):
+        if response is None:
+            return ""
+        if "</think>" in response:
+            response = response.split("</think>")[-1]
+            response.removeprefix("<answer>").removesuffix("</answer>")
+        return func(self, task_id, response, *args, **kwargs)
+
+    return wrapper
+
+
 class Dataset(ABC):
     r"""Base class for all datasets."""
 
@@ -62,6 +78,12 @@ class Dataset(ABC):
         if not self.load_cache() or reload:
             self.load_tasks()
             self.save_cache()
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        # auto decorate the extract_solution method
+        if "extract_solution" in cls.__dict__:
+            cls.extract_solution = preprocess_response(cls.extract_solution)
 
     @property
     def system_prompt(self) -> str | None:
@@ -117,10 +139,10 @@ class Dataset(ABC):
         """
         raise NotImplementedError("Subclass must implement format_prompt method")
 
-    @abstractmethod
-    def extract_solution(self, task_id: str, response: str) -> str:
+    @preprocess_response
+    def extract_solution(self, task_id: str, response: str | None) -> str:
         r"""Extract solution from the response."""
-        raise NotImplementedError("Subclass must implement extract_solution method")
+        return response or ""
 
     def sanitize_and_save(self, results: list[GenerationResult], output_dir: PathLike) -> Path:
         r"""Sanitize and save the results."""

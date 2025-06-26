@@ -16,7 +16,3 @@ class CodeDataset(Dataset):
     def format_prompt(self, item: dict[str, Any]) -> str:
         r"""Format the prompt for math reasoning task."""
         raise NotImplementedError
-
-    def extract_solution(self, task_id: str, response: str) -> str:
-        r"""Extract the code from the response."""
-        raise NotImplementedError

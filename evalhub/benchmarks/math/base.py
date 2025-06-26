@@ -28,9 +28,9 @@ class MathDataset(Dataset):
         r"""Format the prompt for math reasoning task."""
         raise NotImplementedError
 
-    def extract_solution(self, task_id: str, response: str) -> str:
+    def extract_solution(self, task_id: str, response: str | None) -> str:
         r"""Extract the solution from the response."""
-        return extract_answer(response)
+        return extract_answer(response) or ""
 
     def check_correct(self, extracted_answer: str, ground_truth: str, task_id: str = None) -> bool:
         r"""Check if the extracted answer is correct."""
