@@ -82,6 +82,10 @@ package-dir = {"evalhub" = "evalhub"}
 line-length = 120
 target-version = "py312"
 
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
 [tool.ruff.lint]
 select = ["E", "F", "B", "I", "UP", "N", "C", "W"]
 ignore = ["C901", "N818"]

@@ -100,8 +100,13 @@ class LLMGenerator:
                     url=f"{self.config.base_url}/chat/completions",
                     json={"messages": messages, **params},
                 ) as resp:
-                    data = await resp.read()
-                    response = ChatCompletion(**json.loads(data))
+                    try:
+                        data = await resp.read()
+                        response = ChatCompletion(**json.loads(data))
+                    except Exception as e:
+                        logger.error(f"Error parsing response: {str(e)}")
+                        logger.error(f"Response: {data}")
+                        return None
                 if response.choices[0].finish_reason == "length":
                     logger.warning("Max tokens exceeded!")
             return response
