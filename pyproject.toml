@@ -57,6 +57,7 @@ base = [
     "evalplus",
     "omegaconf",
     "latex2sympy2",
+    "jsonlines",
 ]
 
 # SGLang specific dependencies

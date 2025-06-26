@@ -59,6 +59,8 @@ class MMLUReduxDataset(MathDataset):
 
     def extract_solution(self, task_id: str, response: str) -> str:
         r"""Extract the answer from the response."""
+        if response is None:
+            return ""
         if "</think>" in response:
             response = response.split("</think>")[-1]
         match = re.search(ANSWER_PATTERN_MULTICHOICE, response)

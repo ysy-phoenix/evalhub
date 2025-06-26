@@ -51,7 +51,7 @@ class CEVALDataset(MathDataset):
                 self.add_groundtruth(groundtruth)
 
     def format_prompt(self, item: dict[str, Any], subject: str) -> tuple[str, str]:
-        r"""Format the prompt for MMLU-Redux task."""
+        r"""Format the prompt for CEVAL task."""
         query_prompt = CEVAL_QUERY_TEMPLATE.format(
             subject=subject, question=item["question"], A=item["A"], B=item["B"], C=item["C"], D=item["D"]
         )
@@ -60,6 +60,8 @@ class CEVALDataset(MathDataset):
 
     def extract_solution(self, task_id: str, response: str) -> str:
         r"""Extract the answer from the response."""
+        if response is None:
+            return ""
         if "</think>" in response:
             response = response.split("</think>")[-1]
         match = re.search(ANSWER_PATTERN_MULTICHOICE, response)
