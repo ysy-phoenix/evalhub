@@ -7,8 +7,10 @@ from rich.console import Console
 from rich.table import Table
 
 from evalhub.benchmarks import DATASET_HUB, DATASET_MAP, EVALUATE_DATASETS, THIRD_PARTY_DATASETS
-from evalhub.gen import gen, parse_sampling_params
+from evalhub.benchmarks.base import Dataset
+from evalhub.gen import gen
 from evalhub.inference.schemas import GenerationConfig
+from evalhub.utils.click import _extract_field_info, options
 from evalhub.view import view_results
 
 console = Console()
@@ -22,46 +24,28 @@ def cli():
 
 
 @cli.command()
-@click.option("--model", required=True, help="Model to evaluate")
-@click.option("--tasks", required=True, help="Tasks to evaluate on, separated by commas")
-@click.option("--output-dir", required=True, help="Output directory")
-@click.option("--enable-multiturn", is_flag=True, help="Enable multiturn generation")
-@click.option("--system-prompt", help="System prompt for the model")
-# Advanced: support for arbitrary model parameters
-@click.option(
-    "--sampling-param",
-    "-p",
-    multiple=True,
-    help="Additional sampling parameters in format: key=value",
-)
-@click.option("--resume", is_flag=True, help="Resume generation from existing results")
-def run(model, tasks, output_dir, sampling_param, system_prompt, enable_multiturn, resume):
+@options(GenerationConfig)
+def run(config: GenerationConfig):
     r"""Run evaluation on a model with specified dataset."""
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
-    sampling_params = parse_sampling_params(sampling_param)
-    console.print("[blue]Setting sampling parameters:[/blue]")
-    for key, value in sampling_params.items():
-        console.print(f"  [cyan]{key}:[/cyan] {value}")
-
-    # Execute generation with model parameters
-    for task in tasks.split(","):
+    config.output_dir.mkdir(parents=True, exist_ok=True)
+    for task in config.tasks:
         console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
-        gen(model, task.lower(), output_dir, sampling_params, system_prompt, enable_multiturn, resume)
+        gen(config=config, task=task)
 
 
 @cli.command()
 @click.option("--tasks", required=True, help="Tasks to evaluate on, separated by commas")
 @click.option("--solutions", required=True, help="Solutions to evaluate on, separated by commas")
 @click.option("--output-dir", required=True, help="Output directory")
-def eval(tasks, solutions, output_dir):
+def eval(tasks: str, solutions: str, output_dir: str):
     r"""Evaluate the model on the tasks."""
-    tasks = tasks.split(",")
-    solutions = solutions.split(",")
+    tasks = [task.strip().lower() for task in tasks.split(",")]
+    solutions = [solution.strip().lower() for solution in solutions.split(",")]
     assert len(tasks) == len(solutions), "Number of tasks and solutions must be the same"
     for task, solution in zip(tasks, solutions, strict=False):
         console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
         assert task in EVALUATE_DATASETS, f"Dataset {task} is not supported for evaluation"
-        dataset = DATASET_MAP[task](name=task.lower())
+        dataset: Dataset = DATASET_MAP[task](name=task.lower())
         dataset.evaluate(solution, output_dir)
 
 
@@ -69,7 +53,7 @@ def eval(tasks, solutions, output_dir):
 @click.option("--results", required=True, help="Results file path")
 @click.option("--max-display", type=int, default=-1, help="Maximum number of samples to display")
 @click.option("--false-only", type=bool, default=True, help="Only display false samples")
-def view(results, max_display, false_only):
+def view(results: str, max_display: int, false_only: bool):
     r"""View and analyze evaluation results with rich formatting.
 
     Automatically detects the result format:
@@ -92,52 +76,33 @@ def list_configs():
     table.add_column("Parameter", style="cyan")
     table.add_column("Type", style="green")
     table.add_column("Default", style="yellow")
+    table.add_column("Required", style="red")
     table.add_column("Description", style="magenta")
 
-    config_descriptions = {
-        "sample_params": "Sampling parameters for the model",
-        "chat": "Whether to use chat format for prompts",
-        "model": "Name or path of the model to use",
-        "n_samples": "Number of samples to generate per prompt",
-        "num_workers": "Number of parallel workers for generation",
-        "timeout": "API request timeout in seconds",
-        "stop": "List of sequences where generation should stop",
-        "base_url": "Base URL for API endpoint",
-        "api_key": "API key for model access",
-        "output_dir": "Directory to save generation outputs",
-        "tool_config_path": "Path to the tool configuration file",
-        "callback": "Path to the callback function",
-        "max_turns": "Maximum number of turns in the conversation",
-    }
+    # Extract field information automatically from dataclass metadata
+    fields_info = _extract_field_info(GenerationConfig)
 
-    # Get default values from GenerationConfig
-    default_config = GenerationConfig()
-    # Add rows to the table
-    for field_name, field_value in vars(default_config).items():
-        field_type = type(field_value).__name__
-        description = config_descriptions.get(field_name, "No description available")
+    # Sort fields by required status first, then alphabetically
+    fields_info.sort(key=lambda x: (not x["required"], x["name"]))
 
+    for field_info in fields_info:
         # Format default value for display
-        if field_type == "NoneType":
-            default_str = "None"
-        elif field_type == "bool":
-            default_str = str(field_value)
-        elif field_type == "str":
-            default_str = f'"{field_value}"'
-        elif field_type == "list" and not field_value:
-            default_str = "[]"
-        else:
-            default_str = str(field_value)
+        default_value = field_info["default"]
+        match default_value:
+            case str() | Path():
+                default_str = f'"{default_value}"'
+            case list() if not default_value:
+                default_str = "[]"
+            case _:
+                default_str = str(default_value)
 
-        table.add_row(field_name, field_type, default_str, description)
+        required_str = "✅" if field_info["required"] else "❌"
+        table.add_row(field_info["name"], field_info["type"], default_str, required_str, field_info["help"])
 
     console.print(table)
 
-    console.print("\n[bold yellow]Usage Example:[/bold yellow]")
-    console.print(
-        'evalhub run --model "Qwen2.5-7B-Instruct" --tasks humaneval,mbpp --output-dir "./results" '
-        "-p temperature=0.2 -p top_p=0.95"
-    )
+    console.print("\n[bold yellow]Usage Examples:[/bold yellow]")
+    console.print('evalhub run --model "Qwen2.5-7B-Instruct" --tasks humaneval,mbpp --output-dir "./results"')
 
 
 @cli.command(name="tasks")

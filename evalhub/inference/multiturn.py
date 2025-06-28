@@ -30,17 +30,17 @@ def get_module(module_name: str) -> ModuleType:
 class MultiTurnGenerator(LLMGenerator):
     def __init__(self, config: GenerationConfig, system_prompt: str | None = None) -> None:
         super().__init__(config, system_prompt)
-        self._initialize_tools(config.tool_config_path)
+        self._initialize_tools(config.tool_config)
         self._initialize_callback(config.callback)
 
-    def _initialize_tools(self, tool_config_path: Path | None = None) -> None:
+    def _initialize_tools(self, tool_config: Path | None = None) -> None:
         self.available_tools = defaultdict(BaseTool)
         self.tool_schemas: list[dict] = []
 
-        if tool_config_path is None:
+        if tool_config is None:
             return
 
-        tools_config = OmegaConf.load(tool_config_path)
+        tools_config = OmegaConf.load(tool_config)
         for tool_config in tools_config.tools:
             cls_name = tool_config.class_name
             module_name, class_name = cls_name.rsplit(".", 1)

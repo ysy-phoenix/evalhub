@@ -95,20 +95,19 @@ class LLMGenerator:
             params = asdict(self.config.sample_params)
             if tools:
                 params["tools"] = tools
-            if self.config.chat:
-                async with self._session.post(
-                    url=f"{self.config.base_url}/chat/completions",
-                    json={"messages": messages, **params},
-                ) as resp:
-                    try:
-                        data = await resp.read()
-                        response = ChatCompletion(**json.loads(data))
-                    except Exception as e:
-                        logger.error(f"Error parsing response: {str(e)}")
-                        logger.error(f"Response: {data}")
-                        return None
-                if response.choices[0].finish_reason == "length":
-                    logger.warning("Max tokens exceeded!")
+            async with self._session.post(
+                url=f"{self.config.base_url}/chat/completions",
+                json={"messages": messages, **params},
+            ) as resp:
+                try:
+                    data = await resp.read()
+                    response = ChatCompletion(**json.loads(data))
+                except Exception as e:
+                    logger.error(f"Error parsing response: {str(e)}")
+                    logger.error(f"Response: {data}")
+                    return None
+            if response.choices[0].finish_reason == "length":
+                logger.warning("Max tokens exceeded!")
             return response
         except Exception as e:
             import traceback

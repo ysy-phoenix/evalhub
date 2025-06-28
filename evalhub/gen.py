@@ -1,73 +1,35 @@
 from evalhub.benchmarks import DATASET_MAP
+from evalhub.benchmarks.base import Dataset
 from evalhub.inference.generator import LLMGenerator
 from evalhub.inference.multiturn import MultiTurnGenerator
+from evalhub.inference.schemas import GenerationConfig
 from evalhub.utils.logger import logger
 
 
-def parse_sampling_params(sampling_params: dict) -> dict:
-    r"""Parse sampling parameters from command line arguments."""
-    ret = {}
-    for param in sampling_params:
-        key, value = param.split("=", 1)
-
-        # Try to convert string values to appropriate types
-        try:
-            # Try as int
-            if value.isdigit() or (value.startswith("-") and value[1:].isdigit()):
-                value = int(value)
-            # Try as float
-            elif "." in value and all(
-                part.isdigit() or (i == 0 and part.startswith("-") and part[1:].isdigit())
-                for i, part in enumerate(value.split("."))
-            ):
-                value = float(value)
-            # Try as bool
-            elif value.lower() in ("true", "false"):
-                value = value.lower() == "true"
-        except ValueError:
-            # Keep as string if conversion fails
-            pass
-        ret[key] = value
-    return ret
-
-
-def gen(
-    model: str,
-    ds_name: str,
-    output_dir: str,
-    sampling_params: dict,
-    system_prompt: str | None = None,
-    enable_multiturn: bool = False,
-    resume: bool = False,
-) -> None:
+def gen(config: GenerationConfig, task: str) -> None:
     r"""Generate results for a given model and dataset."""
-    assert ds_name in DATASET_MAP, f"Dataset {ds_name} not supported for generation"
-    dataset = DATASET_MAP[ds_name](name=ds_name)
-    dataset.config["model"] = model
-    for key, value in sampling_params.items():
-        try:
-            dataset.config[key] = value
-        except KeyError:
-            logger.warning(f"Parameter {key} not supported!")
-    logger.info(f"Successfully loaded {ds_name} dataset, length: {len(dataset)}")
-    if system_prompt == "":
+    assert task in DATASET_MAP, f"Dataset {task} not supported for generation"
+    dataset: Dataset = DATASET_MAP[task](name=task)
+    logger.info(f"Successfully loaded {task} dataset, length: {len(dataset)}")
+    if config.system_prompt == "":
         system_prompt = None
     else:
-        system_prompt = system_prompt or dataset.system_prompt
+        system_prompt = config.system_prompt or dataset.system_prompt
+
     # NOTE: This will override the system prompt in the dataset
     if system_prompt:
         logger.info(f"Using system prompt:\n{system_prompt}")
     else:
         logger.info("Not using system prompt!")
 
-    if enable_multiturn:
-        generator = MultiTurnGenerator(dataset.config, system_prompt)
+    if config.enable_multiturn:
+        generator = MultiTurnGenerator(config, system_prompt)
     else:
-        generator = LLMGenerator(dataset.config, system_prompt)
-    if resume:
-        logger.info(f"Resuming generation from {output_dir}")
-    results = generator.generate(dataset, output_dir, resume)
-    raw_path, save_path = dataset.save(results, output_dir)
+        generator = LLMGenerator(config, system_prompt)
+    if config.resume:
+        logger.info(f"Resuming generation from {config.output_dir}")
+    results = generator.generate(dataset, config.output_dir, config.resume)
+    raw_path, save_path = dataset.save(results, config.output_dir)
     logger.info(f"Raw results saved to {raw_path}")
     logger.info(f"Solutions saved to {save_path}")
     return raw_path, save_path
