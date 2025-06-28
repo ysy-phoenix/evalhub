@@ -58,6 +58,7 @@ base = [
     "omegaconf",
     "latex2sympy2",
     "jsonlines",
+    "aiofiles",
 ]
 
 # SGLang specific dependencies
