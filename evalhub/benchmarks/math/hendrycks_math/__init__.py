@@ -9,21 +9,14 @@ from evalhub.benchmarks.registry import register_dataset
 
 HENDRYCKS_MATH = "hendrycks_math"
 HENDRYCKS_MATH_HUB = "DigitalLearningGmbH/MATH-lighteval"
-HENDRYCKS_MATH_CONFIG = {
-    "temperature": 0.0,
-    "top_p": 0.95,
-    "max_tokens": 2048,
-}
 
 
 @register_dataset((HENDRYCKS_MATH, HENDRYCKS_MATH_HUB, True))
 class HendrycksMathDataset(MathDataset):
     """Dataset class for Hendrycks Math problems."""
 
-    def __init__(self, name: str = HENDRYCKS_MATH):
-        super().__init__(name)
-        for key, value in HENDRYCKS_MATH_CONFIG.items():
-            self.config[key] = value
+    def __init__(self, name: str = HENDRYCKS_MATH, **kwargs):
+        super().__init__(name, **kwargs)
 
     def load_tasks(self):
         r"""Load tasks from Hendrycks Math dataset."""

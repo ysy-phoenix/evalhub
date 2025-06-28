@@ -22,15 +22,13 @@ MMLU_REDUX_QUERY_TEMPLATE = (
 )
 ANSWER_PATTERN_MULTICHOICE = r"(?i)Answer[ \t]*:[ \t]*\$?([A-D])\$?"
 
-DEFAULT_KS = [1, 5, 10]
-
 
 @register_dataset((MMLU_REDUX, MMLU_REDUX_HUB, True))
 class MMLUReduxDataset(MathDataset):
     r"""Dataset class for MMLU-Redux problems."""
 
-    def __init__(self, name: str = MMLU_REDUX):
-        super().__init__(name)
+    def __init__(self, name: str = MMLU_REDUX, **kwargs):
+        super().__init__(name, **kwargs)
 
     def load_tasks(self) -> None:
         r"""Load tasks from MMLU-Redux dataset."""

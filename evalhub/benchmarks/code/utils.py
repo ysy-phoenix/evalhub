@@ -11,7 +11,6 @@ API_BASE_URL = "http://localhost:8000/api/v1/judge"
 EMPTY_TEST_CASES = [
     {"input": "", "expected": ""},
 ]
-DEFAULT_KS = [1, 5, 10]
 
 
 def syntax_check(code, verbose=False):

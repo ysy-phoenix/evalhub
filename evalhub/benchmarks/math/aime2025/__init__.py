@@ -8,21 +8,14 @@ from evalhub.benchmarks.registry import register_dataset
 
 AIME2025 = "aime2025"
 AIME2025_HUB = "opencompass/AIME2025"
-AIME2025_CONFIG = {
-    "temperature": 0.0,
-    "top_p": 0.95,
-    "max_tokens": 2048,
-}
 
 
 @register_dataset((AIME2025, AIME2025_HUB, True))
 class AIME2025Dataset(MathDataset):
     """Dataset class for AIME2025 problems."""
 
-    def __init__(self, name: str = AIME2025):
-        super().__init__(name)
-        for key, value in AIME2025_CONFIG.items():
-            self.config[key] = value
+    def __init__(self, name: str = AIME2025, **kwargs):
+        super().__init__(name, **kwargs)
 
     def load_tasks(self):
         r"""Load tasks from AIME2025 dataset."""

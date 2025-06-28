@@ -9,21 +9,14 @@ from evalhub.benchmarks.registry import register_dataset
 
 GSM8K = "gsm8k"
 GSM8K_HUB = "openai/gsm8k"
-GSM8K_CONFIG = {
-    "temperature": 0.0,
-    "top_p": 0.95,
-    "max_tokens": 2048,
-}
 
 
 @register_dataset((GSM8K, GSM8K_HUB, True))
 class GSM8KDataset(MathDataset):
     """Dataset class for GSM8K math reasoning problems."""
 
-    def __init__(self, name: str = GSM8K):
-        super().__init__(name)
-        for key, value in GSM8K_CONFIG.items():
-            self.config[key] = value
+    def __init__(self, name: str = GSM8K, **kwargs):
+        super().__init__(name, **kwargs)
 
     def load_tasks(self):
         r"""Load tasks from GSM8K dataset."""

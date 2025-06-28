@@ -23,7 +23,6 @@ from evalhub.benchmarks.code.livecodebench.compute_code_generation_metrics impor
 )
 from evalhub.benchmarks.code.livecodebench.pass_k_utils import extract_instance_results
 from evalhub.benchmarks.code.utils import (
-    DEFAULT_KS,
     compute_pass_at_k,
     extract_livecodebench_code,
     judge,
@@ -43,12 +42,7 @@ LIVECODEBENCH_META_DATA = {
 DEFAULT_TIME_LIMIT = 10
 DEFAULT_MEMORY_LIMIT = 4 * 1024
 NEW_MODE = False
-
-LIVECODEBENCH_CONFIG = {
-    "temperature": 0.2,
-    "top_p": 0.95,
-    "max_tokens": 4096,
-}
+DEFAULT_KS = [2**i for i in range(11)]
 
 SYSTEM_MESSAGE_GENERIC = (
     "You are an expert Python programmer. "
@@ -74,10 +68,8 @@ FORMATTING_WITHOUT_STARTER_CODE = (
 class LiveCodeBenchDataset(CodeDataset):
     r"""Dataset class for LiveCodeBench code generation benchmark."""
 
-    def __init__(self, name: str = LIVECODEBENCH, meta_data: dict[str, Any] = LIVECODEBENCH_META_DATA):
-        super().__init__(name, meta_data=meta_data)
-        for key, value in LIVECODEBENCH_CONFIG.items():
-            self.config[key] = value
+    def __init__(self, name: str = LIVECODEBENCH, meta_data: dict[str, Any] = LIVECODEBENCH_META_DATA, **kwargs):
+        super().__init__(name, meta_data=meta_data, **kwargs)
 
     @property
     def system_prompt(self) -> str | None:

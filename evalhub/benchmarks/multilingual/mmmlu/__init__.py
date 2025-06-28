@@ -22,15 +22,13 @@ MMMLU_QUERY_TEMPLATE = (
 )
 ANSWER_PATTERN_MULTICHOICE = r"(?i)Answer[ \t]*:[ \t]*\$?([A-D])\$?"
 
-DEFAULT_KS = [1, 5, 10]
-
 
 @register_dataset((MMMLU, MMMLU_HUB, True))
 class MMMLUDataset(MathDataset):
     r"""Dataset class for MMMLU problems."""
 
-    def __init__(self, name: str = MMMLU):
-        super().__init__(name)
+    def __init__(self, name: str = MMMLU, **kwargs):
+        super().__init__(name, **kwargs)
 
     def load_tasks(self) -> None:
         r"""Load tasks from MMMLU dataset."""

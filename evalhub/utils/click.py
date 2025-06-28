@@ -46,6 +46,8 @@ def _create_click_option(field_name: str, field_info: Field, field_type: type) -
         "type": click_type,
         "required": metadata.get("required", False),
     }
+    if field_type is bool:
+        option_kwargs["is_flag"] = True
 
     if metadata.get("multiple", False):
         option_kwargs["multiple"] = True
@@ -91,7 +93,6 @@ def options(cls: DataclassProtocol) -> Callable[[Callable], Callable]:
 
         @wraps(func)
         def wrapper(*args, **kwargs):
-            print(args, kwargs)
             # Create SampleParams from extracted kwargs
             sample_param_names = set(SampleParams.__dataclass_fields__.keys())
             sample_kwargs = {k: v for k, v in kwargs.items() if k in sample_param_names}

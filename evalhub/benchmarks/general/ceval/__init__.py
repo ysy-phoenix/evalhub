@@ -22,15 +22,13 @@ CEVAL_QUERY_TEMPLATE = (
 )
 ANSWER_PATTERN_MULTICHOICE = r"(?i)Answer[ \t]*:[ \t]*\$?([A-D])\$?"
 
-DEFAULT_KS = [1, 5, 10]
-
 
 @register_dataset((CEVAL, CEVAL_HUB, False))
 class CEVALDataset(MathDataset):
     r"""Dataset class for CEVAL problems."""
 
-    def __init__(self, name: str = CEVAL):
-        super().__init__(name)
+    def __init__(self, name: str = CEVAL, **kwargs):
+        super().__init__(name, **kwargs)
 
     def load_tasks(self) -> None:
         r"""Load tasks from CEVAL dataset."""

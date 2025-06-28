@@ -1,6 +1,6 @@
 import numpy as np
 
-DEFAULT_K_LIST = [1, 5]
+DEFAULT_K_LIST = [2**i for i in range(11)]
 
 
 def estimate_pass_at_k(num_samples: int | list[int], num_correct: int | list[int], k: int) -> np.ndarray:

@@ -10,10 +10,7 @@ import orjson
 from openai.types.chat.chat_completion import ChatCompletion
 
 from evalhub.benchmarks.base import Dataset
-from evalhub.inference.schemas import (
-    GenerationConfig,
-    GenerationResult,
-)
+from evalhub.inference.schemas import GenerationConfig
 from evalhub.utils.logger import logger
 from evalhub.utils.pbar import get_progress_bar
 
@@ -31,7 +28,7 @@ class ProgressTracker:
     def __init__(self, total_samples: int, total_tasks: int):
         self.progress = get_progress_bar()
         self.completed_samples = 0
-        self.completed_tasks = set()
+        self.completed_tasks = 0
         self.sample_progress = None
         self.task_progress = None
         self.total_samples = total_samples
@@ -51,11 +48,10 @@ class ProgressTracker:
         self.completed_samples += 1
         self.progress.update(self.sample_progress, completed=self.completed_samples)
 
-    def update_task_progress(self, task_id: str, current_responses: int):
+    def update_task_progress(self):
         r"""Update task completion progress."""
-        if task_id not in self.completed_tasks and current_responses >= 1:
-            self.completed_tasks.add(task_id)
-            self.progress.update(self.task_progress, completed=len(self.completed_tasks))
+        self.completed_tasks += 1
+        self.progress.update(self.task_progress, completed=self.completed_tasks)
 
 
 class LLMGenerator:
@@ -131,16 +127,16 @@ class LLMGenerator:
             logger.error(f"Error processing task {task_id} sample {sample_id}: {str(e)}")
             return (task_id, sample_id, None)
 
-    async def generate_async(
-        self, dataset: Dataset, output_dir: PathLike, resume: bool = False
-    ) -> list[GenerationResult]:
+    async def generate_async(self, dataset: Dataset) -> None:
         r"""Generate responses asynchronously with optimized performance."""
         await self._create_session()
-        task_ids, tasks_list = list(dataset.tasks.keys()), list(dataset.tasks.values())
-        results: dict[str, list[dict[str, str]]] = {task_id: [] for task_id in task_ids}
+        await dataset._init_files()
 
-        if resume:
-            results = self.load_results(dataset, output_dir)
+        task_ids, tasks_list = list(dataset.tasks.keys()), list(dataset.tasks.values())
+        completed_tasks: set[str] = set()  # Track completed tasks
+
+        if self.config.resume:
+            results = self.load_results(dataset, self.config.output_dir)
             resume_tasks = defaultdict(int)
             for task_id in task_ids:
                 exist = len(results[task_id]) if task_id in results else 0
@@ -148,6 +144,7 @@ class LLMGenerator:
         else:
             resume_tasks = dict.fromkeys(task_ids, self.config.n_samples)
 
+        results: dict[str, list[dict[str, str]]] = defaultdict(list)
         coroutines = [
             self._generate_single_sample(task.task_id, str(sample_id), task.prompt, task.metadata)
             for task in tasks_list
@@ -174,21 +171,30 @@ class LLMGenerator:
             for future in asyncio.as_completed(tasks):
                 task_id, sample_id, response = await future
 
-                if task_id is not None:  # Skip timed out tasks
+                if task_id is not None and response is not None:  # Skip timed out tasks
                     tracker.update_sample_progress()
-                    if response:
-                        results[task_id].append(response)
-                        tracker.update_task_progress(task_id, len(results[task_id]))
+                    results[task_id].append(response)
+                    if task_id not in completed_tasks and len(results[task_id]) >= resume_tasks[task_id]:
+                        completed_tasks.add(task_id)
+                        await dataset.save_single_task(task_id, results[task_id])
+                        results[task_id].clear()
+                        results.pop(task_id)
+                        tracker.update_task_progress()
+
+        # Save remaining results
+        if len(completed_tasks) < total_tasks:
+            logger.warning(f"Only {len(completed_tasks)} tasks completed out of {total_tasks}")
+            for task_id, responses in results.items():
+                await dataset.save_single_task(task_id, responses)
+        else:
+            logger.info(f"All tasks completed, saved to {self.config.output_dir}")
 
         await self._close_session()
+        await dataset._close_files()
 
-        return [
-            GenerationResult(task_id=task_id, responses=responses) for task_id, responses in sorted(results.items())
-        ]
-
-    def generate(self, dataset: Dataset, output_dir: PathLike, resume: bool = False) -> list[GenerationResult]:
+    def generate(self, dataset: Dataset) -> None:
         r"""Synchronous API."""
-        return asyncio.run(self.generate_async(dataset, output_dir, resume))
+        return asyncio.run(self.generate_async(dataset))
 
     def load_results(self, dataset: Dataset, output_dir: PathLike) -> dict[str, list[dict[str, str]]]:
         r"""Load results from a file."""

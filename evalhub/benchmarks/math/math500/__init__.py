@@ -9,21 +9,14 @@ from evalhub.benchmarks.registry import register_dataset
 
 MATH500 = "math500"
 MATH500_HUB = "HuggingFaceH4/MATH-500"
-MATH500_CONFIG = {
-    "temperature": 0.0,
-    "top_p": 0.95,
-    "max_tokens": 2048,
-}
 
 
 @register_dataset((MATH500, MATH500_HUB, True))
 class Math500Dataset(MathDataset):
     """Dataset class for Math500 problems."""
 
-    def __init__(self, name: str = MATH500):
-        super().__init__(name)
-        for key, value in MATH500_CONFIG.items():
-            self.config[key] = value
+    def __init__(self, name: str = MATH500, **kwargs):
+        super().__init__(name, **kwargs)
 
     def load_tasks(self):
         r"""Load tasks from Math500 dataset."""

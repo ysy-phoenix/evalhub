@@ -11,14 +11,14 @@ from evalhub.utils.logger import logger
 from evalhub.utils.metrics import compute_pass_at_k, get_majority_vote
 from evalhub.utils.pbar import get_progress_bar
 
-DEFAULT_KS = [1, 5, 10]
+DEFAULT_KS = [2**i for i in range(11)]
 
 
 class MathDataset(Dataset):
     r"""Dataset class for math reasoning problems."""
 
-    def __init__(self, name: str = "math"):
-        super().__init__(name)
+    def __init__(self, name: str = "math", **kwargs):
+        super().__init__(name, **kwargs)
 
     def load_tasks(self) -> None:
         r"""Load tasks from math reasoning dataset."""

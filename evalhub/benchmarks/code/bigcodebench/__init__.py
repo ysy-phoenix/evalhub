@@ -13,11 +13,6 @@ BIGCODEBENCH_META_DATA = {
     "split": "instruct",
     "subset": "full",
 }
-BIGCODEBENCH_CONFIG = {
-    "temperature": 0.0,
-    "top_p": 0.95,
-    "max_tokens": 2048,
-}
 BIGCODEBENCH_VERSION = "v0.1.4"
 INSTRUCTION_PREFIX = (
     "Please provide a self-contained Python script thatsolves the following problem in a markdown code block:"
@@ -28,10 +23,8 @@ INSTRUCTION_PREFIX = (
 class BigCodeBenchDataset(CodeDataset):
     r"""Dataset class for BigCodeBench."""
 
-    def __init__(self, name: str = BIGCODEBENCH, meta_data: dict[str, Any] = BIGCODEBENCH_META_DATA):
-        super().__init__(name, meta_data=meta_data)
-        for key, value in BIGCODEBENCH_CONFIG.items():
-            self.config[key] = value
+    def __init__(self, name: str = BIGCODEBENCH, meta_data: dict[str, Any] = BIGCODEBENCH_META_DATA, **kwargs):
+        super().__init__(name, meta_data=meta_data, **kwargs)
 
     def load_tasks(self):
         r"""Load tasks from BigCodeBench dataset."""

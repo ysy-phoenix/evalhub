@@ -29,8 +29,8 @@ def read_jsonl(url: str) -> list[dict[str, Any]]:
 class WritingBenchDataset(MathDataset):
     r"""Dataset class for WritingBench problems."""
 
-    def __init__(self, name: str = WRITINGBENCH):
-        super().__init__(name)
+    def __init__(self, name: str = WRITINGBENCH, **kwargs):
+        super().__init__(name, **kwargs)
 
     def load_tasks(self) -> None:
         r"""Load tasks from WritingBench dataset."""

@@ -9,8 +9,9 @@ from evalhub.utils.logger import logger
 def gen(config: GenerationConfig, task: str) -> None:
     r"""Generate results for a given model and dataset."""
     assert task in DATASET_MAP, f"Dataset {task} not supported for generation"
-    dataset: Dataset = DATASET_MAP[task](name=task)
+    dataset: Dataset = DATASET_MAP[task](name=task, config=config)
     logger.info(f"Successfully loaded {task} dataset, length: {len(dataset)}")
+
     if config.system_prompt == "":
         system_prompt = None
     else:
@@ -26,10 +27,8 @@ def gen(config: GenerationConfig, task: str) -> None:
         generator = MultiTurnGenerator(config, system_prompt)
     else:
         generator = LLMGenerator(config, system_prompt)
+
     if config.resume:
         logger.info(f"Resuming generation from {config.output_dir}")
-    results = generator.generate(dataset, config.output_dir, config.resume)
-    raw_path, save_path = dataset.save(results, config.output_dir)
-    logger.info(f"Raw results saved to {raw_path}")
-    logger.info(f"Solutions saved to {save_path}")
-    return raw_path, save_path
+
+    generator.generate(dataset)

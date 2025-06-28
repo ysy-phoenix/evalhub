@@ -29,8 +29,8 @@ def read_jsonl(url: str) -> list[dict[str, Any]]:
 class IFEVALDataset(MathDataset):
     r"""Dataset class for IFEVAL problems."""
 
-    def __init__(self, name: str = IFEVAL):
-        super().__init__(name)
+    def __init__(self, name: str = IFEVAL, **kwargs):
+        super().__init__(name, **kwargs)
 
     def load_tasks(self) -> None:
         r"""Load tasks from IFEVAL dataset."""

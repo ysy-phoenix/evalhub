@@ -23,15 +23,13 @@ INCLUDE_QUERY_TEMPLATE = (
 )
 ANSWER_PATTERN_MULTICHOICE = r"(?i)Answer[ \t]*:[ \t]*\$?([A-D])\$?"
 
-DEFAULT_KS = [1, 5, 10]
-
 
 @register_dataset((INCLUDE, INCLUDE_HUB, True))
 class INCLUDEDataset(MathDataset):
     r"""Dataset class for INCLUDE problems."""
 
-    def __init__(self, name: str = INCLUDE):
-        super().__init__(name)
+    def __init__(self, name: str = INCLUDE, **kwargs):
+        super().__init__(name, **kwargs)
 
     def load_tasks(self) -> None:
         r"""Load tasks from INCLUDE dataset."""

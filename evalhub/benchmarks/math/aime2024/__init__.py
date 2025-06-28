@@ -8,21 +8,14 @@ from evalhub.benchmarks.registry import register_dataset
 
 AIME2024 = "aime2024"
 AIME2024_HUB = "HuggingFaceH4/aime_2024"
-AIME2024_CONFIG = {
-    "temperature": 0.0,
-    "top_p": 0.95,
-    "max_tokens": 2048,
-}
 
 
 @register_dataset((AIME2024, AIME2024_HUB, True))
 class AIME2024Dataset(MathDataset):
     """Dataset class for AIME2024 problems."""
 
-    def __init__(self, name: str = AIME2024):
-        super().__init__(name)
-        for key, value in AIME2024_CONFIG.items():
-            self.config[key] = value
+    def __init__(self, name: str = AIME2024, **kwargs):
+        super().__init__(name, **kwargs)
 
     def load_tasks(self):
         r"""Load tasks from AIME2024 dataset."""

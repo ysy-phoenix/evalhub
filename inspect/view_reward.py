@@ -7,7 +7,7 @@ from rich.console import Console
 
 from evalhub.utils.metrics import compute_pass_at_k
 
-DEFAULT_KS = [1]
+DEFAULT_KS = [2**i for i in range(11)]
 console = Console(width=120, soft_wrap=False)
 
 

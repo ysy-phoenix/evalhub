@@ -28,6 +28,7 @@ def cli():
 def run(config: GenerationConfig):
     r"""Run evaluation on a model with specified dataset."""
     config.output_dir.mkdir(parents=True, exist_ok=True)
+    console.print(config)
     for task in config.tasks:
         console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
         gen(config=config, task=task)
@@ -40,7 +41,7 @@ def run(config: GenerationConfig):
 def eval(tasks: str, solutions: str, output_dir: str):
     r"""Evaluate the model on the tasks."""
     tasks = [task.strip().lower() for task in tasks.split(",")]
-    solutions = [solution.strip().lower() for solution in solutions.split(",")]
+    solutions = [solution.strip() for solution in solutions.split(",")]
     assert len(tasks) == len(solutions), "Number of tasks and solutions must be the same"
     for task, solution in zip(tasks, solutions, strict=False):
         console.print(f"[bold green]Running evaluation on {task} task[/bold green]")

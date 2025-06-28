@@ -9,13 +9,11 @@ from os import PathLike
 from pathlib import Path
 from typing import Any, ClassVar
 
+import aiofiles
 import orjson
 
-from evalhub.inference.schemas import GenerationConfig, GenerationResult
+from evalhub.inference.schemas import GenerationConfig
 from evalhub.utils.logger import logger
-from evalhub.utils.pbar import get_progress_bar
-
-DEFAULT_GENERATION_CONFIG = GenerationConfig()
 
 
 @dataclass
@@ -67,11 +65,12 @@ class Dataset(ABC):
         name: str | None = None,
         meta_data: dict[str, Any] | None = None,
         reload: bool = False,
+        config: GenerationConfig | None = None,
     ):
         self.name = name or self.__class__.name
         self.tasks: dict[str, Task] = {}
         self.groundtruth: dict[str, GroundTruth] = {}
-        self.config = DEFAULT_GENERATION_CONFIG
+        self.config = config or GenerationConfig()
         self.meta_data: dict[str, Any] = meta_data or {}
         self.cache_dir = Path(os.environ.get("EVALHUB_CACHE_DIR", Path.home() / ".cache" / "evalhub"))
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -115,6 +114,16 @@ class Dataset(ABC):
             pickle.dump(self.groundtruth, f)
         logger.info(f"Saved cached results for {self.name} to {self.cache_dir}")
 
+    async def _init_files(self):
+        r"""Initialize the files for the dataset."""
+        self.raw_file = await aiofiles.open(self.config.output_dir / f"{self.name}_raw.jsonl", "ab")
+        self.sanitized_file = await aiofiles.open(self.config.output_dir / f"{self.name}.jsonl", "ab")
+
+    async def _close_files(self):
+        r"""Close the files for the dataset."""
+        await self.raw_file.close()
+        await self.sanitized_file.close()
+
     @abstractmethod
     def load_tasks(self):
         r"""Load tasks from the dataset.
@@ -149,42 +158,16 @@ class Dataset(ABC):
         r"""Extract solution from the response."""
         return response or ""
 
-    def sanitize_and_save(self, results: list[GenerationResult], output_dir: PathLike) -> Path:
-        r"""Sanitize and save the results."""
-        output_dir = Path(output_dir)
-        save_path = output_dir / f"{self.name}.jsonl"
-        total_samples = sum(len(result.responses) for result in results)
-
-        with open(save_path, "wb") as save_file, get_progress_bar() as progress:
-            task = progress.add_task("[bold blue]Sanitizing and saving results", total=total_samples)
-
-            for result in results:
-                task_id = result.task_id
-                for response in result.responses:
-                    if "content" in response:  # FIXME: multiturn
-                        content = response.get("content", "")
-                    else:
-                        content = response.get("choices", [{}])[0].get("message", {}).get("content", "")
-                    solution = self.extract_solution(task_id, content)
-                    save_file.write(orjson.dumps({"task_id": task_id, "solution": solution}) + b"\n")
-                    progress.update(task, advance=1)
-
-        return save_path
-
-    def save(self, results: list[GenerationResult], output_dir: PathLike) -> tuple[Path, Path]:
-        r"""Save raw results to a JSONL file."""
-        output_dir = Path(output_dir)
-        output_dir.mkdir(exist_ok=True, parents=True)
-        raw_path = output_dir / f"{self.name}_raw.jsonl"
-
-        with open(raw_path, "wb") as raw_file:
-            for sample in results:
-                task_id = sample.task_id
-                for response in sample.responses:
-                    raw_file.write(orjson.dumps({"task_id": task_id, "response": response}) + b"\n")
-
-        save_path = self.sanitize_and_save(results, output_dir)
-        return raw_path, save_path
+    async def save_single_task(self, task_id: str, responses: list[dict]) -> None:
+        r"""Save results for a single task (append mode)."""
+        for response in responses:
+            await self.raw_file.write(orjson.dumps({"task_id": task_id, "response": response}) + b"\n")
+            if "content" in response:  # FIXME: multiturn
+                content = response.get("content", "")
+            else:
+                content = response.get("choices", [{}])[0].get("message", {}).get("content", "")
+            solution = self.extract_solution(task_id, content)
+            await self.sanitized_file.write(orjson.dumps({"task_id": task_id, "solution": solution}) + b"\n")
 
     def __len__(self) -> int:
         r"""Get number of tasks in the dataset."""

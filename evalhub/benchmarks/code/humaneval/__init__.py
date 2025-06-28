@@ -13,11 +13,6 @@ HUMANEVAL = "humaneval"
 MBPP = "mbpp"
 HUMANEVAL_HUB = "evalplus/humanevalplus"
 MBPP_HUB = "evalplus/mbppplus"
-HUMANEVAL_CONFIG = {
-    "temperature": 0.0,
-    "top_p": 0.95,
-    "max_tokens": 2048,
-}
 
 
 def get_mbpp_entry_point(item: dict) -> str:
@@ -37,10 +32,8 @@ def get_mbpp_entry_point(item: dict) -> str:
 class HumanEvalDataset(CodeDataset):
     r"""Dataset class for HumanEval/MBPP."""
 
-    def __init__(self, name: str):
-        super().__init__(name)
-        for key, value in HUMANEVAL_CONFIG.items():
-            self.config[key] = value
+    def __init__(self, name: str, **kwargs):
+        super().__init__(name, **kwargs)
         self.hub = HUMANEVAL_HUB if self.name == HUMANEVAL else MBPP_HUB
 
     def load_tasks(self):
