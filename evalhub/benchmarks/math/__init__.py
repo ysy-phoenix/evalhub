@@ -3,6 +3,7 @@ from .aime2025 import AIME2025Dataset
 from .gsm8k import GSM8KDataset
 from .hendrycks_math import HendrycksMathDataset
 from .math500 import Math500Dataset
+from .zebralogic import ZebraLogicDataset
 
 __all__ = [
     "AIME2024Dataset",
@@ -10,4 +11,5 @@ __all__ = [
     "GSM8KDataset",
     "HendrycksMathDataset",
     "Math500Dataset",
+    "ZebraLogicDataset",
 ]
