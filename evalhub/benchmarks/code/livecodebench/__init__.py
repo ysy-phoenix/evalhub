@@ -308,8 +308,8 @@ class LiveCodeBenchDataset(CodeDataset):
         metrics, results, metadatas = codegen_metrics(
             eval_samples,
             generations,
-            num_process_evaluate=16,
-            timeout=6,
+            num_process_evaluate=min(64, os.cpu_count()),
+            timeout=10,
         )
 
         graded = extract_instance_results(results)
