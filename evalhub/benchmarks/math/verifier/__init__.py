@@ -14,7 +14,7 @@ def extract_answer(passage: str) -> str:
 def grade_answer(given_answer: str, ground_truth: str) -> bool:
     r"""Grade the answer."""
     return any(
-        verifier(given_answer, ground_truth) for verifier in [verify_dapo, grade_answer_mathd, grade_answer_sympy]
+        verifier(given_answer, ground_truth) for verifier in [grade_answer_mathd, grade_answer_sympy, verify_dapo]
     )
 
 
