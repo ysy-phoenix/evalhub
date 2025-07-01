@@ -79,7 +79,7 @@ max_tokens=4096
 tool_config_path="$HOME/projects/evalhub/evalhub/tools/config/gsm8k_tool_config.yaml"
 system_prompt="You are a math expert. You are given a question and you need to solve it step by step. Reasoning step by step before any tool call. You should use the \`calc_gsm8k_reward\` tool after step by step solving the question, before generate final answer at least once and refine your answer if necessary."
 
-evalhub run --model "$HOME/models/Qwen2.5-7B-Instruct" --tasks gsm8k --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ -p max_tokens=$max_tokens -p temperature=$temperature -p top_p=$top_p -p tool_config_path=$tool_config_path --enable-multiturn --system-prompt "$system_prompt"
+evalhub run --model "$HOME/models/Qwen2.5-7B-Instruct" --tasks gsm8k --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ --max-tokens $max_tokens --temperature $temperature --top-p $top_p --tool-config-path $tool_config_path --enable-multiturn --system-prompt "$system_prompt"
 ```
 
 #### livecodebench with callback
@@ -92,5 +92,5 @@ You will be given a question (problem specification) and \
 will generate a correct Python program that matches the specification and passes all tests. \
 We will provide you with feedback of public test cases results to help you improve your code."
 
-evalhub run --model "$HOME/models/Qwen2.5-7B-Instruct" --tasks livecodebench --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ -p max_tokens=$max_tokens -p temperature=$temperature -p top_p=$top_p  --enable-multiturn --system-prompt "$system_prompt" -p callback="evalhub.callback.code_callback.CodeCallback"
+evalhub run --model "$HOME/models/Qwen2.5-7B-Instruct" --tasks livecodebench --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ --max-tokens $max_tokens --temperature $temperature --top-p $top_p  --enable-multiturn --system-prompt "$system_prompt" --callback "evalhub.callback.code_callback.CodeCallback"
 ```

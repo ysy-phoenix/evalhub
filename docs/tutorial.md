@@ -36,6 +36,11 @@ from .your_dataset_name import YourDatasetName
 
 __all__ = [..., "YourDatasetName"]
 ```
+If you add a new type of dataset, you need to add a new file in `evalhub/benchmarks/__init__.py` to register the dataset.
+
+```python
+from .type_of_dataset import *  # noqa
+```
 
 ### Step 4: Testing Your Dataset
 
