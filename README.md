@@ -38,9 +38,6 @@ All-in-one benchmarking platform for evaluating Large Language Models (LLMs) wit
 > - Minimal viable code implementation
 > - Prioritize simplicity and modularity over comprehensive feature sets
 > - Easy to expose evaluation details(prompts, answer extraction, etc.)
->
-> We now mainly focus on the evaluation of **code** and **math** benchmarks.
-
 
 ## 📦 Installation
 
@@ -57,8 +54,7 @@ uv venv --python 3.12
 source .venv/bin/activate
 
 # Install the package
-uv pip install -r requirements.txt
-uv pip install -e ".[dev]" # optional, for development
+uv pip install -e ".[all]" # other options: [dev], [base], [sglang]
 
 # Recommend cleaning up cache after pulling the latest changes
 rm -rf ~/.cache/evalhub/
@@ -79,7 +75,7 @@ python -m sglang.launch_server --model-path $HOME/models/Qwen2.5-7B-Instruct
 python -m sglang_router.launch_server --model-path $HOME/models/Qwen2.5-Coder-7B-Instruct --dp 4
 
 # humaneval && mbpp
-evalhub run --model Qwen2.5-7B-Instruct --tasks humaneval --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ -p temperature=0.2 -p top_p=0.95 # -p key=value to override default config
+evalhub run --model Qwen2.5-7B-Instruct --tasks humaneval --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ --temperature 0.2 --top-p 0.95
 evalhub run --model Qwen2.5-7B-Instruct --tasks mbpp --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
 evalplus.evaluate --dataset humaneval --samples $HOME/metrics/Qwen2.5-7B-Instruct/humaneval.jsonl
 evalplus.evaluate --dataset mbpp --samples $HOME/metrics/Qwen2.5-7B-Instruct/mbpp.jsonl
@@ -104,25 +100,6 @@ For more commands, please refer to [docs/cmds.md](docs/cmds.md).
 
 > [!Note]
 > `view` is supported for math and livecodebench tasks only now!
-
-We also provide some all in one scripts in `scripts/`, and feel free to adjust for your own use.
-
-```bash
-bash ./scripts/eval_code.sh --model Qwen2.5-Coder-7B-Instruct --temperature 0.6 --max-tokens 4096
-```
-
-> [!Important]
-> Due to the tightly coupled nature of LiveCodeBench's codebase, despite our efforts to integrate it with minimal cost, we inevitably had to incorporate a significant amount of code from the original repository.
->
-> We only suopport codegeneration scenario of LiveCodeBench.
-
-03/26/2025 update: We add a new mode for livecodebench, use [mini-judge](https://github.com/ysy-phoenix/mini-judge) as backend.
-- The original LiveCodeBench would return upon encountering the first failed test case
-- whereas our new evaluation will execute all test cases.
-- As a result, there is a significant difference in speed between the two approaches.
-- By default, the original evaluation method is used, but you can modify it [here](src/benchmarks/code/livecodebench/__init__.py).
-
-04/29/2025 update: Evaluation results of r1 recipe reproduction can be found in [docs/baseline.md](docs/baseline.md).
 
 ## 🛠 Development
 
@@ -156,17 +133,16 @@ pre-commit install
 pre-commit run --all-files
 ```
 
+### Test
+
+```bash
+# Run all tests
+pytest -W ignore::Warning
+```
+
 ## 🛣 Roadmap
 
-- [x] code: humaneval && mbpp
-- [x] math: gsm8k && hendrycks_math
-- [x] code: livecodebench
-- [x] math: math500 && AIME-2024
-- [x] refactor math framework
-- [x] clean up livecodebench framework
-- [x] organize docs
-- [x] integrate with mini-judge
-- [x] code: BigCodeBench
+See [docs/history.md](docs/history.md) for more details.
 
 ## 🌐 Acknowledgements
 
@@ -175,6 +151,9 @@ pre-commit run --all-files
 - [math-evaluation-harness](https://github.com/ZubinGou/math-evaluation-harness)
 - [LiveCodeBench](https://github.com/LiveCodeBench/LiveCodeBench)
 - [verl](https://github.com/volcengine/verl)
+
+> [!Important]
+> Additionally, special thanks to Cursor and Claude for their tremendous support in the code development of this project.
 
 ## 📄 License
 

@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8,<3.13"
 license = {file = "LICENSE"}
 authors = [
-    {name = "EvalHub Team", email = "ysy007@mail.ustc.edu.cn"}
+    {name = "Shengyu Ye", email = "ysy007@mail.ustc.edu.cn"}
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -25,19 +25,17 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
+# Core minimal dependencies
 dependencies = [
     "click",
     "requests",
     "pydantic",
     "rich",
     "tqdm",
-    "openai",
-    "datasets",
-    "huggingface-hub",
-    "hf_transfer",
 ]
 
 [project.optional-dependencies]
+# Development dependencies
 dev = [
     "pytest",
     "pytest-cov",
@@ -45,36 +43,54 @@ dev = [
     "pre-commit",
 ]
 
+# All production dependencies
+base = [
+    "numpy",
+    "psutil",
+    "orjson",
+    "openai",
+    "datasets",
+    "huggingface-hub",
+    "hf_transfer",
+    "sympy",
+    "pylatexenc",
+    "evalplus",
+    "omegaconf",
+    "latex2sympy2",
+    "jsonlines",
+    "aiofiles",
+    "antlr4-python3-runtime==4.7.2",
+]
+
+# SGLang specific dependencies
+sglang = [
+    "sglang[all]>=0.4.8.post1",
+    "sglang-router",
+]
+
+# Complete set (all + dev)
+all = [
+    "evalhub[base,dev,sglang]",
+]
+
 [project.scripts]
-evalhub = "src.cli:main"
+evalhub = "evalhub.cli:main"
 
 [tool.setuptools]
-packages = ["src"]
-package-dir = {"src" = "src"}
+packages = ["evalhub"]
+package-dir = {"evalhub" = "evalhub"}
 
 [tool.ruff]
-line-length = 100
-target-version = "py38"
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
 
 [tool.ruff.lint]
 select = ["E", "F", "B", "I", "UP", "N", "C", "W"]
 ignore = ["C901", "N818"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["src"]
-
-[tool.black]
-line-length = 100
-target-version = ["py38", "py39", "py310", "py311", "py312"]
-
-[tool.mypy]
-python_version = "3.8"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-
-[[tool.mypy.overrides]]
-module = "tests.*"
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
+known-first-party = ["evalhub"]

@@ -9,7 +9,7 @@ from rich.progress import track
 from rich.table import Table
 
 CODE_TASKS = ["humaneval", "mbpp", "livecodebench", "bigcodebench"]
-MATH_TASKS = ["gsm8k", "hendrycks_math", "aime2024", "math500", "gpqa"]
+MATH_TASKS = ["gsm8k", "hendrycks_math", "aime2024", "aime2025", "math500", "gpqa", "mmlu_redux"]
 INCLUDED_TASKS = CODE_TASKS + MATH_TASKS
 
 
@@ -60,9 +60,7 @@ def analyze_length_distribution(dir_path: Path, show_progress: bool = True):
     stats["overall"] = get_stats_for_lengths(all_lengths)
 
     # Create table with all tasks
-    table = Table(
-        title="Solution Length Distribution by Task", show_header=True, header_style="bold magenta"
-    )
+    table = Table(title="Solution Length Distribution by Task", show_header=True, header_style="bold magenta")
     table.add_column("Statistic", style="dim")
     for task in list(task_lengths.keys()) + ["overall"]:
         table.add_column(task.upper(), justify="right")
@@ -99,9 +97,7 @@ def analyze_length_distribution(dir_path: Path, show_progress: bool = True):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Analyze the length distribution of solutions in a JSONL file."
-    )
+    parser = argparse.ArgumentParser(description="Analyze the length distribution of solutions in a JSONL file.")
     parser.add_argument("--dir", type=str, help="Path to the directory containing the JSONL files.")
     args = parser.parse_args()
 
