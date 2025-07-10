@@ -148,10 +148,9 @@ class Dataset(ABC):
         """
         raise NotImplementedError("Subclass must implement format_prompt method")
 
-    @abstractmethod
     def evaluate(self, solution: str, output_dir: PathLike) -> None:
         r"""Evaluate the model on the tasks."""
-        raise NotImplementedError("Subclass must implement evaluate method")
+        logger.warning(f"Evaluate method is not implemented for {self.name}")
 
     @preprocess_response
     def extract_solution(self, task_id: str, response: str | None) -> str:
