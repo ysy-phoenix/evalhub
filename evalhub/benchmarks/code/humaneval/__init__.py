@@ -33,7 +33,7 @@ class HumanEvalDataset(CodeDataset):
     r"""Dataset class for HumanEval/MBPP."""
 
     def __init__(self, name: str, **kwargs):
-        self.hub = HUMANEVAL_HUB if self.name == HUMANEVAL else MBPP_HUB
+        self.hub = HUMANEVAL_HUB if name == HUMANEVAL else MBPP_HUB
         super().__init__(name, **kwargs)
 
     def load_tasks(self):
