@@ -5,6 +5,7 @@ from pathlib import Path
 
 from rich.columns import Columns
 from rich.console import Console
+from rich.markdown import Markdown
 from rich.table import Table
 
 
@@ -124,7 +125,7 @@ def display_summary_files(directory: Path, csv_output: Path | None = None) -> No
     # Generate and print markdown table
     markdown_table = generate_markdown_table(all_data)
     console.print("\n[bold]Markdown Table:[/bold]")
-    console.print(markdown_table)
+    console.print(Markdown(markdown_table))
     console.print()
 
     tables = []
@@ -154,7 +155,7 @@ if __name__ == "__main__":
 
     console = Console()
     directory = Path(args.dir)
-    csv_output = Path(args.csv) if args.csv else None
+    csv_output = Path(args.csv) if args.csv else Path(args.dir) / "summary.csv"
 
     if not directory.exists():
         console.print(f"[red]Directory not found: {directory}[/red]")

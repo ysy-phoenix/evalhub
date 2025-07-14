@@ -7,12 +7,14 @@ def extract_answer(passage: str) -> str:
     if "</think>" in passage:
         passage = passage.split("</think>")[-1]
     if "\\boxed" in passage:
-        return extract_boxed_answer(passage)
-    return passage[:-300]  # Limit solution length for efficiency
+        passage = extract_boxed_answer(passage)
+    return passage[-300:] if passage is not None else ""  # Limit solution length for efficiency
 
 
 def grade_answer(given_answer: str, ground_truth: str) -> bool:
     r"""Grade the answer."""
+    if "!" in given_answer and "!" not in ground_truth:
+        return False
     return any(
         verifier(given_answer, ground_truth) for verifier in [grade_answer_mathd, grade_answer_sympy, verify_dapo]
     )
