@@ -69,7 +69,7 @@ class LiveCodeBenchDataset(CodeDataset):
     r"""Dataset class for LiveCodeBench code generation benchmark."""
 
     def __init__(self, name: str = LIVECODEBENCH, meta_data: dict[str, Any] = LIVECODEBENCH_META_DATA, **kwargs):
-        super().__init__(name, meta_data=meta_data, **kwargs)
+        super().__init__(f"{name}_{meta_data['release_version']}", meta_data=meta_data, **kwargs)
 
     @property
     def system_prompt(self) -> str | None:

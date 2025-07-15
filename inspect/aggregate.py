@@ -9,17 +9,6 @@ from rich.markdown import Markdown
 from rich.table import Table
 
 
-def get_title(title: str) -> str:
-    title_mapping = {
-        "hendrycks": "hendrycks_math",
-        "mmlu": "mmlu_redux",
-        "gpqa": "gpqa_diamond",
-        "livecodebench": "livecodebench_v6",
-    }
-    base_title = title.split("_")[0]
-    return title_mapping.get(base_title, base_title)
-
-
 def save_to_csv(data: list[dict], output_path: Path) -> None:
     fieldnames = ["benchmark", "metric", "value"]
     with open(output_path, "w", newline="") as f:
@@ -27,8 +16,8 @@ def save_to_csv(data: list[dict], output_path: Path) -> None:
         writer.writeheader()
 
         for entry in data:
-            benchmark = get_title(entry["file"].stem)
-            is_humaneval = "humaneval" in entry["file"].stem or "mbpp" in entry["file"].stem
+            benchmark = entry["file"].stem.removesuffix("_summary")
+            is_humaneval = "humaneval" in benchmark or "mbpp" in benchmark
 
             if is_humaneval:
                 for k, v in entry["data"]["base_pass_at_k"].items():
@@ -47,7 +36,7 @@ def create_table(title: str, data: dict, is_humaneval: bool = False) -> Table:
     table_style = {"title": "[bold green]", "width": 30}
 
     table = Table(
-        title=f"{table_style['title']}{get_title(title)}[/]",
+        title=f"{table_style['title']}{title}[/]",
         show_header=True,
         header_style="bold magenta",
         width=table_style["width"],
@@ -80,8 +69,8 @@ def generate_markdown_table(data: list[dict]) -> str:
     pass1_values = []
 
     for entry in data:
-        benchmark = get_title(entry["file"].stem)
-        is_humaneval = "humaneval" in entry["file"].stem or "mbpp" in entry["file"].stem
+        benchmark = entry["file"].stem.removesuffix("_summary")
+        is_humaneval = "humaneval" in benchmark or "mbpp" in benchmark
 
         if is_humaneval:
             benchmarks.extend([f"{benchmark} (Base)", f"{benchmark} (Plus)"])
@@ -130,8 +119,9 @@ def display_summary_files(directory: Path, csv_output: Path | None = None) -> No
 
     tables = []
     for entry in all_data:
-        is_humaneval = "humaneval" in entry["file"].stem or "mbpp" in entry["file"].stem
-        tables.append(create_table(entry["file"].stem, entry["data"], is_humaneval))
+        benchmark = entry["file"].stem.removesuffix("_summary")
+        is_humaneval = "humaneval" in benchmark or "mbpp" in benchmark
+        tables.append(create_table(benchmark, entry["data"], is_humaneval))
 
     unified_width = max(t.width for t in tables) if tables else 30
     terminal_width = console.width
