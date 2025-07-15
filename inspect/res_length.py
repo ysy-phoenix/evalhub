@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -29,7 +29,8 @@ def get_stats_for_lengths(lengths: list[int]) -> dict[str, Any]:
             "75": int(np.percentile(lengths, 75)),
             "95": int(np.percentile(lengths, 95)),
         },
-        "max_ratio": float(np.max(lengths) / np.mean(lengths)),
+        "max_cnt": Counter(lengths).most_common(1)[0][1],
+        "max_ratio": Counter(lengths).most_common(1)[0][1] / len(lengths),
     }
 
 
@@ -80,6 +81,7 @@ def analyze_length_distribution(dir_path: Path, show_progress: bool = True):
         ("50th Percentile", ("percentiles", "50"), "integer", ""),
         ("75th Percentile", ("percentiles", "75"), "integer", ""),
         ("95th Percentile", ("percentiles", "95"), "integer", ""),
+        ("Max Count", "max_cnt", "integer", ""),
         ("Max Ratio", "max_ratio", "float", ""),
     ]
 
