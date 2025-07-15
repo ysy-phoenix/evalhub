@@ -17,17 +17,19 @@ def get_stats_for_lengths(lengths: list[int]) -> dict[str, Any]:
     lengths = np.array(lengths)
     return {
         "count": len(lengths),
-        "min": float(np.min(lengths)),
-        "max": float(np.max(lengths)),
-        "mean": float(np.mean(lengths)),
-        "median": float(np.median(lengths)),
+        "min": int(np.min(lengths)),
+        "max": int(np.max(lengths)),
+        "max_rank2": sorted(set(lengths))[-2],
+        "mean": int(np.mean(lengths)),
+        "median": int(np.median(lengths)),
         "std": float(np.std(lengths)),
         "percentiles": {
-            "25": float(np.percentile(lengths, 25)),
-            "50": float(np.percentile(lengths, 50)),
-            "75": float(np.percentile(lengths, 75)),
-            "95": float(np.percentile(lengths, 95)),
+            "25": int(np.percentile(lengths, 25)),
+            "50": int(np.percentile(lengths, 50)),
+            "75": int(np.percentile(lengths, 75)),
+            "95": int(np.percentile(lengths, 95)),
         },
+        "max_ratio": float(np.max(lengths) / np.mean(lengths)),
     }
 
 
@@ -70,6 +72,7 @@ def analyze_length_distribution(dir_path: Path, show_progress: bool = True):
         ("Total Samples", "count", "integer", ""),
         ("Minimum Length", "min", "integer", ""),
         ("Maximum Length", "max", "integer", ""),
+        ("Maximum(Rank 2)", "max_rank2", "integer", ""),
         ("Mean Length", "mean", "integer", ""),
         ("Median Length", "median", "integer", ""),
         ("Std Length", "std", "float", ""),
@@ -77,6 +80,7 @@ def analyze_length_distribution(dir_path: Path, show_progress: bool = True):
         ("50th Percentile", ("percentiles", "50"), "integer", ""),
         ("75th Percentile", ("percentiles", "75"), "integer", ""),
         ("95th Percentile", ("percentiles", "95"), "integer", ""),
+        ("Max Ratio", "max_ratio", "float", ""),
     ]
 
     for label, key, value_type, suffix in metrics:
