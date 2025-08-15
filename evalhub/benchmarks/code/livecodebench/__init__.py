@@ -69,7 +69,7 @@ class LiveCodeBenchDataset(CodeDataset):
     r"""Dataset class for LiveCodeBench code generation benchmark."""
 
     def __init__(self, name: str = LIVECODEBENCH, meta_data: dict[str, Any] = LIVECODEBENCH_META_DATA, **kwargs):
-        super().__init__(name, meta_data=meta_data, **kwargs)
+        super().__init__(f"{name}_{meta_data['release_version']}", meta_data=meta_data, **kwargs)
 
     @property
     def system_prompt(self) -> str | None:
@@ -326,9 +326,11 @@ class LiveCodeBenchDataset(CodeDataset):
         # save_eval_results
         output_results = {}
         output_results["date"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+        pass_at_k = {}
         for k in metrics:
             if k.startswith("pass@"):
                 logger.info(f"{k}: {metrics[k]}")
+                pass_at_k[f"{k.split('@')[1]}"] = metrics[k]
                 output_results[k] = metrics[k]
 
         output_results["detail_pass"] = {}
@@ -360,6 +362,10 @@ class LiveCodeBenchDataset(CodeDataset):
 
         with open(Path(output_dir) / f"{self.name}_results.json", "w") as f:
             json.dump(output_results, f, indent=2)
+
+        # save summary
+        with open(Path(output_dir) / f"{self.name}_summary.json", "w") as f:
+            json.dump({"pass_at_k": pass_at_k}, f, indent=2)
 
 
 """

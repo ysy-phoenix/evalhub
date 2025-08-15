@@ -1,5 +1,6 @@
 import asyncio
 import json
+import random
 from collections import defaultdict
 from dataclasses import asdict
 from os import PathLike
@@ -150,6 +151,7 @@ class LLMGenerator:
             for task in tasks_list
             for sample_id in range(resume_tasks[task.task_id])
         ]
+        random.shuffle(coroutines)
         total_tasks = sum(1 if resume_tasks[task_id] > 0 else 0 for task_id in task_ids)
         total_samples = sum(resume_tasks.values())
 
@@ -174,10 +176,11 @@ class LLMGenerator:
                 if task_id is not None and response is not None:  # Skip timed out tasks
                     tracker.update_sample_progress()
                     results[task_id].append(response)
-                    if task_id not in completed_tasks and len(results[task_id]) >= resume_tasks[task_id]:
+                    await dataset.save_single_task(task_id, results[task_id])
+                    results[task_id].clear()
+                    resume_tasks[task_id] -= 1
+                    if task_id not in completed_tasks and resume_tasks[task_id] == 0:
                         completed_tasks.add(task_id)
-                        await dataset.save_single_task(task_id, results[task_id])
-                        results[task_id].clear()
                         results.pop(task_id)
                         tracker.update_task_progress()
 

@@ -10,6 +10,9 @@ from evalhub.benchmarks.registry import register_dataset
 
 GPQA = "gpqa"
 GPQA_HUB = "Idavidrein/gpqa"
+GPQA_META_DATA = {
+    "version": "diamond",
+}
 GPQA_QUERY_TEMPLATE = (
     "Answer the following multiple choice question.\n"
     "The last line of your response should be of the following format:\n"
@@ -28,12 +31,12 @@ ANSWER_PATTERN_MULTICHOICE = r"(?i)Answer[ \t]*:[ \t]*\$?([A-D])\$?"
 class GPQADataset(MathDataset):
     r"""Dataset class for GPQA problems."""
 
-    def __init__(self, name: str = GPQA, **kwargs):
-        super().__init__(name, **kwargs)
+    def __init__(self, name: str = GPQA, meta_data: dict[str, Any] = GPQA_META_DATA, **kwargs):
+        super().__init__(f"{name}_{meta_data['version']}", meta_data=meta_data, **kwargs)
 
     def load_tasks(self) -> None:
         r"""Load tasks from GPQA dataset."""
-        dataset = load_dataset(GPQA_HUB, "gpqa_diamond", split="train")
+        dataset = load_dataset(GPQA_HUB, self.name, split="train")
         for i, item in enumerate(dataset):
             prompt, answer = self.format_prompt(item)
             task = Task(

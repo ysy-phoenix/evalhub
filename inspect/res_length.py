@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -17,17 +17,20 @@ def get_stats_for_lengths(lengths: list[int]) -> dict[str, Any]:
     lengths = np.array(lengths)
     return {
         "count": len(lengths),
-        "min": float(np.min(lengths) / 1024),
-        "max": float(np.max(lengths) / 1024),
-        "mean": float(np.mean(lengths) / 1024),
-        "median": float(np.median(lengths) / 1024),
-        "std": float(np.std(lengths) / 1024),
+        "min": int(np.min(lengths)),
+        "max": int(np.max(lengths)),
+        "max_rank2": sorted(set(lengths))[-2],
+        "mean": int(np.mean(lengths)),
+        "median": int(np.median(lengths)),
+        "std": float(np.std(lengths)),
         "percentiles": {
-            "25": float(np.percentile(lengths, 25) / 1024),
-            "50": float(np.percentile(lengths, 50) / 1024),
-            "75": float(np.percentile(lengths, 75) / 1024),
-            "95": float(np.percentile(lengths, 95) / 1024),
+            "25": int(np.percentile(lengths, 25)),
+            "50": int(np.percentile(lengths, 50)),
+            "75": int(np.percentile(lengths, 75)),
+            "95": int(np.percentile(lengths, 95)),
         },
+        "max_cnt": Counter(lengths).most_common(1)[0][1],
+        "max_ratio": Counter(lengths).most_common(1)[0][1] / len(lengths),
     }
 
 
@@ -68,15 +71,18 @@ def analyze_length_distribution(dir_path: Path, show_progress: bool = True):
     # Add rows for each statistic
     metrics = [
         ("Total Samples", "count", "integer", ""),
-        ("Minimum Length", "min", "float", "K"),
-        ("Maximum Length", "max", "float", "K"),
-        ("Mean Length", "mean", "float", "K"),
-        ("Median Length", "median", "float", "K"),
-        ("Std Length", "std", "float", "K"),
-        ("25th Percentile", ("percentiles", "25"), "float", "K"),
-        ("50th Percentile", ("percentiles", "50"), "float", "K"),
-        ("75th Percentile", ("percentiles", "75"), "float", "K"),
-        ("95th Percentile", ("percentiles", "95"), "float", "K"),
+        ("Minimum Length", "min", "integer", ""),
+        ("Maximum Length", "max", "integer", ""),
+        ("Maximum(Rank 2)", "max_rank2", "integer", ""),
+        ("Mean Length", "mean", "integer", ""),
+        ("Median Length", "median", "integer", ""),
+        ("Std Length", "std", "float", ""),
+        ("25th Percentile", ("percentiles", "25"), "integer", ""),
+        ("50th Percentile", ("percentiles", "50"), "integer", ""),
+        ("75th Percentile", ("percentiles", "75"), "integer", ""),
+        ("95th Percentile", ("percentiles", "95"), "integer", ""),
+        ("Max Count", "max_cnt", "integer", ""),
+        ("Max Ratio", "max_ratio", "float", ""),
     ]
 
     for label, key, value_type, suffix in metrics:
@@ -84,7 +90,7 @@ def analyze_length_distribution(dir_path: Path, show_progress: bool = True):
         for task in list(task_lengths.keys()) + ["overall"]:
             value = stats[task][key] if isinstance(key, str) else stats[task][key[0]][key[1]]
             if value_type == "integer":
-                formatted_value = f"{value:,d}"
+                formatted_value = f"{int(value):,d}"
             else:  # float
                 formatted_value = f"{value:,.2f}"
             row.append(f"{formatted_value}{suffix}")
