@@ -1,8 +1,9 @@
 """Command-line interface for EvalHub."""
 
 from pathlib import Path
+from typing import Annotated
 
-import click
+import typer
 from rich.console import Console
 from rich.table import Table
 
@@ -10,35 +11,37 @@ from evalhub.benchmarks import DATASET_HUB, DATASET_MAP, EVALUATE_DATASETS, THIR
 from evalhub.benchmarks.base import Dataset
 from evalhub.gen import gen
 from evalhub.inference.schemas import GenerationConfig
-from evalhub.utils.click import _extract_field_info, options
+from evalhub.utils.typer import options
 from evalhub.view import view_results
 
 console = Console()
 
+# Create the main Typer app
+app = typer.Typer(
+    name="evalhub",
+    help="EvalHub - All-in-one benchmarking platform for evaluating LLMs.",
+    add_completion=True,
+    rich_markup_mode="rich",
+)
 
-@click.group()
-@click.version_option()
-def cli():
-    """EvalHub - All-in-one benchmarking platform for evaluating LLMs."""
-    pass
 
-
-@cli.command()
+@app.command(name="run")
 @options(GenerationConfig)
 def run(config: GenerationConfig):
-    r"""Run evaluation on a model with specified dataset."""
-    config.output_dir.mkdir(parents=True, exist_ok=True)
+    r"""Run generation on a model with specified dataset."""
     console.print(config)
+    config.output_dir.mkdir(parents=True, exist_ok=True)
     for task in config.tasks:
-        console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
+        console.print(f"[bold green]Running generation on {task} task[/bold green]")
         gen(config=config, task=task)
 
 
-@cli.command()
-@click.option("--tasks", required=True, help="Tasks to evaluate on, separated by commas")
-@click.option("--solutions", required=True, help="Solutions to evaluate on, separated by commas")
-@click.option("--output-dir", required=True, help="Output directory")
-def eval(tasks: str, solutions: str, output_dir: str):
+@app.command()
+def eval(
+    tasks: Annotated[str, typer.Option(help="Tasks to evaluate on, separated by commas")],
+    solutions: Annotated[str, typer.Option(help="Solutions to evaluate on, separated by commas")],
+    output_dir: Annotated[str, typer.Option(help="Output directory")],
+):
     r"""Evaluate the model on the tasks."""
     tasks = [task.strip().lower() for task in tasks.split(",")]
     solutions = [solution.strip() for solution in solutions.split(",")]
@@ -50,18 +53,18 @@ def eval(tasks: str, solutions: str, output_dir: str):
         dataset.evaluate(solution, output_dir)
 
 
-@cli.command()
-@click.option("--results", required=True, help="Results file path")
-@click.option("--max-display", type=int, default=-1, help="Maximum number of samples to display")
-@click.option("--false-only", type=bool, default=True, help="Only display false samples")
-def view(results: str, max_display: int, false_only: bool):
+@app.command()
+def view(
+    results: Annotated[str, typer.Option(help="Results file path")],
+    max_display: Annotated[int, typer.Option(help="Maximum number of samples to display")] = -1,
+    false_only: Annotated[bool, typer.Option(help="Only display false samples")] = True,
+):
     r"""View and analyze evaluation results with rich formatting.
 
     Automatically detects the result format:
     - JSONL files: Math evaluation results (GSM8K, etc.)
     - JSON files: LiveCodeBench results
     """
-
     view_results(
         results_path=Path(results),
         max_display=max_display,
@@ -69,44 +72,7 @@ def view(results: str, max_display: int, false_only: bool):
     )
 
 
-@cli.command(name="configs")
-def list_configs():
-    """List all available configuration options with defaults."""
-    table = Table(title="EvalHub Configuration Options")
-
-    table.add_column("Parameter", style="cyan")
-    table.add_column("Type", style="green")
-    table.add_column("Default", style="yellow")
-    table.add_column("Required", style="red")
-    table.add_column("Description", style="magenta")
-
-    # Extract field information automatically from dataclass metadata
-    fields_info = _extract_field_info(GenerationConfig)
-
-    # Sort fields by required status first, then alphabetically
-    fields_info.sort(key=lambda x: (not x["required"], x["name"]))
-
-    for field_info in fields_info:
-        # Format default value for display
-        default_value = field_info["default"]
-        match default_value:
-            case str() | Path():
-                default_str = f'"{default_value}"'
-            case list() if not default_value:
-                default_str = "[]"
-            case _:
-                default_str = str(default_value)
-
-        required_str = "✅" if field_info["required"] else "❌"
-        table.add_row(field_info["name"], field_info["type"], default_str, required_str, field_info["help"])
-
-    console.print(table)
-
-    console.print("\n[bold yellow]Usage Examples:[/bold yellow]")
-    console.print('evalhub run --model "Qwen2.5-7B-Instruct" --tasks humaneval,mbpp --output-dir "./results"')
-
-
-@cli.command(name="tasks")
+@app.command(name="tasks")
 def list_tasks():
     r"""List all supported tasks and evaluable tasks."""
     # Create a table for all tasks
@@ -143,8 +109,7 @@ def list_tasks():
 
 def main():
     r"""Run the CLI entry point for EvalHub."""
-    console.print("[bold yellow]Welcome to EvalHub - LLM Evaluation Platform[/bold yellow]")
-    cli()
+    app()
 
 
 if __name__ == "__main__":

@@ -27,7 +27,7 @@ classifiers = [
 ]
 # Core minimal dependencies
 dependencies = [
-    "click",
+    "typer",
     "requests",
     "pydantic",
     "rich",

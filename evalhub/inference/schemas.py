@@ -28,72 +28,54 @@ class SampleParams:
         default="Qwen/Qwen2.5-Coder7B-Instruct",
         metadata={
             "help": "Model name or path to use for generation",
-            "cli_name": "--model",
-            "required": True,
         },
     )
     temperature: float = field(
         default=0.6,
         metadata={
-            "help": "Controls randomness in generation (0.0-2.0)",
-            "cli_name": "--temperature",
-            "validate": lambda x: 0.0 <= x <= 2.0,
+            "help": "Controls randomness in generation",
         },
     )
     top_p: float = field(
         default=0.95,
         metadata={
-            "help": "Nucleus sampling parameter (0.0-1.0)",
-            "cli_name": "--top-p",
-            "validate": lambda x: 0.0 <= x <= 1.0,
+            "help": "Nucleus sampling parameter",
         },
     )
     top_k: int = field(
         default=20,
         metadata={
-            "help": "Top-k sampling parameter (1-100)",
-            "cli_name": "--top-k",
-            "validate": lambda x: x >= 1,
+            "help": "Top-k sampling parameter",
         },
     )
     max_tokens: int = field(
         default=2048,
         metadata={
             "help": "Maximum number of tokens to generate",
-            "cli_name": "--max-tokens",
-            "validate": lambda x: x > 0,
         },
     )
     frequency_penalty: float = field(
         default=0,
         metadata={
-            "help": "Frequency penalty for token repetition (-2.0 to 2.0)",
-            "cli_name": "--frequency-penalty",
-            "validate": lambda x: -2.0 <= x <= 2.0,
+            "help": "Frequency penalty for token repetition",
         },
     )
     presence_penalty: float = field(
         default=0,
         metadata={
-            "help": "Presence penalty for token repetition (-2.0 to 2.0)",
-            "cli_name": "--presence-penalty",
-            "validate": lambda x: -2.0 <= x <= 2.0,
+            "help": "Presence penalty for token repetition",
         },
     )
     stop: list[str] | None = field(
         default=None,
         metadata={
             "help": "List of stop sequences for generation",
-            "cli_name": "--stop",
-            "multiple": True,
         },
     )
     timeout: int = field(
         default=1800,
         metadata={
             "help": "API request timeout in seconds",
-            "cli_name": "--timeout",
-            "validate": lambda x: x > 0,
         },
     )
 
@@ -109,11 +91,9 @@ class GenerationConfig:
 
     # Task parameters
     tasks: list[str] = field(
-        default_factory=list,
+        default=...,
         metadata={
-            "help": "Tasks to evaluate on, separated by commas",
-            "required": True,
-            "cli_name": "--tasks",
+            "help": "Tasks to evaluate on(specify multiple --tasks or comma-separated)",
         },
     )
 
@@ -122,7 +102,6 @@ class GenerationConfig:
         default_factory=SampleParams,
         metadata={
             "help": "Sampling parameters for the model",
-            "hidden": True,  # This is a nested config, handled specially
         },
     )
 
@@ -130,7 +109,6 @@ class GenerationConfig:
         default="",
         metadata={
             "help": "System prompt to use for evaluation",
-            "cli_name": "--system-prompt",
         },
     )
 
@@ -138,7 +116,6 @@ class GenerationConfig:
         default=False,
         metadata={
             "help": "Enable multiturn conversation",
-            "cli_name": "--enable-multiturn",
         },
     )
 
@@ -146,7 +123,6 @@ class GenerationConfig:
         default=False,
         metadata={
             "help": "Resume from previous run",
-            "cli_name": "--resume",
         },
     )
 
@@ -155,66 +131,55 @@ class GenerationConfig:
         default=1,
         metadata={
             "help": "Number of samples to generate per prompt",
-            "cli_name": "--n-samples",
-            "validate": lambda x: x > 0,
         },
     )
     num_workers: int = field(
         default=1024,
         metadata={
             "help": "Number of parallel workers for generation",
-            "cli_name": "--num-workers",
-            "validate": lambda x: x > 0,
         },
     )
     base_url: str = field(
         default="http://localhost:30000/v1",
         metadata={
             "help": "Base URL for the API endpoint",
-            "cli_name": "--base-url",
         },
     )
     api_key: str = field(
         default="EMPTY",
         metadata={
             "help": "API key for model authentication",
-            "cli_name": "--api-key",
-            "hidden": True,  # Sensitive information
         },
     )
     output_dir: Path = field(
         default=Path("outputs"),
         metadata={
             "help": "Directory to save generation outputs",
-            "cli_name": "--output-dir",
-            "required": True,
         },
     )
     tool_config: Path | None = field(
         default=Path("tool_config.json"),
         metadata={
             "help": "Path to the tool configuration file",
-            "cli_name": "--tool-config",
         },
     )
     callback: str | None = field(
         default=Path("callback.py"),
         metadata={
             "help": "Path to the callback function script",
-            "cli_name": "--callback",
         },
     )
     max_turns: int = field(
         default=3,
         metadata={
             "help": "Maximum number of conversation turns",
-            "cli_name": "--max-turns",
-            "validate": lambda x: x > 0,
         },
     )
 
     def __post_init__(self):
         self.output_dir = Path(self.output_dir)
+        if len(self.tasks) == 1 and "," in self.tasks[0]:
+            self.tasks = [task.strip() for task in self.tasks[0].split(",")]
         if self.tool_config:
             self.tool_config = Path(self.tool_config)
 
