@@ -70,7 +70,7 @@ class Dataset(ABC):
         self.name = name or self.__class__.name
         self.tasks: dict[str, Task] = {}
         self.groundtruth: dict[str, GroundTruth] = {}
-        self.config = config or GenerationConfig()
+        self.config = config
         self.meta_data: dict[str, Any] = meta_data or {}
         self.cache_dir = Path(os.environ.get("EVALHUB_CACHE_DIR", Path.home() / ".cache" / "evalhub"))
         self.cache_dir.mkdir(parents=True, exist_ok=True)

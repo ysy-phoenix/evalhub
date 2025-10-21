@@ -2,14 +2,9 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 DEFAULT_CHAT_STOP_TOKENS = [
-    "<|eot_id|>",
     "<|im_end|>",
-    "</s>",
-    "<|EOT|>",
     "<|endoftext|>",
-    "<|eos|>",
 ]
-DEFAULT_TEXT_STOP_TOKENS = ["</s>", "<|endoftext|>", "<|eos_token|>"]
 
 
 @dataclass
@@ -21,11 +16,11 @@ class GenerationResult:
 
 
 @dataclass
-class SampleParams:
+class SamplingParams:
     r"""Parameters related to model sampling behavior."""
 
     model: str = field(
-        default="Qwen/Qwen2.5-Coder7B-Instruct",
+        default=...,
         metadata={
             "help": "Model name or path to use for generation",
         },
@@ -42,13 +37,7 @@ class SampleParams:
             "help": "Nucleus sampling parameter",
         },
     )
-    top_k: int = field(
-        default=20,
-        metadata={
-            "help": "Top-k sampling parameter",
-        },
-    )
-    max_tokens: int = field(
+    max_completion_tokens: int = field(
         default=2048,
         metadata={
             "help": "Maximum number of tokens to generate",
@@ -73,7 +62,7 @@ class SampleParams:
         },
     )
     timeout: int = field(
-        default=1800,
+        default=3600,
         metadata={
             "help": "API request timeout in seconds",
         },
@@ -98,8 +87,8 @@ class GenerationConfig:
     )
 
     # Sampling parameters
-    sample_params: SampleParams = field(
-        default_factory=SampleParams,
+    sampling_params: SamplingParams = field(
+        default_factory=SamplingParams,
         metadata={
             "help": "Sampling parameters for the model",
         },
@@ -139,18 +128,6 @@ class GenerationConfig:
             "help": "Number of parallel workers for generation",
         },
     )
-    base_url: str = field(
-        default="http://localhost:30000/v1",
-        metadata={
-            "help": "Base URL for the API endpoint",
-        },
-    )
-    api_key: str = field(
-        default="EMPTY",
-        metadata={
-            "help": "API key for model authentication",
-        },
-    )
     output_dir: Path = field(
         default=Path("outputs"),
         metadata={
@@ -187,8 +164,8 @@ class GenerationConfig:
         r"""Support dictionary-style item assignment."""
         if hasattr(self, key):
             setattr(self, key, value)
-        elif key in asdict(self.sample_params):
-            setattr(self.sample_params, key, value)
+        elif key in asdict(self.sampling_params):
+            setattr(self.sampling_params, key, value)
         else:
             raise KeyError(f"GenerationConfig has no attribute '{key}'")
 
@@ -196,6 +173,6 @@ class GenerationConfig:
         r"""Support dictionary-style item access."""
         if hasattr(self, key):
             return getattr(self, key)
-        elif key in asdict(self.sample_params):
-            return getattr(self.sample_params, key)
+        elif key in asdict(self.sampling_params):
+            return getattr(self.sampling_params, key)
         raise KeyError(f"GenerationConfig has no attribute '{key}'")

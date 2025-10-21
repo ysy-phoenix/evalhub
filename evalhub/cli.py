@@ -9,7 +9,7 @@ from rich.table import Table
 
 from evalhub.benchmarks import DATASET_HUB, DATASET_MAP, EVALUATE_DATASETS, THIRD_PARTY_DATASETS
 from evalhub.benchmarks.base import Dataset
-from evalhub.gen import gen
+from evalhub.gen import generate
 from evalhub.inference.schemas import GenerationConfig
 from evalhub.utils.typer import options
 from evalhub.view import view_results
@@ -25,15 +25,15 @@ app = typer.Typer(
 )
 
 
-@app.command(name="run")
+@app.command()
 @options(GenerationConfig)
-def run(config: GenerationConfig):
+def gen(config: GenerationConfig):
     r"""Run generation on a model with specified dataset."""
     console.print(config)
     config.output_dir.mkdir(parents=True, exist_ok=True)
     for task in config.tasks:
         console.print(f"[bold green]Running generation on {task} task[/bold green]")
-        gen(config=config, task=task)
+        generate(config=config, task=task)
 
 
 @app.command()

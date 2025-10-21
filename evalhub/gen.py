@@ -6,7 +6,7 @@ from evalhub.inference.schemas import GenerationConfig
 from evalhub.utils.logger import logger
 
 
-def gen(config: GenerationConfig, task: str) -> None:
+def generate(config: GenerationConfig, task: str) -> None:
     r"""Generate results for a given model and dataset."""
     assert task in DATASET_MAP, f"Dataset {task} not supported for generation"
     dataset: Dataset = DATASET_MAP[task](name=task, config=config)

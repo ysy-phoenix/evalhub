@@ -72,11 +72,11 @@ class LLMGenerator:
     )
     async def complete(self, messages: list[dict[str, str]], tools: list[dict[str, str]] | None = None) -> dict:
         r"""Complete API call with automatic retry on failure."""
-        params = asdict(self.config.sample_params)
+        params = asdict(self.config.sampling_params)
         if tools:
             params["tools"] = tools
 
-        response = await acompletion(messages=messages, **params)
+        response = await acompletion(messages, **params)
         if response.choices[0].finish_reason == "length":
             logger.warning("Max tokens exceeded!")
 
@@ -127,9 +127,9 @@ class LLMGenerator:
             r"""Execute with semaphore and timeout protection."""
             async with semaphore:
                 try:
-                    return await asyncio.wait_for(coro, timeout=self.config.sample_params.timeout)
+                    return await asyncio.wait_for(coro, timeout=self.config.sampling_params.timeout)
                 except TimeoutError:
-                    logger.warning(f"Task timed out after {self.config.sample_params.timeout}s")
+                    logger.warning(f"Task timed out after {self.config.sampling_params.timeout}s")
                     return (None, None, None)
 
         with ProgressTracker(total_samples, total_tasks) as tracker:

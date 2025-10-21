@@ -25,18 +25,18 @@ logger.add(
 )
 
 # Add file handler if LOG_DIR is specified
-LOG_DIR = os.environ.get("LOG_DIR", "logs")
-log_dir_path = Path(LOG_DIR)
-log_dir_path.mkdir(exist_ok=True, parents=True)
-log_file_path = log_dir_path / "evalhub.log"
-logger.add(
-    log_file_path,
-    format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {message}",
-    level=LOG_LEVEL,
-    rotation="100 MB",  # Rotate when file reaches 100MB
-    retention="10 days",  # Keep logs for 10 days
-    compression="zip",  # Compress rotated logs
-    enqueue=True,  # Thread-safe logging
-)
-
-logger.info(f"Log file created at: {log_file_path.absolute()}")
+LOG_DIR = os.environ.get("LOG_DIR", None)
+if LOG_DIR:
+    log_dir_path = Path(LOG_DIR)
+    log_dir_path.mkdir(exist_ok=True, parents=True)
+    log_file_path = log_dir_path / "evalhub.log"
+    logger.add(
+        log_file_path,
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {message}",
+        level=LOG_LEVEL,
+        rotation="100 MB",  # Rotate when file reaches 100MB
+        retention="10 days",  # Keep logs for 10 days
+        compression="zip",  # Compress rotated logs
+        enqueue=True,  # Thread-safe logging
+    )
+    logger.info(f"Log file created at: {log_file_path.absolute()}")
