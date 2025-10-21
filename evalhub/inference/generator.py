@@ -1,26 +1,17 @@
 import asyncio
-import json
 import random
 from collections import defaultdict
 from dataclasses import asdict
-from os import PathLike
 from pathlib import Path
 
-import aiohttp
 import orjson
-from openai.types.chat.chat_completion import ChatCompletion
+from litellm import acompletion
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from evalhub.benchmarks.base import Dataset
 from evalhub.inference.schemas import GenerationConfig
 from evalhub.utils.logger import logger
 from evalhub.utils.pbar import get_progress_bar
-
-MAX_RETRIES = 3
-
-
-def truncate(text: str, max_tokens: int = 1024) -> str:
-    r"""Truncate text to max_tokens."""
-    return text[: max_tokens // 2] + "\n...[truncated]...\n" + text[-max_tokens // 2 :]
 
 
 class ProgressTracker:
@@ -73,65 +64,39 @@ class LLMGenerator:
             messages = [{"role": "user", "content": prompt}]
         return messages
 
-    async def _create_session(self):
-        timeout = aiohttp.ClientTimeout(total=None)
-        connector = aiohttp.TCPConnector(limit=0)
-        self._session = aiohttp.ClientSession(
-            timeout=timeout,
-            connector=connector,
-            headers={"Authorization": f"Bearer {self.config.api_key}"},
-        )
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type(Exception),
+        reraise=True,
+    )
+    async def complete(self, messages: list[dict[str, str]], tools: list[dict[str, str]] | None = None) -> dict:
+        r"""Complete API call with automatic retry on failure."""
+        params = asdict(self.config.sample_params)
+        if tools:
+            params["tools"] = tools
 
-    async def _close_session(self):
-        await self._session.close()
+        response = await acompletion(messages=messages, **params)
+        if response.choices[0].finish_reason == "length":
+            logger.warning("Max tokens exceeded!")
 
-    async def complete(
-        self, messages: list[dict[str, str]], tools: list[dict[str, str]] | None = None
-    ) -> ChatCompletion | None:
-        try:
-            params = asdict(self.config.sample_params)
-            if tools:
-                params["tools"] = tools
-            async with self._session.post(
-                url=f"{self.config.base_url}/chat/completions",
-                json={"messages": messages, **params},
-            ) as resp:
-                try:
-                    data = await resp.read()
-                    response = ChatCompletion(**json.loads(data))
-                except Exception as e:
-                    logger.error(f"Error parsing response: {str(e)}")
-                    logger.error(f"Response: {data}")
-                    return None
-            if response.choices[0].finish_reason == "length":
-                logger.warning("Max tokens exceeded!")
-            return response
-        except Exception as e:
-            import traceback
-
-            traceback.print_exc()
-            logger.error(f"API call failed: {str(e)}")
-            return None
+        return response.model_dump()
 
     async def _generate_single_sample(
         self, task_id: str, sample_id: str, prompt: str, metadata: dict | None = None
     ) -> tuple[str, str, dict[str, str] | None]:
-        r"""Generate a single sample with enhanced error handling."""
+        r"""Generate a single sample with automatic retry."""
         messages = self._build_messages(prompt)
         try:
-            for _ in range(MAX_RETRIES):
-                response = await self.complete(messages)
-                if response is not None:
-                    break
-            return (task_id, sample_id, response.model_dump())
+            response = await self.complete(messages)
+            return (task_id, sample_id, response)
         except Exception as e:
-            logger.error(f"Error processing task {task_id} sample {sample_id}: {str(e)}")
+            logger.error(f"Failed to process task {task_id} sample {sample_id}: {str(e)}")
             return (task_id, sample_id, None)
 
-    async def generate_async(self, dataset: Dataset) -> None:
+    async def agenerate(self, dataset: Dataset) -> None:
         r"""Generate responses asynchronously with optimized performance."""
-        await self._create_session()
-        await dataset._init_files()
+        await dataset.init_files()
 
         task_ids, tasks_list = list(dataset.tasks.keys()), list(dataset.tasks.values())
         completed_tasks: set[str] = set()  # Track completed tasks
@@ -192,14 +157,13 @@ class LLMGenerator:
         else:
             logger.info(f"All tasks completed, saved to {self.config.output_dir}")
 
-        await self._close_session()
-        await dataset._close_files()
+        await dataset.close_files()
 
     def generate(self, dataset: Dataset) -> None:
         r"""Synchronous API."""
-        return asyncio.run(self.generate_async(dataset))
+        return asyncio.run(self.agenerate(dataset))
 
-    def load_results(self, dataset: Dataset, output_dir: PathLike) -> dict[str, list[dict[str, str]]]:
+    def load_results(self, dataset: Dataset, output_dir: Path) -> dict[str, list[dict[str, str]]]:
         r"""Load results from a file."""
         output_dir = Path(output_dir)
         output_dir.mkdir(exist_ok=True, parents=True)

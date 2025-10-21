@@ -114,12 +114,12 @@ class Dataset(ABC):
             pickle.dump(self.groundtruth, f)
         logger.info(f"Saved cached results for {self.name} to {self.cache_dir}")
 
-    async def _init_files(self):
+    async def init_files(self):
         r"""Initialize the files for the dataset."""
         self.raw_file = await aiofiles.open(self.config.output_dir / f"{self.name}_raw.jsonl", "ab")
         self.sanitized_file = await aiofiles.open(self.config.output_dir / f"{self.name}.jsonl", "ab")
 
-    async def _close_files(self):
+    async def close_files(self):
         r"""Close the files for the dataset."""
         await self.raw_file.close()
         await self.sanitized_file.close()

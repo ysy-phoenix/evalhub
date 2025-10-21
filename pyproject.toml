@@ -28,6 +28,8 @@ classifiers = [
 # Core minimal dependencies
 dependencies = [
     "typer",
+    "litellm",
+    "tenacity",
     "requests",
     "pydantic",
     "rich",
