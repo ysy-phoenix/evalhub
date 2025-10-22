@@ -73,10 +73,11 @@ class LLMGenerator:
     async def complete(self, messages: list[dict[str, str]], tools: list[dict[str, str]] | None = None) -> dict:
         r"""Complete API call with automatic retry on failure."""
         params = asdict(self.config.sampling_params)
+        params["messages"] = messages
         if tools:
             params["tools"] = tools
 
-        response = await acompletion(messages, **params)
+        response = await acompletion(**params)
         if response.choices[0].finish_reason == "length":
             logger.warning("Max tokens exceeded!")
 

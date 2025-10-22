@@ -65,7 +65,8 @@ class CodeGenerationProblem:
     def __post_init__(self):
         self.platform = Platform(self.platform)
         self.difficulty = Difficulty(self.difficulty)
-        self.contest_date = datetime.fromisoformat(self.contest_date)
+        if isinstance(self.contest_date, str):
+            self.contest_date = datetime.fromisoformat(self.contest_date)
 
         self.public_test_cases = orjson.loads(self.public_test_cases)  # type: ignore
         self.public_test_cases = [Test(**t) for t in self.public_test_cases]
@@ -124,11 +125,12 @@ class CodeGenerationProblem:
 
 
 def load_livecodebench(meta_data: dict) -> Dataset:
+    version = meta_data.get("release_version").lstrip("v")
     dataset = load_dataset(
         "livecodebench/code_generation_lite",
+        data_files={"test": f"test{version}.jsonl"},
         split="test",
-        version_tag=meta_data["release_version"],
-        trust_remote_code=True,
+        revision="refs/pr/6",  # FIXME: remove this when the PR is merged
     )
     if meta_data["start_date"] is not None:
         dataset = dataset.filter(lambda line: line["contest_date"] >= meta_data["start_date"])

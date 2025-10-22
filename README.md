@@ -100,7 +100,7 @@ evalhub view --results $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/aime2025_r
 
 # livecodebench
 evalhub gen --model hosted_vllm/Qwen/Qwen3-30B-A3B-Instruct-2507 --tasks livecodebench --temperature 0.7 --top-p 0.8 --n-samples 64 --max-completion-tokens 28272 --num-workers 256 --output-dir $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/
-evalhub eval --tasks livecodebench --solutions $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/livecodebench.jsonl --output-dir $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/
+evalhub eval --tasks livecodebench --solutions $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/livecodebench_v6.jsonl --output-dir $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/
 evalhub view --results $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/livecodebench_results.json --max-display 20
 ```
 

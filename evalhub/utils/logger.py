@@ -17,9 +17,16 @@ logger.remove()
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 
 # Add console handler with beautiful formatting
+logger.level("INFO", color="<green>")
+logger.level("WARNING", color="<yellow>")
+logger.level("ERROR", color="<red><bold>")
 logger.add(
     sys.stderr,
-    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <5}</level> | <level>{message}</level>",
+    format=(
+        "<magenta>{time:YYYY-MM-DD HH:mm:ss}</magenta> - "
+        "<level>{level: <7}</level> - "
+        "<cyan>{module}:{line}</cyan> - {message}"
+    ),
     level=LOG_LEVEL,
     colorize=True,
 )
@@ -32,7 +39,7 @@ if LOG_DIR:
     log_file_path = log_dir_path / "evalhub.log"
     logger.add(
         log_file_path,
-        format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {message}",
+        format="{time:YYYY-MM-DD HH:mm:ss} - {level: <7} - {module}:{line} - {message}",
         level=LOG_LEVEL,
         rotation="100 MB",  # Rotate when file reaches 100MB
         retention="10 days",  # Keep logs for 10 days
