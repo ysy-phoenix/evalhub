@@ -23,9 +23,9 @@ logger.level("ERROR", color="<red><bold>")
 logger.add(
     sys.stderr,
     format=(
-        "<magenta>{time:YYYY-MM-DD HH:mm:ss}</magenta> - "
-        "<level>{level: <7}</level> - "
-        "<cyan>{module}:{line}</cyan> - {message}"
+        "<green>{time:YYYY-MM-DD HH:mm:ss}</green> - "
+        "<level>{level: <8}</level> - "
+        "<cyan>{file.name}:{line}</cyan> - {message}"
     ),
     level=LOG_LEVEL,
     colorize=True,

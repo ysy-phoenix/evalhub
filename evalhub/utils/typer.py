@@ -69,7 +69,7 @@ def options[T](cls: type[T]):
             new_params.append(param)
 
         # Then add parameters from the dataclass fields
-        new_params.extend(process_dataclass_fields(cls))
+        new_params = process_dataclass_fields(cls) + new_params
         wrapper.__signature__ = sig.replace(parameters=new_params)
         return wrapper
 

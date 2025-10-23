@@ -99,8 +99,8 @@ evalhub eval --tasks aime2025 --solutions $HOME/metrics/Qwen/Qwen3-30B-A3B-Instr
 evalhub view --results $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/aime2025_results.jsonl --max-display 20
 
 # livecodebench
-evalhub gen --model hosted_vllm/Qwen/Qwen3-30B-A3B-Instruct-2507 --tasks livecodebench --temperature 0.7 --top-p 0.8 --n-samples 64 --max-completion-tokens 28272 --num-workers 256 --output-dir $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/
-evalhub eval --tasks livecodebench --solutions $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/livecodebench_v6.jsonl --output-dir $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/
+evalhub gen --model hosted_vllm/Qwen/Qwen3-30B-A3B-Instruct-2507 --tasks livecodebench --temperature 0.7 --top-p 0.8 --n-samples 64 --max-completion-tokens 28272 --num-workers 256 --output-dir $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/ --override-args '{"release_version": "v6"}'
+evalhub eval --tasks livecodebench --solutions $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/livecodebench_v6.jsonl --output-dir $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/ --override-args '{"release_version": "v6"}'
 evalhub view --results $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/livecodebench_results.json --max-display 20
 ```
 

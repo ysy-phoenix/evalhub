@@ -27,13 +27,16 @@ app = typer.Typer(
 
 @app.command()
 @options(GenerationConfig)
-def gen(config: GenerationConfig):
+def gen(
+    config: GenerationConfig,
+    *,
+    override_args: Annotated[str | None, typer.Option(help="Override dataset arguments in json string format")] = None,
+):
     r"""Run generation on a model with specified dataset."""
     console.print(config)
     config.output_dir.mkdir(parents=True, exist_ok=True)
     for task in config.tasks:
-        console.print(f"[bold green]Running generation on {task} task[/bold green]")
-        generate(config=config, task=task)
+        generate(config=config, task=task, override_args=override_args)
 
 
 @app.command()
@@ -41,15 +44,15 @@ def eval(
     tasks: Annotated[str, typer.Option(help="Tasks to evaluate on, separated by commas")],
     solutions: Annotated[str, typer.Option(help="Solutions to evaluate on, separated by commas")],
     output_dir: Annotated[str, typer.Option(help="Output directory")],
+    override_args: Annotated[str | None, typer.Option(help="Override dataset arguments in json string format")] = None,
 ):
     r"""Evaluate the model on the tasks."""
     tasks = [task.strip().lower() for task in tasks.split(",")]
     solutions = [solution.strip() for solution in solutions.split(",")]
     assert len(tasks) == len(solutions), "Number of tasks and solutions must be the same"
     for task, solution in zip(tasks, solutions, strict=False):
-        console.print(f"[bold green]Running evaluation on {task} task[/bold green]")
         assert task in EVALUATE_DATASETS, f"Dataset {task} is not supported for evaluation"
-        dataset: Dataset = DATASET_MAP[task](name=task.lower())
+        dataset: Dataset = DATASET_MAP[task](name=task.lower(), override_args=override_args)
         dataset.evaluate(solution, output_dir)
 
 
