@@ -66,12 +66,23 @@ class Dataset(ABC):
         meta_data: dict[str, Any] | None = None,
         reload: bool = False,
         config: GenerationConfig | None = None,
+        override_args: str | None = None,
     ):
         self.name = name or self.__class__.name
         self.tasks: dict[str, Task] = {}
         self.groundtruth: dict[str, GroundTruth] = {}
-        self.config = config or GenerationConfig()
+        self.config = config
         self.meta_data: dict[str, Any] = meta_data or {}
+        if override_args is not None:
+            args = json.loads(override_args)
+            for key, value in args.items():
+                if key in self.meta_data:
+                    logger.info(f"Overriding meta_data key {key} from {self.meta_data[key]} to {value}")
+                    self.meta_data[key] = value
+                else:
+                    logger.error(f"No such meta_data key {key}")
+                    exit(1)
+
         self.cache_dir = Path(os.environ.get("EVALHUB_CACHE_DIR", Path.home() / ".cache" / "evalhub"))
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         if not self.load_cache() or reload:
@@ -114,12 +125,12 @@ class Dataset(ABC):
             pickle.dump(self.groundtruth, f)
         logger.info(f"Saved cached results for {self.name} to {self.cache_dir}")
 
-    async def _init_files(self):
+    async def init_files(self):
         r"""Initialize the files for the dataset."""
         self.raw_file = await aiofiles.open(self.config.output_dir / f"{self.name}_raw.jsonl", "ab")
         self.sanitized_file = await aiofiles.open(self.config.output_dir / f"{self.name}.jsonl", "ab")
 
-    async def _close_files(self):
+    async def close_files(self):
         r"""Close the files for the dataset."""
         await self.raw_file.close()
         await self.sanitized_file.close()

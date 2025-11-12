@@ -1,21 +1,22 @@
 """View utilities for EvalHub."""
 
+import math
+import statistics
 from pathlib import Path
 
 import orjson
-from rich import print as rprint
-from rich.console import Console
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.table import Table
+from rich.text import Text
 
-console = Console()
+from evalhub.utils import console, cprint
 
 
-def truncate_text(text: str, max_length: int = 32) -> str:
+def truncate_text(text: str, max_length: int = 200) -> str:
     if len(text) <= max_length:
         return text
-    return text[: max_length // 2] + "..." + text[-max_length // 2 :]
+    return "Truncated"
 
 
 def display_math_results(
@@ -33,35 +34,42 @@ def display_math_results(
             result = orjson.loads(line)
             if false_only and result.get("pass_at_k", {}).get("1", 0) > 0.0:
                 continue
-            rprint(
-                Panel.fit(
-                    f"[bold]Ground Truth:[/]\n{result['ground_truth']}",
-                    title="Reference Answers",
-                    border_style="green",
-                )
-            )
 
-            table = Table(title="Evaluation Results", show_header=True, header_style="bold magenta")
-            table.add_column("Metric", style="cyan")
-            table.add_column("Value", style="green")
+            table1 = Table(title="Evaluation Results", show_header=True, header_style="bold magenta")
+            table1.add_column("Metric", style="cyan")
+            table1.add_column("Value", style="green")
 
-            table.add_row("Pass@k", str(result["pass_at_k"]))
+            table1.add_row("Pass@k", str(result["pass_at_k"]))
+            table1.add_row("Ground Truth", result["ground_truth"])
             if "majority_vote" in result:
-                table.add_row("Majority Vote", str(result["majority_vote"]))
+                table1.add_row("Majority Vote", str(result["majority_vote"]))
             if "is_correct_majority" in result:
-                table.add_row("Is Correct Majority", str(result["is_correct_majority"]))
+                table1.add_row("Is Correct Majority", str(result["is_correct_majority"]))
+            cprint(table1)
 
-            rprint(table)
+            solutions = list(map(truncate_text, result.get("solutions", [])))
+            correct = result.get("correct", [])
+            median_len = max(int(statistics.median(len(x) for x in solutions)) + 3, 13)
+            cols = max(1, min(len(solutions), console.size.width // median_len))
 
-            rprint(
-                Panel.fit(
-                    f"[bold]Extracted Answers:[/]\n{list(map(truncate_text, result['solutions']))}",
-                    title="Model Answers",
-                    border_style="blue",
-                )
-            )
+            table2 = Table(title="Solutions", show_header=False, expand=True)
+            for _ in range(cols):
+                table2.add_column(width=median_len)
 
-            rprint("[yellow]" + "─" * 80 + "[/yellow]\n")
+            for i in range(math.ceil(len(solutions) / cols)):
+                row = []
+                for j in range(cols):
+                    idx = i * cols + j
+                    if idx < len(solutions):
+                        content = Text(solutions[idx])
+                        content.stylize("green") if correct[idx] else content.stylize("red")
+                        row.append(content)
+                    else:
+                        row.append("")
+                table2.add_row(*row)
+            cprint(table2)
+
+            cprint("[yellow]" + "─" * console.size.width + "[/yellow]\n")
             cnt += 1
             if cnt >= max_display:
                 break
@@ -79,7 +87,7 @@ def display_livecodebench_results(
     problems = list(eval_data.values())
 
     if not problems:
-        console.print("[yellow]No results found with current filters.[/yellow]")
+        cprint("[yellow]No results found with current filters.[/yellow]")
         return
 
     stats_table = Table(title="LiveCodeBench Results Summary", show_header=False)
@@ -95,9 +103,9 @@ def display_livecodebench_results(
     for difficulty, rate in detail_pass.items():
         stats_table.add_row(f"{difficulty.title()} Pass@1", f"{rate:.2%}")
 
-    console.print(stats_table)
-    console.print("")
-    console.print("[bold blue]Problem Results[/bold blue]")
+    cprint(stats_table)
+    cprint("")
+    cprint("[bold blue]Problem Results[/bold blue]")
 
     cnt = 0
     for i, problem in enumerate(problems, 1):
@@ -119,15 +127,15 @@ def display_livecodebench_results(
             title=f"Problem #{i}",
             border_style="blue" if pass_rate > 0 else "red",
         )
-        console.print(problem_panel)
+        cprint(problem_panel)
 
         if "code_list" in problem:
             code = problem["code_list"][0] if problem["code_list"] else "No code available"
             syntax = Syntax(code, lexer="python", theme="monokai", line_numbers=True, indent_guides=True)
             code_panel = Panel(syntax, title="Solution Code", border_style="green")
-            console.print(code_panel)
+            cprint(code_panel)
 
-        console.print("[dim]" + "─" * 80 + "[/dim]")
+        cprint("[dim]" + "─" * 80 + "[/dim]")
         cnt += 1
         if cnt >= max_display:
             break
@@ -141,23 +149,23 @@ def view_results(
     r"""Unified view function that handles different result formats."""
     if results_path.suffix.lower() == ".json":
         try:
-            console.print("[blue]Detected LiveCodeBench results format[/blue]")
+            cprint("[blue]Detected LiveCodeBench results format[/blue]")
             display_livecodebench_results(
                 results_path=results_path,
                 max_display=max_display,
                 false_only=false_only,
             )
         except (FileNotFoundError, orjson.JSONDecodeError) as e:
-            console.print(f"[bold red]Error loading JSON results file:[/bold red] {e}")
+            cprint(f"[bold red]Error loading JSON results file:[/bold red] {e}")
             return
     else:
         try:
-            console.print("[blue]Detected JSONL format (math evaluation results)[/blue]")
+            cprint("[blue]Detected JSONL format (math evaluation results)[/blue]")
             display_math_results(
                 results_path=results_path,
                 max_display=max_display,
                 false_only=false_only,
             )
         except (FileNotFoundError, orjson.JSONDecodeError) as e:
-            console.print(f"[bold red]Error loading JSONL results file:[/bold red] {e}")
+            cprint(f"[bold red]Error loading JSONL results file:[/bold red] {e}")
             return

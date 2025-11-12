@@ -45,11 +45,6 @@ All-in-one benchmarking platform for evaluating Large Language Models (LLMs) wit
 > [uv](https://github.com/astral-sh/uv) is a fast Python package installer and resolver.
 
 ```bash
-# Create a new environment
-conda create -n evalhub python=3.12 -y
-conda activate evalhub
-
-# Recommend using uv to install the package
 uv venv --python 3.12
 source .venv/bin/activate
 
@@ -62,38 +57,46 @@ rm -rf ~/.cache/evalhub/
 
 ## 🚀 Quick Start
 
+### Environment Variables
+
+Evalhub uses [litellm](https://www.litellm.ai/) to access model. Please first set the api_key and base_url according to the model provider you are using.
+For example, to use a local model served via vllm/sglang, you can set:
+
 ```bash
-# list configs / tasks / help
-evalhub configs
-evalhub tasks
-evalhub run --help
+export HOSTED_VLLM_API_BASE="http://0.0.0.0:30000/v1"
+export HOSTED_VLLM_API_KEY="your_api_key"
 
-# before running the following commands, serve the model locally
-# the default run command will assume the model is served on localhost:30000(i.e. sglang port)
-# feel free to pass base_url and api_key to the run command, more details can be found via `evalhub configs`
-python -m sglang.launch_server --model-path $HOME/models/Qwen2.5-7B-Instruct
-python -m sglang_router.launch_server --model-path $HOME/models/Qwen2.5-Coder-7B-Instruct --dp 4
+hf download Qwen/Qwen3-30B-A3B-Instruct-2507 --local-dir $HOME/models/Qwen/Qwen3-30B-A3B-Instruct-2507
+python -m sglang.launch_server \
+  --model $HOME/models/Qwen/Qwen3-30B-A3B-Instruct-2507 \
+  --context-length 32768 \
+  --tp-size 4 \
+  --ep-size 4 \
+  --host 0.0.0.0 \
+  --port 30000
+```
 
-# humaneval && mbpp
-evalhub run --model Qwen2.5-7B-Instruct --tasks humaneval --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/ --temperature 0.2 --top-p 0.95
-evalhub run --model Qwen2.5-7B-Instruct --tasks mbpp --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
-evalplus.evaluate --dataset humaneval --samples $HOME/metrics/Qwen2.5-7B-Instruct/humaneval.jsonl
-evalplus.evaluate --dataset mbpp --samples $HOME/metrics/Qwen2.5-7B-Instruct/mbpp.jsonl
+Additionally, evalhub uses loguru's logger, configured via `LOG_LEVEL` and `LOG_DIR`.
 
-# gsm8k
-evalhub run --model Qwen2.5-7B-Instruct --tasks gsm8k --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
-evalhub eval --tasks gsm8k --solutions $HOME/metrics/Qwen2.5-7B-Instruct/gsm8k.jsonl --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
-evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/gsm8k_results.jsonl --max-display 20
+```bash
+export LOG_LEVEL="INFO" # default is "INFO"
+export LOG_DIR="./logs" # default is None
+```
 
-# hendrycks_math
-evalhub run --model Qwen2.5-7B-Instruct --tasks hendrycks_math --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
-evalhub eval --tasks hendrycks_math --solutions $HOME/metrics/Qwen2.5-7B-Instruct/hendrycks_math.jsonl --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
-evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/hendrycks_math_results.jsonl --max-display 20
+### Commands
+
+```bash
+evalhub --help
+
+# aime2025
+evalhub gen --model hosted_vllm/Qwen/Qwen3-30B-A3B-Instruct-2507 --tasks aime2025 --temperature 0.7 --top-p 0.8 --n-samples 64 --max-completion-tokens 28272 --num-workers 256 --output-dir $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/
+evalhub eval --tasks aime2025 --solutions $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/aime2025.jsonl --output-dir $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/
+evalhub view --results $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/aime2025_results.jsonl --max-display 20
 
 # livecodebench
-evalhub run --model Qwen2.5-7B-Instruct --tasks livecodebench --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
-evalhub eval --tasks livecodebench --solutions $HOME/metrics/Qwen2.5-7B-Instruct/livecodebench.jsonl --output-dir $HOME/metrics/Qwen2.5-7B-Instruct/
-evalhub view --results $HOME/metrics/Qwen2.5-7B-Instruct/livecodebench_results.json --max-display 20
+evalhub gen --model hosted_vllm/Qwen/Qwen3-30B-A3B-Instruct-2507 --tasks livecodebench --temperature 0.7 --top-p 0.8 --n-samples 64 --max-completion-tokens 28272 --num-workers 256 --output-dir $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/ --override-args '{"release_version": "v6"}'
+evalhub eval --tasks livecodebench --solutions $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/livecodebench_v6.jsonl --output-dir $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/ --override-args '{"release_version": "v6"}'
+evalhub view --results $HOME/metrics/Qwen/Qwen3-30B-A3B-Instruct-2507/livecodebench_results.json --max-display 20
 ```
 
 For more commands, please refer to [docs/cmds.md](docs/cmds.md).

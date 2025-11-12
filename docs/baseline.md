@@ -8,22 +8,22 @@ python -m sglang_router.launch_server --model-path "$HOME/models/DeepSeek-R1-Dis
 curl http://127.0.0.1:30000/v1/models
 
 # aime2024
-evalhub run --model "$HOME/models/DeepSeek-R1-Distill-Qwen-7B" --tasks aime2024 --output-dir "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/" --max-tokens 30720 --temperature 0.6 --top-p 0.95 --n-samples 64 --num-workers 1024 --timeout 3600 --system-prompt ""
+evalhub gen --model "$HOME/models/DeepSeek-R1-Distill-Qwen-7B" --tasks aime2024 --output-dir "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/" --max-tokens 30720 --temperature 0.6 --top-p 0.95 --n-samples 64 --num-workers 1024 --timeout 3600 --system-prompt ""
 evalhub eval --tasks aime2024 --solutions "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/aime2024.jsonl" --output-dir "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/"
 evalhub view --results "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/aime2024_results.jsonl" --max-display 10
 
 # math500
-evalhub run --model "$HOME/models/DeepSeek-R1-Distill-Qwen-7B" --tasks math500 --output-dir "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/" --max-tokens 30720 --temperature 0.6 --top-p 0.95 --n-samples 4 --num-workers 1024 --timeout 3600 --system-prompt ""
+evalhub gen --model "$HOME/models/DeepSeek-R1-Distill-Qwen-7B" --tasks math500 --output-dir "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/" --max-tokens 30720 --temperature 0.6 --top-p 0.95 --n-samples 4 --num-workers 1024 --timeout 3600 --system-prompt ""
 evalhub eval --tasks math500 --solutions "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/math500.jsonl" --output-dir "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/"
 evalhub view --results "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/math500_results.jsonl" --max-display 10
 
 # livecodebench
-evalhub run --model "$HOME/models/DeepSeek-R1-Distill-Qwen-7B" --tasks livecodebench --output-dir "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/" --max-tokens 28672 --temperature 0.6 --top-p 0.95 --n-samples 4 --num-workers 1024 --system-prompt ""
+evalhub gen --model "$HOME/models/DeepSeek-R1-Distill-Qwen-7B" --tasks livecodebench --output-dir "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/" --max-tokens 28672 --temperature 0.6 --top-p 0.95 --n-samples 4 --num-workers 1024 --system-prompt ""
 evalhub eval --tasks livecodebench --solutions "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/livecodebench.jsonl" --output-dir "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/"
 evalhub view --results "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/livecodebench_results.json" --max-display 10
 
 # gpqa
-evalhub run --model "$HOME/models/DeepSeek-R1-Distill-Qwen-7B" --tasks gpqa --output-dir "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/" --max-tokens 28672 --temperature 0.6 --top-p 0.95 --n-samples 4 --num-workers 1024 --system-prompt ""
+evalhub gen --model "$HOME/models/DeepSeek-R1-Distill-Qwen-7B" --tasks gpqa --output-dir "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/" --max-tokens 28672 --temperature 0.6 --top-p 0.95 --n-samples 4 --num-workers 1024 --system-prompt ""
 evalhub eval --tasks gpqa --solutions "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/gpqa.jsonl" --output-dir "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/"
 evalhub view --results "$HOME/metrics/DeepSeek-R1-Distill-Qwen-7B/gpqa_results.jsonl" --max-display 10
 ```
@@ -68,7 +68,7 @@ Example commands:
 ```bash
 python -m sglang_router.launch_server --model-path "$HOME/models/Qwen3-4B" --router-worker-startup-check-interval 20 --router-balance-abs-threshold 1 --context-length 32768 --dp 8 --port 30000 --reasoning-parser qwen3
 
-evalhub run --model "$HOME/models/Qwen3-4B" --tasks aime2025 --output-dir "$HOME/metrics/Qwen3-4B" --max-tokens 30720 --temperature 0.6 --top-p 0.95 --n-samples 32 --num-workers 1024 --timeout 3600 --system-prompt ""
+evalhub gen --model "$HOME/models/Qwen3-4B" --tasks aime2025 --output-dir "$HOME/metrics/Qwen3-4B" --max-tokens 30720 --temperature 0.6 --top-p 0.95 --n-samples 32 --num-workers 1024 --timeout 3600 --system-prompt ""
 evalhub eval --tasks aime2025 --solutions "$HOME/metrics/Qwen3-4B/aime2025.jsonl" --output-dir "$HOME/metrics/Qwen3-4B"
 evalhub view --results "$HOME/metrics/Qwen3-4B/aime2025_results.jsonl" --max-display 10
 ```

@@ -48,7 +48,7 @@ Test your dataset integration:
 
 1. Generation: Test if prompts are correctly generated
    ```bash
-   evalhub run --model "your-model" --tasks your_dataset_name --output-dir ./results
+   evalhub gen --model "your-model" --tasks your_dataset_name --output-dir ./results
    ```
 
 2. Evaluation: Test if evaluation works correctly
