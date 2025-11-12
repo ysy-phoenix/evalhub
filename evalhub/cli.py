@@ -97,7 +97,7 @@ def list_tasks():
 
     # Print usage examples
     console.print("\n[bold yellow]Generation Examples:[/bold yellow]")
-    console.print('evalhub run --model "Qwen2.5-7B-Instruct" --tasks humaneval,mbpp --output-dir ./results')
+    console.print('evalhub gen --model "Qwen2.5-7B-Instruct" --tasks humaneval,mbpp --output-dir ./results')
 
     console.print("\n[bold yellow]Evaluation Examples:[/bold yellow]")
     for task in list(DATASET_MAP.keys())[:6]:

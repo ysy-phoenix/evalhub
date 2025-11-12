@@ -45,11 +45,6 @@ All-in-one benchmarking platform for evaluating Large Language Models (LLMs) wit
 > [uv](https://github.com/astral-sh/uv) is a fast Python package installer and resolver.
 
 ```bash
-# Create a new environment
-conda create -n evalhub python=3.12 -y
-conda activate evalhub
-
-# Recommend using uv to install the package
 uv venv --python 3.12
 source .venv/bin/activate
 

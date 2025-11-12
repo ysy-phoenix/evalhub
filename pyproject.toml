@@ -67,7 +67,7 @@ base = [
 
 # SGLang specific dependencies
 sglang = [
-    "sglang[all]>=0.4.8.post1",
+    "sglang>=0.5.5.post1",
     "sglang-router",
 ]
 
